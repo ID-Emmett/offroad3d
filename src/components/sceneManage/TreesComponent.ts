@@ -25,7 +25,6 @@ export class TreesComponent extends ComponentBase {
         if (!e.data.terrainName) return console.error("The terrain object has no name")
 
         this.initiate(e.data.terrainName);
-        Engine3D.inputSystem.removeEventListener("TerrainInited", this.onTerrainReady, this);
     }
 
     public initiate(terrainName: string) {
@@ -282,6 +281,10 @@ export class TreesComponent extends ComponentBase {
         const interpolatedHeight = h0 + tz * (h1 - h0);
 
         return interpolatedHeight;
+    }
+
+    destroy(force?: boolean): void {
+        Engine3D.inputSystem.removeEventListener("TerrainInited", this.onTerrainReady, this);
     }
 
 }

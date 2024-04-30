@@ -46,7 +46,7 @@ export class AmmoRigidBody extends ComponentBase {
 	 */
 	public size: Vector3;
 	/**
-	 * 碰撞体完整高度，圆柱体与胶囊体形设置有效，胶囊体将会是圆柱部分高度
+	 * 碰撞体完整高度，圆柱体与胶囊体形设置有效，胶囊形状时表示圆柱部分高度
 	 */
 	public height: number;
 	/**
@@ -283,7 +283,7 @@ export class AmmoRigidBody extends ComponentBase {
 
 			this.transform.localRotQuat = Quaternion.HELP_0;
 
-			// Physics.checkBound(this as unknown as Rigidbody);
+			Physics.checkBound(this as unknown as Rigidbody);
 		}
 	}
 

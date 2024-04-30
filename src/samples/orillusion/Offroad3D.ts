@@ -1,11 +1,11 @@
-import { Engine3D, BoxColliderShape, BoxGeometry, Camera3D, ColliderComponent, Color, ComponentBase, DirectLight, AtmosphericComponent, View3D, LitMaterial, MeshRenderer, Object3D, Scene3D, Vector3, SphereGeometry, AxisObject, SkyRenderer } from '@orillusion/core'
+import { Engine3D, Camera3D, Color, DirectLight, AtmosphericComponent, View3D, Object3D, Scene3D, Vector3, AxisObject, SkyRenderer } from '@orillusion/core'
 import { Physics } from '@orillusion/physics'
 import { Stats } from "@orillusion/stats"
 import { HoverCameraController } from '@/components/cameraController'
 import { InteractRay } from '@/components/ammoRay/InteractRay';
-import { TerrainComponent, TreesComponent } from '@/components/sceneManage';
+import { TerrainComponent, TreesComponent, Grass, BoxGenerator } from '@/components/sceneManage';
 import { VehicleComponent, VehicleType } from '@/components/vehicleManage';
-import { AmmoRigidBody, ShapeTypes } from "@/physics";
+import dat from 'dat.gui'
 
 // import { SimpleDebugDrawer } from '@/physics/DebugDrawer'
 
@@ -62,41 +62,42 @@ class Sample_game {
     // mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0))
     mainCamera.perspective(45, Engine3D.aspect, 0.1, 2000.0)
     mainCamera.enableCSM = true;
+
     let cameraCtrl = mainCamera.object3D.addComponent(HoverCameraController)
-
-    // cameraCtrl.distance = 50 // 500
+    cameraCtrl.setCamera(160, -15, 800)
     cameraCtrl.smooth = false
-    // cameraCtrl.dragSmooth = 0.8
-    // cameraCtrl.wheelSmooth = 0.8
     cameraCtrl.maxDistance = 1000
-    cameraCtrl.roll = 160
-    cameraCtrl.pitch = -15
-
     cameraCtrl.rollSmooth = 8
-    // cameraCtrl.smooth = false
-    // cameraCtrl.dragSmooth = 18
-
     scene.addChild(cameraObj)
 
     let light = new Object3D()
-    let component = light.addComponent(DirectLight)
-    light.rotationX = 145
-    light.rotationY = 10
-    component.lightColor = new Color(1.0, 1.0, 1.0, 1.0)
-    component.intensity = 60
-    component.castShadow = true
+    let directLight = light.addComponent(DirectLight)
+    // light.rotationX = 145
+    // light.rotationY = 10
+    light.rotationX = 50
+    light.rotationY = 50
+    directLight.lightColor = new Color(1.0, 1.0, 1.0, 1.0)
+    directLight.intensity = 49
+    directLight.castShadow = true
     scene.addChild(light)
 
-    // scene3D.addComponent(BoxGenerator)
-
-    let axis = new AxisObject(250, 0.8)
-    scene.addChild(axis)
-
+    // let name = 'DirectLight';
+    // let GUIHelp = new dat.GUI()
+    // GUIHelp.addFolder(name);
+    // GUIHelp.add(light, 'enable');
+    // GUIHelp.add(light.transform, 'rotationX', 0.0, 360.0, 0.01);
+    // GUIHelp.add(light.transform, 'rotationY', 0.0, 360.0, 0.01);
+    // GUIHelp.add(light.transform, 'rotationZ', 0.0, 360.0, 0.01);
+    // GUIHelp.addColor(light, 'lightColor');
+    // GUIHelp.add(light, 'intensity', 0.0, 300.0, 0.01);
+    // GUIHelp.add(light, 'indirect', 0.0, 1.0, 0.01);
+    // GUIHelp.add(light, 'castShadow');
+    
     let view = new View3D()
     view.scene = scene
     view.camera = mainCamera
 
-    this.initGameComponents(scene, cameraObj, cameraCtrl)
+    this.initGameComponents(scene, cameraCtrl)
 
     // start render
     Engine3D.startRenderView(view)
@@ -128,32 +129,24 @@ class Sample_game {
 
   }
 
-  initGameComponents(scene: Scene3D, cameraObj: Object3D, cameraCtrl: HoverCameraController) {
+  initGameComponents(scene: Scene3D, cameraCtrl: HoverCameraController) {
+
+    let axis = new AxisObject(250, 0.8)
+    scene.addChild(axis)
+
     scene.addComponent(TerrainComponent)
     scene.addComponent(TreesComponent)
+    scene.addComponent(Grass)
+    // scene.addComponent(BoxGenerator)
 
-    cameraObj.addComponent(InteractRay)
+    cameraCtrl.object3D.addComponent(InteractRay)
 
-    let carComponent = scene.addComponent(VehicleComponent);
-    carComponent.vehicleType = VehicleType.Pickup;
-    carComponent.addInitedFunction((vehicle: Object3D) => {
+    let vehicle = scene.addComponent(VehicleComponent);
+    vehicle.vehicleType = VehicleType.Pickup;
+    vehicle.addInitedFunction((vehicle: Object3D) => {
       cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0))
     }, this)
 
-    // setTimeout(() => {
-    //   console.log('定时器5s');
-
-    //   carComponent.position = cameraCtrl.target.clone();
-    //   carComponent.vehicleType = VehicleType.FireTruck;
-
-    //   // setTimeout(() => {
-    //   //   console.log('定时器 2  5s');
-
-    //   //   carComponent.position = cameraCtrl.target.clone();
-    //   //   carComponent.vehicleType = VehicleType.Truck;
-
-    //   // }, 5000);
-    // }, 5000);
   }
 
   loop() {
@@ -163,45 +156,6 @@ class Sample_game {
   }
 }
 
-class BoxGenerator extends ComponentBase {
-  // save last time
-  private _lastTime: number = performance.now()
 
-  // a simple loop update
-  public onUpdate(): void {
-    // get current time
-    let now: number = performance.now()
-    // add a box every 300ms
-    if (now - this._lastTime > 3000) {
-      // add a box
-      this._addBox()
-      // remove the first box after 500 boxes
-      // if (this.object3D.entityChildren.length > 50) this.object3D.removeChildByIndex(4)
-      // save current time
-      this._lastTime = now
-    }
-  }
-
-  // add a box
-  private _addBox(): void {
-    const obj = new Object3D()
-    let mr = obj.addComponent(MeshRenderer)
-    // mr.geometry = new BoxGeometry(5, 5, 5)
-    mr.geometry = new SphereGeometry(5, 16, 16)
-    let mat = new LitMaterial()
-    mat.baseColor = new Color(Math.random(), Math.random(), Math.random(), 1.0)
-    mr.material = mat;
-    obj.localPosition = new Vector3(Math.random() * 700 - 350, 250, Math.random() * 700 - 350)
-    obj.localRotation = new Vector3(Math.random() * 360, Math.random() * 360, Math.random() * 360)
-    // add a rigidbody with mass 10
-    let rigidbody = obj.addComponent(AmmoRigidBody)
-    rigidbody.mass = 1
-    rigidbody.shape = ShapeTypes.btSphereShape
-    rigidbody.radius = 5
-
-
-    this.object3D.addChild(obj)
-  }
-}
 
 new Sample_game().run()

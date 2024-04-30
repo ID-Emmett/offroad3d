@@ -102,7 +102,7 @@ export class HoverCameraController extends ComponentBase {
   /**
    * 相机避障
    */
-  public avoidObstacles: boolean = true
+  public avoidObstacles: boolean = false
 
 
   /**
