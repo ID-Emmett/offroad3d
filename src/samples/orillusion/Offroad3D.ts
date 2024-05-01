@@ -5,6 +5,7 @@ import { HoverCameraController } from '@/components/cameraController'
 import { InteractRay } from '@/components/ammoRay/InteractRay';
 import { TerrainComponent, TreesComponent, Grass, BoxGenerator } from '@/components/sceneManage';
 import { VehicleComponent, VehicleType } from '@/components/vehicleManage';
+import { FrameTaskQueue } from '@/components/systems/FrameTaskQueue';
 import { PostProcessingSetup } from '@/effects/Postprocessing';
 
 import { GUIHelp } from "@/utils/debug/GUIHelp";
@@ -113,9 +114,14 @@ class Sample_game {
 		let axis = new AxisObject(250, 0.8);
 		scene.addChild(axis);
 
+		scene.addComponent(FrameTaskQueue);
+
 		scene.addComponent(TerrainComponent);
+
 		scene.addComponent(TreesComponent);
+
 		scene.addComponent(Grass);
+		
 		// scene.addComponent(BoxGenerator)
 
 		cameraCtrl.object3D.addComponent(InteractRay);
