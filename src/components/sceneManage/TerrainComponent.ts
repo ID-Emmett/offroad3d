@@ -1,8 +1,10 @@
-import { ComponentBase, Engine3D, LitMaterial, MeshRenderer, Object3D, Scene3D, GPUAddressMode, Vector4, BitmapTexture2D, PlaneGeometry, Vector3, VertexAttributeName, CEvent } from '@orillusion/core'
+import { ComponentBase, Engine3D, LitMaterial, MeshRenderer, Object3D, Scene3D, GPUAddressMode, Vector4, BitmapTexture2D, PlaneGeometry, Vector3, VertexAttributeName, CEvent, Reference } from '@orillusion/core'
 import { TerrainGeometry } from '@orillusion/effect';
 import { AmmoRigidBody, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil } from "@/physics";
 import { Physics } from '@orillusion/physics';
 import { perlinNoise, createNoiseSeed } from '@/utils/perlin.js';
+import { GUIUtil } from '@/utils/GUIUtil'
+import dat from 'dat.gui'
 
 
 /**
@@ -17,8 +19,14 @@ export class TerrainComponent extends ComponentBase {
 	public segmentH: number = 199
 	public terrainMaxHeight: number = -250
 
+	private _terrainGeometry: TerrainGeometry
+
+	public get terrainGeometry() {
+		return this._terrainGeometry
+	}
+
 	async start() {
-			
+
 		let terrain = await this.generateTerrain();
 
 		this.transform.scene3D.addChild(terrain);
@@ -27,6 +35,8 @@ export class TerrainComponent extends ComponentBase {
 
 		// 关联 CreateTree 组件
 		Engine3D.inputSystem.dispatchEvent(new CEvent("TerrainInited", { terrainName: this.terrainName }));
+
+		this.debug(terrain)
 
 	}
 
@@ -81,8 +91,10 @@ export class TerrainComponent extends ComponentBase {
 		terrain.name = this.terrainName;
 		let mr = terrain.addComponent(MeshRenderer);
 		mr.geometry = terrainGeometry;
+		this._terrainGeometry = terrainGeometry
 
 		let mat = new LitMaterial()
+		mat.name = 'terrainMaterial'
 		mat.setUniformVector4('transformUV1', new Vector4(0, 0, 30, 30))
 		mat.baseMap = texture
 		mat.normalMap = normalMap
@@ -96,6 +108,7 @@ export class TerrainComponent extends ComponentBase {
 
 		texture.addressModeU = GPUAddressMode.repeat;     // 水平方向与竖直方向
 		texture.addressModeV = GPUAddressMode.repeat;
+
 		mr.material = mat;
 		mr.receiveShadow = false;
 		mr.castShadow = false;
@@ -111,6 +124,73 @@ export class TerrainComponent extends ComponentBase {
 		rigidbody.mask = CollisionMask.DEFAULT_MASK;
 		rigidbody.userIndex = 2;
 		rigidbody.enable = false;
+	}
+
+	private debug(terrain: Object3D) {
+		let gui = new dat.GUI()
+		let f = gui.addFolder(this.terrainName)
+
+		f.add(this, 'terrainMaxHeight', -1000, 1000, 1).onChange(v => setTerrainSize(v, 'terrainMaxHeight')).onFinishChange(v => resetRigidBody())
+		f.add(this, 'width', 100, 5000, 10).onChange(v => setTerrainSize(v, 'width')).onFinishChange(v => resetRigidBody())
+		f.add(this, 'height', 100, 5000, 10).onChange(v => setTerrainSize(v, 'height')).onFinishChange(v => resetRigidBody())
+		f.add(this, 'segmentW', 1, 1000, 1).onFinishChange(v => setTerrainSegment())
+		f.add(this, 'segmentH', 1, 1000, 1).onFinishChange(v => setTerrainSegment())
+		f.open()
+		let dimensionSpecs = {
+			width: { index: 0, value: this.width },
+			height: { index: 2, value: this.height },
+			terrainMaxHeight: { index: 1, value: this.terrainMaxHeight }
+		}
+		const setTerrainSize = (size: number, specs: 'width' | 'height' | 'terrainMaxHeight') => {
+			if (size !== 0) {
+				let posAttrData = this.terrainGeometry.getAttribute(VertexAttributeName.position);
+				let dimension = dimensionSpecs[specs];
+				for (let i = 0, count = posAttrData.data.length / 3; i < count; i++) {
+					posAttrData.data[i * 3 + dimension.index] *= size / dimension.value;
+				}
+				dimension.value = size;
+
+				if (specs !== 'terrainMaxHeight') this.terrainGeometry[specs] = size;
+
+				this.terrainGeometry.vertexBuffer.upload(VertexAttributeName.position, posAttrData);
+				this.terrainGeometry.computeNormals();
+			}
+		}
+
+		const setTerrainSegment = async () => {
+			let heightTexture = await Engine3D.res.loadTexture('https://cdn.orillusion.com/terrain/test01/height.png');
+			let newGeometry = new TerrainGeometry(this.width, this.height, this.segmentW, this.segmentH);
+			newGeometry.setHeight(heightTexture as BitmapTexture2D, this.terrainMaxHeight);
+
+			// 由于直接修改几何体的分段数涉及到多项数据替换，性能开销巨大，此处通过删增的方式进行处理
+
+			// 克隆网格克隆材质
+			let material = terrain.getComponent(MeshRenderer).material.clone() as LitMaterial;
+
+			// 删除网格，这会清除几何体与材质
+			terrain.removeComponent(MeshRenderer)
+
+			// 重新添加网格
+			let mesh = terrain.addComponent(MeshRenderer)
+			mesh.material = material
+			mesh.geometry = newGeometry
+			// mesh.receiveShadow = false;
+			// mesh.castShadow = false;
+			this._terrainGeometry = newGeometry
+
+			resetRigidBody();
+
+			GUIUtil.removeFolder(`terrainMaterial`);
+			GUIUtil.renderLitMaterial(material, true, 'terrainMaterial')
+		}
+
+		const resetRigidBody = () => {
+			terrain.removeComponent(AmmoRigidBody)
+			this.initRigidBody(terrain)
+		}
+
+		GUIUtil.renderLitMaterial((terrain.getComponent(MeshRenderer).material as LitMaterial), false, 'terrainMaterial')
+
 	}
 
 

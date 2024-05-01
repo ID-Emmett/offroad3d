@@ -3,6 +3,10 @@ import { AnimatorComponent, AtmosphericComponent, BillboardType, BlendMode, Bloo
 
 export class GUIUtil {
 
+    public static removeFolder(folderName: string) {
+        GUIHelp.removeFolder(folderName);
+    };
+
     public static renderShadowSetting(open: boolean = true) {
         // if (!GUIHelp.debug) return
 
@@ -447,8 +451,9 @@ export class GUIUtil {
         GUIHelp.endFolder();
     }
 
-    static renderLitMaterial(mat: LitMaterial, open?: boolean) {
-        GUIHelp.addFolder(mat.name);
+    static renderLitMaterial(mat: LitMaterial, open?: boolean, name?: string) {
+        name ||= mat.name || 'LitMaterial';
+        GUIHelp.addFolder(name);
         GUIHelp.addColor(mat, 'baseColor').onChange((v: any) => {
             let color = mat.baseColor;
             color.copyFromArray(v);

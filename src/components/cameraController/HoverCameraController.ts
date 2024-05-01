@@ -293,15 +293,12 @@ export class HoverCameraController extends ComponentBase {
 						let obj = new Object3D()
 						obj.name = 'test'
 						scene.addChild(obj)
-						// obj.localPosition = new Vector3(976.2945556640625, 40, 948.9457397460938) // 水上
-						// obj.localPosition = new Vector3(743.4409790039062, 983.6719360351562, 11475.818359375 - 10000) // 停机坪后面
-						// obj.localPosition = new Vector3(761.4771728515625, 979.090576171875, 1429.517822265625) // 停机坪后面
 						obj.localPosition = scene.getChildByName('vehicle').localPosition
 						// this._flowTarget = obj
 						this.slowTracking(obj)
 					} else {
 						// this._flowTarget = scene.getChildByName('vehicle')
-						this.slowTracking(scene.getChildByName('vehicle'))
+						this.slowTracking(scene.getChildByName('vehicle'), 3000, new Vector3(0, 2, 0))
 						scene.getChildByName('test').removeSelf()
 					}
 

@@ -227,11 +227,6 @@ export class VehicleComponent extends ComponentBase {
 	  */
 	public destroy(force?: boolean) {
 
-		// 相机目标为当前对象时，取消追踪
-		// let hoverCtrl = this.transform.view3D.camera.object3D.getComponent(HoverCameraController)
-		// if (hoverCtrl.getFlowTarget() === this.vehicle) {
-		// 	hoverCtrl.slowTracking(this.vehicle.clone(), 3000, new Vector3(0, 2, 0))
-		// }
 		console.log('Vehicle Component destroy');
 
 		this._initedFunctions = null;
