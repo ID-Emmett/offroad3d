@@ -1,6 +1,7 @@
 import { Engine3D, Object3D, MeshRenderer, Vector3, ComponentBase, CEvent, Color } from '@orillusion/core';
 import { GrassComponent, TerrainGeometry } from '@orillusion/effect'
 import dat from 'dat.gui'
+import { GUIUtil } from '@/utils/GUIUtil'
 
 /**
  * 草地
