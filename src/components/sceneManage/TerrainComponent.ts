@@ -1,10 +1,12 @@
-import { ComponentBase, Engine3D, LitMaterial, MeshRenderer, Object3D, Scene3D, GPUAddressMode, Vector4, BitmapTexture2D, PlaneGeometry, Vector3, VertexAttributeName, CEvent, Reference } from '@orillusion/core'
-import { TerrainGeometry } from '@orillusion/effect';
+import { ComponentBase, Engine3D, LitMaterial, MeshRenderer, Object3D, Scene3D, GPUAddressMode, Vector4, BitmapTexture2D, PlaneGeometry, Vector3, VertexAttributeName, CEvent } from '@orillusion/core'
+import { GrassComponent, TerrainGeometry } from '@orillusion/effect';
 import { AmmoRigidBody, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil } from "@/physics";
 import { Physics } from '@orillusion/physics';
 import { perlinNoise, createNoiseSeed } from '@/utils/perlin.js';
 import { GUIUtil } from '@/utils/GUIUtil'
 import dat from 'dat.gui'
+import { FrameTaskQueue } from '../systems/FrameTaskQueue';
+import { TerrainUtil } from "@/utils/TerrainUtil";
 
 
 /**
@@ -127,7 +129,8 @@ export class TerrainComponent extends ComponentBase {
 	}
 
 	private debug(terrain: Object3D) {
-		let gui = new dat.GUI()
+		// let gui = new dat.GUI()
+		let gui = GUIUtil.GUI
 		let f = gui.addFolder(this.terrainName)
 
 		f.add(this, 'terrainMaxHeight', -1000, 1000, 1).onChange(v => setTerrainSize(v, 'terrainMaxHeight')).onFinishChange(v => resetRigidBody())
@@ -136,25 +139,30 @@ export class TerrainComponent extends ComponentBase {
 		f.add(this, 'segmentW', 1, 1000, 1).onFinishChange(v => setTerrainSegment())
 		f.add(this, 'segmentH', 1, 1000, 1).onFinishChange(v => setTerrainSegment())
 		f.open()
+		
 		let dimensionSpecs = {
 			width: { index: 0, value: this.width },
 			height: { index: 2, value: this.height },
 			terrainMaxHeight: { index: 1, value: this.terrainMaxHeight }
 		}
 		const setTerrainSize = (size: number, specs: 'width' | 'height' | 'terrainMaxHeight') => {
-			if (size !== 0) {
-				let posAttrData = this.terrainGeometry.getAttribute(VertexAttributeName.position);
-				let dimension = dimensionSpecs[specs];
-				for (let i = 0, count = posAttrData.data.length / 3; i < count; i++) {
-					posAttrData.data[i * 3 + dimension.index] *= size / dimension.value;
-				}
-				dimension.value = size;
-
-				if (specs !== 'terrainMaxHeight') this.terrainGeometry[specs] = size;
-
-				this.terrainGeometry.vertexBuffer.upload(VertexAttributeName.position, posAttrData);
-				this.terrainGeometry.computeNormals();
+			size ||= 0.01; // 避免为0时顶点数据丢失
+			let posAttrData = this.terrainGeometry.getAttribute(VertexAttributeName.position);
+			let dimension = dimensionSpecs[specs];
+			for (let i = 0, count = posAttrData.data.length / 3; i < count; i++) {
+				posAttrData.data[i * 3 + dimension.index] *= size / dimension.value;
 			}
+			dimension.value = size;
+
+			if (specs !== 'terrainMaxHeight') this.terrainGeometry[specs] = size;
+
+			this.terrainGeometry.vertexBuffer.upload(VertexAttributeName.position, posAttrData);
+			// this.terrainGeometry.setAttribute(VertexAttributeName.position, posAttrData.data);
+			this.terrainGeometry.computeNormals();
+
+			taskQueue.clearQueue()
+			resetChildHeight(this.terrainGeometry, posAttrData.data as Float32Array)
+
 		}
 
 		const setTerrainSegment = async () => {
@@ -181,18 +189,55 @@ export class TerrainComponent extends ComponentBase {
 			resetRigidBody();
 
 			GUIUtil.removeFolder(`terrainMaterial`);
-			GUIUtil.renderLitMaterial(material, true, 'terrainMaterial')
+			GUIUtil.renderLitMaterial(material, false, 'terrainMaterial')
 		}
 
+		let taskQueue = this.transform.scene3D.getComponent(FrameTaskQueue)
+
+		// 重置地形子元素高度
+		const resetChildHeight = (terrainGeometry: TerrainGeometry, terrainVertexs: Float32Array) => {
+			taskQueue.maxTasksPerFrame = 80
+
+			terrain.entityChildren.forEach(entity => {
+				let child = entity as Object3D;
+				if (child.name === 'grass') {
+					child.getComponent(GrassComponent).nodes.forEach(node => {
+						taskQueue.enqueue(() => {
+							node.y = TerrainUtil.calculateHeightAtPoint(node.x, node.z, terrainGeometry, terrainVertexs)
+						})
+					})
+				} else if (child.name === 'grassYellow') {
+					(child.entityChildren as Object3D[]).forEach((node) => {
+						taskQueue.enqueue(() => {
+							node.y = TerrainUtil.calculateHeightAtPoint(node.x, node.z, terrainGeometry, terrainVertexs)
+						})
+					})
+				} else {
+					taskQueue.enqueue(() => {
+						child.y = TerrainUtil.calculateHeightAtPoint(child.x, child.z, terrainGeometry, terrainVertexs)
+					})
+				}
+			})
+
+		}
+
+		// 重置刚体
 		const resetRigidBody = () => {
 			terrain.removeComponent(AmmoRigidBody)
 			this.initRigidBody(terrain)
+
+			// 树木刚体
+			terrain.entityChildren.forEach(entity => {
+				let child = entity as Object3D;
+				taskQueue.enqueue(() => {
+					child.getComponent(AmmoRigidBody)?.resetRigidBody()
+				})
+			})
 		}
 
 		GUIUtil.renderLitMaterial((terrain.getComponent(MeshRenderer).material as LitMaterial), false, 'terrainMaterial')
 
 	}
-
 
 	// TEST
 	private async createModelFloor(scene3D: Scene3D) {

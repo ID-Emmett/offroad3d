@@ -36,6 +36,16 @@ export class VehicleComponent extends ComponentBase {
 		}
 	}
 
+	public set enable(value: boolean) {
+		this._enable = value
+		this.vehicle.getComponent(VehicleControl).enable = value
+
+	}
+
+	public get enable(): boolean {
+		return this._enable
+	}
+
 	async start() {
 		await this.initVehicle()
 

@@ -2,6 +2,7 @@ import { Engine3D, Object3D, MeshRenderer, Vector3, ComponentBase, CEvent, Color
 import { GrassComponent, TerrainGeometry } from '@orillusion/effect'
 import dat from 'dat.gui'
 import { GUIUtil } from '@/utils/GUIUtil'
+import { TerrainUtil } from "@/utils/TerrainUtil";
 
 /**
  * 草地
@@ -67,7 +68,7 @@ export class Grass extends ComponentBase {
             // let z = (Math.random() * height) - height / 2;
             let x = (Math.random() * width / 10) - width / 10 / 2;
             let z = (Math.random() * height / 10) - height / 10 / 2;
-            let y = this.interpolateHeights(terrainGeometry, null, x, z)[1]
+            let y = TerrainUtil.calculateHeightAtPoint(x, z, terrainGeometry)
             node.localPosition = Vector3.HELP_0.set(x, y, z)
 
             node.localRotation.y = Math.random() * 360
@@ -116,51 +117,9 @@ export class Grass extends ComponentBase {
 
     }
 
-    /**
-     * 插值计算地形上给定点的高度。
-     * @param {TerrainGeometry} terrainGeometry - 地形的几何数据，包含宽、高、分段数和高度数据。
-     * @param {Float32Array} points - 包含x, z坐标的浮点数组，可选。如果未提供，则根据x和z参数创建。
-     * @param {number} x - x坐标，可选。
-     * @param {number} z - z坐标，可选。
-     * @returns {Float32Array} 包含更新高度的points数组。
-     */
-    protected interpolateHeights(terrainGeometry: TerrainGeometry, points?: Float32Array, x?: number, z?: number): Float32Array {
-        if (!points && x !== undefined && z !== undefined) {
-            points = new Float32Array([x, 0, z]);  // 如果只给出x和z，则构造points数组
-        } else if (!points) {
-            console.error('Invalid parameters: either points array or both x and z must be provided.');
-            return null; // 返回null或抛出错误，以明确表示函数未能执行
-        }
-
-        const { width, height, segmentW, segmentH, heightData } = terrainGeometry;
-        const scaleX = segmentW / width;
-        const scaleZ = segmentH / height;
-
-        for (let i = 0; i < points.length; i += 3) {
-            const x = points[i];
-            const z = points[i + 2];
-            const gridX = (x + width / 2) * scaleX;
-            const gridZ = (z + height / 2) * scaleZ;
-
-            const x0 = Math.min(Math.floor(gridX), segmentW - 2);
-            const z0 = Math.min(Math.floor(gridZ), segmentH - 2);
-            const x1 = Math.min(x0 + 1, segmentW - 2);
-            const z1 = Math.min(z0 + 1, segmentH - 2);
-            const tx = gridX - x0;
-            const tz = gridZ - z0;
-
-            const h00 = heightData[z0][x0];
-            const h01 = heightData[z0][x1];
-            const h10 = heightData[z1][x0];
-            const h11 = heightData[z1][x1];
-
-            points[i + 1] = h00 + tx * (h01 - h00) + tz * ((h10 + tx * (h11 - h10)) - (h00 + tx * (h01 - h00))); // 双线性插值
-        }
-        return points;
-    }
-
     private debug(grassCom: GrassComponent) {
-        let gui = new dat.GUI()
+        // let gui = new dat.GUI()
+        let gui = GUIUtil.GUI
         let dir = gui.addFolder('grass-wind')
         dir.addColor(grassCom.grassMaterial, 'grassBaseColor')
         dir.addColor(grassCom.grassMaterial, 'grassTopColor')

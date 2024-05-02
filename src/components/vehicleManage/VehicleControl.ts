@@ -350,7 +350,7 @@ export class VehicleControl extends ComponentBase {
       case KeyCode.Key_P:
         if (state) {
           let { x, y, z } = this.object3D.transform.localPosition
-          RigidBodyUtil.resetRigidBody(this.rigidbody, new Vector3(x, 40, z), Quaternion._zero)
+          RigidBodyUtil.resetRigidBody(this.rigidbody, new Vector3(x, 200, z), Quaternion._zero)
         }
     }
   }

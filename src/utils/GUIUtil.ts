@@ -3,6 +3,8 @@ import { AnimatorComponent, AtmosphericComponent, BillboardType, BlendMode, Bloo
 
 export class GUIUtil {
 
+    public static GUI = GUIHelp
+
     public static removeFolder(folderName: string) {
         GUIHelp.removeFolder(folderName);
     };
@@ -400,7 +402,7 @@ export class GUIUtil {
 
         //depth test
         if ((panel as any).isWorldPanel) {
-            GUIHelp.add(panel, 'depthTest');
+            GUIHelp.add(panel, 'depthTest' as any);
         }
 
         open && GUIHelp.open();

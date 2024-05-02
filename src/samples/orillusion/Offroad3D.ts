@@ -91,6 +91,8 @@ class Sample_game {
 		view.camera = mainCamera
 
 
+		GUIHelp.init();
+
 		this.initGameComponents(scene, cameraCtrl)
 
 
@@ -98,8 +100,6 @@ class Sample_game {
 		Engine3D.startRenderView(view)
 
 		scene.addComponent(PostProcessingSetup);
-
-		GUIHelp.init();
 
 		GUIUtil.renderDebug(false);
 
@@ -121,7 +121,7 @@ class Sample_game {
 		scene.addComponent(TreesComponent);
 
 		scene.addComponent(Grass);
-		
+
 		// scene.addComponent(BoxGenerator)
 
 		cameraCtrl.object3D.addComponent(InteractRay);

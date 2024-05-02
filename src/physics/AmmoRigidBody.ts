@@ -271,7 +271,7 @@ export class AmmoRigidBody extends ComponentBase {
 
 	onUpdate(): void {
 
-		if (this._btRigidbody && this._btRigidbody.isActive()) {
+		if (this._btRigidbody.isActive()) {
 
 			console.log('同步图形变换');
 
@@ -287,16 +287,27 @@ export class AmmoRigidBody extends ComponentBase {
 		}
 	}
 
-	public destroy(force?: boolean): void {
-		// Physics.removeRigidbody(this as unknown as Rigidbody);
+	/**
+	 * 重设刚体变换
+	 * @param newPosition 可选，默认为图形对象的当前位置
+	 * @param newRotation 可选，默认为图形对象的当前旋转
+	 */
+	public resetRigidBody(newPosition?: Vector3, newRotation?: Quaternion): void {
+		if (!this._btRigidbody) return console.error('No rigid body');
+		
+		newPosition ||= this.transform.localPosition;
+		newRotation ||= this.transform.localRotQuat;
+		RigidBodyUtil.resetRigidBody(this.btRigidbody, newPosition, newRotation)
+	}
 
+	public destroy(force?: boolean): void {
 		console.log('AmmoRigidBody Component destroy');
 
 		RigidBodyUtil.destroyRigidBody(this._btRigidbody)
 
 		this._btRigidbody = null;
-
 		this._initedFunctions = null;
+
 		super.destroy(force);
 	}
 
