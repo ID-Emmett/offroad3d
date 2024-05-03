@@ -144,7 +144,7 @@ export class TerrainComponent extends ComponentBase {
 		f.add(this, 'segmentW', 1, 1000, 1).onFinishChange(v => setTerrainSegment())
 		f.add(this, 'segmentH', 1, 1000, 1).onFinishChange(v => setTerrainSegment())
 		f.open()
-		
+
 		let dimensionSpecs = {
 			width: { index: 0, value: this.width },
 			height: { index: 2, value: this.height },
@@ -178,10 +178,15 @@ export class TerrainComponent extends ComponentBase {
 			// 由于直接修改几何体的分段数涉及到多项数据替换，性能开销巨大，此处通过删增的方式进行处理
 
 			// 克隆网格克隆材质
-			let material = terrain.getComponent(MeshRenderer).material.clone() as LitMaterial;
+			let mat = terrain.getComponent(MeshRenderer).material;
+			let material = mat.clone() as LitMaterial;
 
-			// 删除网格，这会清除几何体与材质
-			terrain.removeComponent(MeshRenderer)
+
+			// 引入源码包会报错
+			try {
+				// 删除网格，这会清除几何体与材质
+				terrain.removeComponent(MeshRenderer)
+			} catch { }
 
 			// 重新添加网格
 			let mesh = terrain.addComponent(MeshRenderer)
@@ -192,6 +197,9 @@ export class TerrainComponent extends ComponentBase {
 			this._terrainGeometry = newGeometry
 
 			resetRigidBody();
+
+			let posAttrData = this.terrainGeometry.getAttribute(VertexAttributeName.position);
+			resetChildHeight(this.terrainGeometry, posAttrData.data as Float32Array)
 
 			GUIUtil.removeFolder(`terrainMaterial`);
 			GUIUtil.renderLitMaterial(material, false, 'terrainMaterial')
