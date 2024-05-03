@@ -81,6 +81,11 @@ export class TerrainComponent extends ComponentBase {
 		// let rough = await Engine3D.res.loadTexture('src/assets/images/coast_sand_rocks_02_rough_2k.png');
 
 		/* 土地 */
+		// let texture = await Engine3D.res.loadTexture('src/assets/images/sandstone_cracks_4K/sandstone_cracks_diff_4k.jpg');
+		// let normalMap = await Engine3D.res.loadTexture('src/assets/images/sandstone_cracks_4K/sandstone_cracks_nor_gl_4k.jpg');
+		// let aoMap = await Engine3D.res.loadTexture('src/assets/images/sandstone_cracks_4K/sandstone_cracks_ao_4k.jpg');
+		// let rough = await Engine3D.res.loadTexture('src/assets/images/sandstone_cracks_4K/sandstone_cracks_rough_4k.jpg');
+
 		let texture = await Engine3D.res.loadTexture('src/assets/images/sandstone_cracks/sandstone_cracks_diff_1k.jpg');
 		let normalMap = await Engine3D.res.loadTexture('src/assets/images/sandstone_cracks/sandstone_cracks_nor_gl_1k.png');
 

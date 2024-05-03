@@ -92,6 +92,7 @@ class Sample_game {
 
 
 		GUIHelp.init();
+		GUIHelp.addButton('reset',()=>location.reload())
 
 		this.initGameComponents(scene, cameraCtrl)
 
