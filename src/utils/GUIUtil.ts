@@ -456,7 +456,7 @@ export class GUIUtil {
     static renderLitMaterial(mat: LitMaterial, open?: boolean, name?: string) {
         name ||= mat.name || 'LitMaterial';
         GUIHelp.addFolder(name);
-        GUIHelp.addColor(mat, 'baseColor').onChange((v: any) => {
+        GUIHelp.addColor({ baseColor: Object.values(mat.baseColor).map((v, i) => i === 3 ? v : v * 255) }, 'baseColor').onChange(v => {
             let color = mat.baseColor;
             color.copyFromArray(v);
             mat.baseColor = color;
@@ -481,11 +481,11 @@ export class GUIUtil {
             mat.doubleSide = v;
         });
 
-        GUIHelp.add(mat, 'roughness', 0.0, 1.0, 0.0001).onChange((v: any) => {
+        GUIHelp.add(mat, 'roughness', 0.0, 5.0, 0.0001).onChange((v: any) => {
             mat.roughness = v;
         });
 
-        GUIHelp.add(mat, 'metallic', 0.0, 1.0, 0.0001).onChange((v: any) => {
+        GUIHelp.add(mat, 'metallic', 0.0, 5.0, 0.0001).onChange((v: any) => {
             mat.metallic = v;
         });
 

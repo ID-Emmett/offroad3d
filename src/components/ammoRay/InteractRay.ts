@@ -1,4 +1,4 @@
-import { Engine3D, Camera3D, View3D, Object3D, PointerEvent3D, clamp, Quaternion, Vector3, BoundUtil, Time, Vector3Ex, ComponentBase, lerp, lerpVector3, MathUtil, DEGREES_TO_RADIANS, RADIANS_TO_DEGREES, KeyEvent, KeyCode, Color, kPI, MeshRenderer, SphereGeometry, LitMaterial, ColliderComponent, SphereColliderShape, BoxGeometry, CylinderGeometry } from "@orillusion/core";
+import { Engine3D, Camera3D, View3D, Object3D, PointerEvent3D, clamp, Quaternion, Vector3, BoundUtil, Time, Vector3Ex, ComponentBase, lerp, lerpVector3, MathUtil, DEGREES_TO_RADIANS, RADIANS_TO_DEGREES, KeyEvent, KeyCode, Color, kPI, MeshRenderer, SphereGeometry, LitMaterial, ColliderComponent, SphereColliderShape, BoxGeometry, CylinderGeometry, Ray } from "@orillusion/core";
 import { Ammo, Physics, Rigidbody } from "@orillusion/physics";
 import { AmmoRigidBody, ShapeTypes, CollisionFlags, ActivationState, CollisionGroup, CollisionMask } from "@/physics";
 
@@ -64,10 +64,12 @@ export class InteractRay extends ComponentBase {
 
     switch (e.mouseCode) {
       case 0:
-        this._mouseLeftDown = true
 
         e.stopImmediatePropagation()
         this.lastTime = Date.now()
+
+        this._mouseLeftDown = true
+        this.ray(e.mouseX, e.mouseY)
 
         Engine3D.views[0].graphic3D.Clear('interactRay')
         break;
@@ -100,7 +102,9 @@ export class InteractRay extends ComponentBase {
       if (this._mouseLeftDown) {
 
         this.bodyRb.getMotionState().getWorldTransform(Physics.TEMP_TRANSFORM);
-        this.btIntersection.setY(this.btIntersection.y())
+        // this.btIntersection.setY(this.btIntersection.y())
+        // console.log(this.btIntersection.x());
+
         Physics.TEMP_TRANSFORM.setOrigin(this.btIntersection);
         this.bodyRb.getMotionState().setWorldTransform(Physics.TEMP_TRANSFORM);
 
@@ -117,6 +121,7 @@ export class InteractRay extends ComponentBase {
         this.cameraRay.set_m_collisionFilterMask(CollisionMask.DEFAULT_MASK); // 重设掩码，射线可获取所有碰撞体
         this.intersection.set(0, 0, 0)
 
+        this.btOffset.setValue(0, 0, 0)
         this.bodyRb.setCollisionFlags(this.bodyRb.getCollisionFlags() & ~CollisionFlags.KINEMATIC_OBJECT);  // 清除Kinematic标志
         if ((this.bodyRb.getCollisionFlags() & CollisionFlags.STATIC_OBJECT) !== 0) {
           console.log('静态刚体');
@@ -161,11 +166,30 @@ export class InteractRay extends ComponentBase {
 
 
   private ray(x: number, y: number) {
-    const point = this.camera.screenPointToWorld(x, y, 1);
+    // const point = this.camera.screenPointToWorld(x, y, 1);
+
+    let ray = this.camera.screenPointToRay(x, y);
+    let provisionalEnd;
+
+
+    // 使用偏移量调整射线方向
+    if (this._mouseLeftDown && this.bodyRb) {
+      // ray.direction.subVectors(ray.direction.normalize(), this.offsetDirection.scaleBy(0.8 - this.hitDistance))
+      ray.direction.subVectors(ray.direction.normalize(), this.offsetDirection)
+
+      let adjustedDirection = ray.direction.normalize(); // 确保是单位向量
+
+      // 根据调整后的方向和基础长度计算新的射线终点
+      provisionalEnd = ray.origin.add(adjustedDirection.multiplyScalar(1000));
+
+    } else {
+      provisionalEnd = ray.origin.add(ray.direction.multiplyScalar(1000)); // 计算一个临时的射线终点
+
+    }
 
     let cameraPos = this.camera.object3D.localPosition;
 
-    this.castCameraSightRay(cameraPos, point)
+    this.castCameraSightRay(cameraPos, provisionalEnd, ray)
 
   }
 
@@ -178,9 +202,13 @@ export class InteractRay extends ComponentBase {
 
   }
 
+  private btOffset: Ammo.btVector3 = new Ammo.btVector3()
+  private offset: Vector3 = new Vector3()
+  private hitDistance: number = 1000
+  private offsetDirection: Vector3 = new Vector3()
 
   private intersection: Vector3 = new Vector3()
-  private btIntersection: Ammo.btVector3 = new Ammo.btVector3
+  private btIntersection: Ammo.btVector3
 
   private _tmpVecA = new Vector3()
   private _tmpVecB = new Vector3()
@@ -205,8 +233,13 @@ export class InteractRay extends ComponentBase {
 
   private bodyRb: Ammo.btRigidBody
 
+  private lineStartPos: Vector3 = new Vector3()
+
+  private btVecConvert(vec3: Ammo.btVector3): Vector3 {
+    return new Vector3(vec3.x(), vec3.y(), vec3.z())
+  }
   // 相机视线射线检测
-  private castCameraSightRay(cameraPos: Vector3, targetPos: Vector3) {
+  private castCameraSightRay(cameraPos: Vector3, targetPos: Vector3, ray: Ray) {
 
     this.rayFrom.setValue(cameraPos.x, cameraPos.y, cameraPos.z);
     this.rayTo.setValue(targetPos.x, targetPos.y, targetPos.z);
@@ -221,6 +254,14 @@ export class InteractRay extends ComponentBase {
 
       // console.log(this.cameraRay.get_m_collisionObject().getUserIndex());
 
+      // 交点
+      const hitPoint = this.cameraRay.get_m_hitPointWorld();
+      let hitPointWorld = this.intersection.set(hitPoint.x(), hitPoint.y(), hitPoint.z());
+
+      this.btIntersection = hitPoint
+
+
+      // 按下左键，并且不是地形时，存储数据进行拖拽准备
       if (this._mouseLeftDown && this.cameraRay.get_m_collisionObject().getUserIndex() !== 2) {
 
         this.cameraRay.set_m_collisionFilterMask(CollisionGroup.TERRAIN); // 定义射线或物体可以与哪些碰撞组相碰撞
@@ -230,14 +271,30 @@ export class InteractRay extends ComponentBase {
 
         this.bodyRb.setCollisionFlags(this.bodyRb.getCollisionFlags() | CollisionFlags.KINEMATIC_OBJECT); // 保留原有标志，增加动力学标志
 
+        // 获取碰撞体的位置
+        let originPos = this.bodyRb.getWorldTransform().getOrigin()
+
+        // 碰撞体与地形的交点的偏移量
+        this.btOffset = hitPoint.op_sub(originPos)
+        this.offset.set(this.btOffset.x(), this.btOffset.y(), this.btOffset.z())
+
+        this.hitDistance = Vector3.distance(ray.origin, hitPointWorld) / 1000;
+
+        console.log(this.hitDistance / 1000);
+
+        // 测试计算偏移方向
+        // 相机到基座点的方向
+        let basePos = this.btVecConvert(originPos)
+        let cameraTobassDir = Vector3.sub(basePos, cameraPos).normalize() // 计算射线从相机起点到基座点的方向
+        this.offsetDirection = Vector3.sub(ray.direction.normalize(), cameraTobassDir) // 原方向与基座点方向的差，表示偏移量，在之后的射线中，需要应用此偏移量
+
+
+        this.lineStartPos.set(originPos.x(), originPos.y(), originPos.z())
+        // this.lineStartPos.copyFrom(hitPointWorld)
+        // todo 两个方案  从鼠标参数下手或是从偏移量方向下手
+
       }
 
-      // 交点
-      const hitPoint = this.cameraRay.get_m_hitPointWorld();
-      let hitPointWorld = this.intersection.set(hitPoint.x(), hitPoint.y(), hitPoint.z());
-
-
-      this.btIntersection = hitPoint
 
       // 法线向量
       let hitNormal = this.cameraRay.get_m_hitNormalWorld();
@@ -260,10 +317,17 @@ export class InteractRay extends ComponentBase {
 
 
       // 相机射向指针的参考线
-      Vector3.HELP_3.copyFrom(cameraPos).y -= 1
-      this.transform.view3D.graphic3D.Clear('interactRay')
-      this.transform.view3D.graphic3D.drawLines('interactRay', [hitPointWorld, Vector3.HELP_3],);
 
+      if (this._mouseLeftDown && this.bodyRb) {
+        this.transform.view3D.graphic3D.Clear('interactRay')
+        // Vector3.HELP_4.copyFrom(this.linePos).y += 1
+        // this.transform.view3D.graphic3D.drawLines('interactRay', [Vector3.add(hitPointWorld, this.offset, Vector3.HELP_3), this.lineStartPos]);
+        this.transform.view3D.graphic3D.drawLines('interactRay', [hitPointWorld, this.lineStartPos]);
+      } else {
+        Vector3.HELP_3.copyFrom(cameraPos).y -= 1
+        this.transform.view3D.graphic3D.Clear('interactRay')
+        this.transform.view3D.graphic3D.drawLines('interactRay', [hitPointWorld, Vector3.HELP_3]);
+      }
     }
 
     this.resetRayCallback(this.cameraRay)

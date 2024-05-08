@@ -1,9 +1,10 @@
-import { ComponentBase, Engine3D, LitMaterial, MeshRenderer, Object3D, Scene3D, GPUAddressMode, Vector4, BitmapTexture2D, PlaneGeometry, Vector3, VertexAttributeName, CEvent } from '@orillusion/core'
+import { ComponentBase, Engine3D, LitMaterial, MeshRenderer, Object3D, Scene3D, GPUAddressMode, Vector4, BitmapTexture2D, PlaneGeometry, Vector3, VertexAttributeName, CEvent, Color } from '@orillusion/core'
 import { GrassComponent, TerrainGeometry } from '@orillusion/effect';
 import { AmmoRigidBody, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil } from "@/physics";
 import { Physics } from '@orillusion/physics';
 import { perlinNoise, createNoiseSeed } from '@/utils/perlin.js';
 import { GUIUtil } from '@/utils/GUIUtil'
+import { GUIHelp } from '@/utils/debug/GUIHelp'
 import dat from 'dat.gui'
 import { FrameTaskQueue } from '../systems/FrameTaskQueue';
 import { TerrainUtil } from "@/utils/TerrainUtil";
@@ -144,6 +145,30 @@ export class TerrainComponent extends ComponentBase {
 		f.add(this, 'segmentW', 1, 1000, 1).onFinishChange(v => setTerrainSegment())
 		f.add(this, 'segmentH', 1, 1000, 1).onFinishChange(v => setTerrainSegment())
 		f.open()
+
+
+		gui.addButton('baseMap', async () => {
+			let mat = terrain.getComponent(MeshRenderer).material as LitMaterial;
+
+			if (mat.baseMap.name === 'sandstone_cracks_diff_1k') {
+				mat.baseMap = await Engine3D.res.loadTexture('src/assets/images/floor_tiles_06_4k/floor_tiles_06_diff_4k.jpg')
+				mat.normalMap = await Engine3D.res.loadTexture('src/assets/images/floor_tiles_06_4k/floor_tiles_06_nor_gl_4k.jpg')
+			} else {
+				mat.baseMap = await Engine3D.res.loadTexture('src/assets/images/sandstone_cracks/sandstone_cracks_diff_1k.jpg');
+				mat.normalMap = await Engine3D.res.loadTexture('src/assets/images/sandstone_cracks/sandstone_cracks_nor_gl_1k.png');
+			}
+		})
+
+
+		let transUV = new Vector4(0, 0, 30, 30)
+
+		gui.add(transUV, 'x', 0, 100, 1).onChange((v) => changeUV()).name('uv-x')
+		gui.add(transUV, 'y', 0, 100, 1).onChange((v) => changeUV()).name('uv-y')
+		gui.add(transUV, 'z', 0, 100, 1).onChange((v) => changeUV()).name('uv-z')
+		gui.add(transUV, 'w', 0, 100, 1).onChange((v) => changeUV()).name('uv-w')
+
+		const changeUV = () => terrain.getComponent(MeshRenderer).material.setUniformVector4('transformUV1', transUV);
+
 
 		let dimensionSpecs = {
 			width: { index: 0, value: this.width },

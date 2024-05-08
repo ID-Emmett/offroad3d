@@ -47,6 +47,7 @@ export class Grass extends ComponentBase {
         grassCom.setWindNoiseTexture(gustNoiseTexture)
         // grassCom.setGrass(18, 1, 5, 1, grassCount)
         grassCom.setGrass(1, 1, 5, 1, grassCount)
+        // grassCom.setMinMax(new Vector3(-10, -5, -10), new Vector3(10, 5, 10))
         grassCom.grassMaterial.grassHeight = 0.5
         grassCom.grassMaterial.roughness = 0.7
         // grassCom.grassMaterial.castShadow = true
@@ -63,7 +64,6 @@ export class Grass extends ComponentBase {
         for (let i = 0; i < grassCount; i++) {
             let node = grassCom.nodes[i]
             let gassSize = 2
-            let scale = (Math.random() * 0.75 + 0.25) * gassSize
             // let x = (Math.random() * width) - width / 2;
             // let z = (Math.random() * height) - height / 2;
             let x = (Math.random() * width / 10) - width / 10 / 2;
@@ -71,8 +71,8 @@ export class Grass extends ComponentBase {
             let y = TerrainUtil.calculateHeightAtPoint(x, z, terrainGeometry)
             node.localPosition = Vector3.HELP_0.set(x, y, z)
 
-            node.localRotation.y = Math.random() * 360
-            node.localScale = Vector3.HELP_0.set(scale, scale, scale)
+            node.rotationY = Math.random() * 360
+            node.scaleX = (Math.random() * 0.75 + 0.25) * gassSize
             node.updateWorldMatrix(true)
 
         }

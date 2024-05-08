@@ -120,7 +120,7 @@ export class TreesComponent extends ComponentBase {
         {
             let glftModel = await Engine3D.res.loadGltf('src/models/trees/pine_tree_pink.glb'); // 中红树
 
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 100; i++) {
                 const newModel = glftModel.clone()
                 let x = (Math.random() * width) - width / 2;
                 let z = (Math.random() * height) - height / 2;
