@@ -55,7 +55,7 @@ export class TreesComponent extends ComponentBase {
 
         points = TerrainUtil.calculateHeightsForPoints(points, terrainGeometry); // 计算高度值
 
-        let glftModel = await Engine3D.res.loadGltf('src/models/trees/pine_tree_blue.glb');  // 蓝色树
+        let glftModel = await Engine3D.res.loadGltf('models/trees/pine_tree_blue.glb');  // 蓝色树
         glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 1;
 
         for (let i = 0, count = points.length / 3; i < count; i++) {
@@ -70,7 +70,7 @@ export class TreesComponent extends ComponentBase {
             let grassYellow = new Object3D();
             grassYellow.name = 'grassYellow'
 
-            let glftModel = await Engine3D.res.loadGltf('src/models/trees/grass_yellow.glb');  // 黄草
+            let glftModel = await Engine3D.res.loadGltf('models/trees/grass_yellow.glb');  // 黄草
             glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 3;
 
             for (let i = 0; i < 1000; i++) {
@@ -93,7 +93,7 @@ export class TreesComponent extends ComponentBase {
 
         }
         {
-            let glftModel = await Engine3D.res.loadGltf('src/models/trees/birch_red.glb'); // 大红树
+            let glftModel = await Engine3D.res.loadGltf('models/trees/birch_red.glb'); // 大红树
 
             for (let i = 0; i < 20; i++) {
                 const newModel = glftModel.clone()
@@ -118,7 +118,7 @@ export class TreesComponent extends ComponentBase {
             }
         }
         {
-            let glftModel = await Engine3D.res.loadGltf('src/models/trees/pine_tree_pink.glb'); // 中红树
+            let glftModel = await Engine3D.res.loadGltf('models/trees/pine_tree_pink.glb'); // 中红树
 
             for (let i = 0; i < 100; i++) {
                 const newModel = glftModel.clone()

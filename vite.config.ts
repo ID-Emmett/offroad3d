@@ -6,12 +6,16 @@ import vue from '@vitejs/plugin-vue'
 const fs = require("fs");
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './',
   server: {
     host: '0.0.0.0', // 配置IP访问
     port: 5555,
 
     open: false, // 配置自动启动浏览器
     // hmr: false // open this line if no auto hot-reload required
+  },
+  build: {
+    manifest: true
   },
   plugins: [
     // basicSsl(),
@@ -36,13 +40,13 @@ export default defineConfig({
        *     "@orillusion/physics": "^0.2.2",
        *     "@orillusion/stats": "^0.2.2",
        */
-      '@orillusion/core': 'D:/code/orillusion/src/index',
-      "@orillusion/physics": "D:/code/orillusion/packages/physics/index",
-      "@orillusion/ammo": "D:/code/orillusion/packages/ammo/ammo",
-      "@orillusion/effect": "D:/code/orillusion/packages/effect/index",
-      "@orillusion/particle": "D:/code/orillusion/packages/particle/index",
-      "@orillusion/stats": "D:/code/orillusion/packages/stats/index",
-      "@orillusion/wasm-matrix": "D:/code/orillusion/packages/wasm-matrix",
+      // '@orillusion/core': 'D:/code/orillusion/src/index',
+      // "@orillusion/physics": "D:/code/orillusion/packages/physics/index",
+      // "@orillusion/ammo": "D:/code/orillusion/packages/ammo/ammo",
+      // "@orillusion/effect": "D:/code/orillusion/packages/effect/index",
+      // "@orillusion/particle": "D:/code/orillusion/packages/particle/index",
+      // "@orillusion/stats": "D:/code/orillusion/packages/stats/index",
+      // "@orillusion/wasm-matrix": "D:/code/orillusion/packages/wasm-matrix",
     }
   }
 })

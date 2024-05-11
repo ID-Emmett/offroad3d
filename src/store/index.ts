@@ -1,45 +1,45 @@
 class EventBus {
-  private subscribers: { [name: string]: Array<Function> } = {};
+    private subscribers: { [name: string]: Array<Function> } = {};
 
-  public subscribe<T extends string>(eventName: T, handler: Function): void {
-    if (!this.subscribers[eventName]) {
-      this.subscribers[eventName] = [];
+    public subscribe<T extends string>(eventName: T, handler: Function): void {
+        if (!this.subscribers[eventName]) {
+            this.subscribers[eventName] = [];
+        }
+        this.subscribers[eventName].push(handler);
+
     }
-    this.subscribers[eventName].push(handler);
 
-  }
-
-  public unsubscribe<T extends string>(eventName: T, handler: Function): void {
-    if (this.subscribers[eventName]) {
-      this.subscribers[eventName] = this.subscribers[eventName].filter(subscriber => subscriber !== handler);
+    public unsubscribe<T extends string>(eventName: T, handler: Function): void {
+        if (this.subscribers[eventName]) {
+            this.subscribers[eventName] = this.subscribers[eventName].filter(subscriber => subscriber !== handler);
+        }
     }
-  }
 
-  public publish<T extends string>(eventName: T, eventData: object): void {
-    if (this.subscribers[eventName]) {
-      this.subscribers[eventName].forEach(subscriber => subscriber(eventData));
+    public publish<T extends string>(eventName: T, eventData: object): void {
+        if (this.subscribers[eventName]) {
+            this.subscribers[eventName].forEach(subscriber => subscriber(eventData));
+        }
     }
-  }
 
 }
 
 class StateManager {
-  private states: { [key: string]: any } = {};
-  private eventBus: EventBus;
+    private states: { [key: string]: any } = {};
+    private eventBus: EventBus;
 
-  constructor(eventBus: EventBus) {
-    this.eventBus = eventBus;
-  }
+    constructor(eventBus: EventBus) {
+        this.eventBus = eventBus;
+    }
 
-  // Modify and publish
-  public setState(key: string, value: any, eventName?: string): void {
-    this.states[key] = value;
-    if (eventName) this.eventBus.publish(eventName, { key, value });
-  }
+    // Modify and publish
+    public setState(key: string, value: any, eventName?: string): void {
+        this.states[key] = value;
+        if (eventName) this.eventBus.publish(eventName, { key, value });
+    }
 
-  public getState(key: string): any {
-    return this.states[key];
-  }
+    public getState(key: string): any {
+        return this.states[key];
+    }
 }
 
 export const eventBus = new EventBus();

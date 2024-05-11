@@ -20,126 +20,131 @@ import { GUIUtil } from '@/utils/GUIUtil'
  */
 class Sample_game {
 
-	async run() {
+    async run() {
 
-		Engine3D.setting.shadow.shadowSize = 1024 * 4;
-		Engine3D.setting.shadow.csmMargin = 0.1 // 设置不同级别阴影的过渡范围，在0-1区间调节
-		Engine3D.setting.shadow.csmScatteringExp = 0.9 // 微调各个级别阴影的范围，以满足不同的场景需求
-		Engine3D.setting.shadow.csmAreaScale = 0.2 // 微调阴影能够覆盖的最大范围，在0.0-1区间调节
-		Engine3D.setting.shadow.updateFrameRate = 1 // 阴影更新
-		// Engine3D.setting.shadow.type = 'PCF'; // 默认 PCF HARD SOFT
-
-
-		Engine3D.frameRate = 170
-
-		// Init physics engine
-		await Physics.init()
-
-		// Init Engine3D
-		await Engine3D.init({
-			canvasConfig: { devicePixelRatio: 1 },
-			renderLoop: () => this.loop()
-		})
-
-		let scene = new Scene3D()
-		scene.addComponent(Stats)
-
-		/* 大气天空盒 */
-		// let sky = view.scene.addComponent(AtmosphericComponent)
-		// sky.sunY = 0.65
-
-		/* 全景天空盒默认 */
-		// let sky = scene3D.getOrAddComponent(SkyRenderer)
-		// sky.map = await Engine3D.res.loadHDRTextureCube('https://cdn.orillusion.com//hdri/sunset.hdr')
-		// scene3D.envMap = sky.map
-
-		/* 全景天空盒2 */
-		let skyTexture = await Engine3D.res.loadLDRTextureCube('src/assets/images/sky/kloppenheim_07_puresky.jpg');
-		let sky = scene.addComponent(SkyRenderer);
-		sky.map = skyTexture;
-		// sky.exposure = 0.6
-		scene.envMap = skyTexture;
+        Engine3D.setting.shadow.shadowSize = 1024 * 4;
+        Engine3D.setting.shadow.csmMargin = 0.1 // 设置不同级别阴影的过渡范围，在0-1区间调节
+        Engine3D.setting.shadow.csmScatteringExp = 0.9 // 微调各个级别阴影的范围，以满足不同的场景需求
+        Engine3D.setting.shadow.csmAreaScale = 0.2 // 微调阴影能够覆盖的最大范围，在0.0-1区间调节
+        Engine3D.setting.shadow.updateFrameRate = 1 // 阴影更新
+        // Engine3D.setting.shadow.type = 'PCF'; // 默认 PCF HARD SOFT
 
 
-		let cameraObj = new Object3D()
-		let mainCamera = cameraObj.addComponent(Camera3D)
-		// mainCamera.object3D.transform.localScale = new Vector3(0.5,0.1,0.5)
-		// mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0))
-		mainCamera.perspective(45, Engine3D.aspect, 0.1, 2000.0)
-		mainCamera.enableCSM = true;
+        Engine3D.frameRate = 60
 
-		let cameraCtrl = mainCamera.object3D.addComponent(HoverCameraController)
-		cameraCtrl.setCamera(160, -15, 10)
-		cameraCtrl.smooth = false
-		cameraCtrl.maxDistance = 1000
-		cameraCtrl.rollSmooth = 8
-		scene.addChild(cameraObj)
+        // Init physics engine
+        await Physics.init()
 
-		let light = new Object3D()
-		// light.rotationX = 145
-		// light.rotationY = 10
-		light.rotationX = 50
-		light.rotationY = 50
-		let directLight = light.addComponent(DirectLight)
-		directLight.lightColor = new Color(1.0, 1.0, 1.0, 1.0)
-		directLight.intensity = 49
-		directLight.castShadow = true
-		scene.addChild(light)
+        // Init Engine3D
+        await Engine3D.init({
+            canvasConfig: { devicePixelRatio: 1 },
+            renderLoop: () => this.loop()
+        })
 
-		let view = new View3D()
-		view.scene = scene
-		view.camera = mainCamera
+        let scene = new Scene3D()
+        scene.addComponent(Stats)
 
+        /* 大气天空盒 */
+        // let sky = view.scene.addComponent(AtmosphericComponent)
+        // sky.sunY = 0.65
 
-		GUIHelp.init();
-		GUIHelp.addButton('reset',()=>location.reload())
+        /* 全景天空盒默认 */
+        // let sky = scene3D.getOrAddComponent(SkyRenderer)
+        // sky.map = await Engine3D.res.loadHDRTextureCube('https://cdn.orillusion.com//hdri/sunset.hdr')
+        // scene3D.envMap = sky.map
 
-		this.initGameComponents(scene, cameraCtrl)
+        /* 全景天空盒2 */
+        let skyTexture = await Engine3D.res.loadLDRTextureCube('sky/kloppenheim_07_puresky.jpg');
+        let sky = scene.addComponent(SkyRenderer);
+        sky.map = skyTexture;
+        // sky.exposure = 0.6
+        scene.envMap = skyTexture;
 
 
-		// start render
-		Engine3D.startRenderView(view)
+        let cameraObj = new Object3D()
+        let mainCamera = cameraObj.addComponent(Camera3D)
+        // mainCamera.object3D.transform.localScale = new Vector3(0.5,0.1,0.5)
+        // mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0))
+        mainCamera.perspective(45, Engine3D.aspect, 0.1, 2000.0)
+        mainCamera.enableCSM = true;
 
-		scene.addComponent(PostProcessingSetup);
+        let cameraCtrl = mainCamera.object3D.addComponent(HoverCameraController)
+        cameraCtrl.setCamera(160, -15, 10)
+        cameraCtrl.smooth = false
+        cameraCtrl.maxDistance = 1000
+        cameraCtrl.rollSmooth = 8
+        scene.addChild(cameraObj)
 
-		GUIUtil.renderDebug(false);
+        let light = new Object3D()
+        // light.rotationX = 145
+        // light.rotationY = 10
+        light.rotationX = 50
+        light.rotationY = 50
+        let directLight = light.addComponent(DirectLight)
+        directLight.lightColor = new Color(1.0, 1.0, 1.0, 1.0)
+        directLight.intensity = 49
+        directLight.castShadow = true
+        scene.addChild(light)
 
-		GUIUtil.renderDirLight(directLight, false);
+        let view = new View3D()
+        view.scene = scene
+        view.camera = mainCamera
 
-		GUIUtil.renderShadowSetting(false);
 
-	}
+        GUIHelp.init();
+        GUIHelp.addButton('reset', () => location.reload())
 
-	initGameComponents(scene: Scene3D, cameraCtrl: HoverCameraController) {
+        this.initGameComponents(scene, cameraCtrl)
 
-		let axis = new AxisObject(250, 0.8);
-		scene.addChild(axis);
 
-		scene.addComponent(FrameTaskQueue);
+        // start render
+        Engine3D.startRenderView(view)
 
-		scene.addComponent(TerrainComponent);
+        scene.addComponent(PostProcessingSetup);
 
-		scene.addComponent(TreesComponent);
+        GUIUtil.renderDebug(false);
 
-		scene.addComponent(Grass);
+        GUIUtil.renderDirLight(directLight, false);
 
-		// scene.addComponent(BoxGenerator)
+        GUIUtil.renderShadowSetting(false);
 
-		cameraCtrl.object3D.addComponent(InteractRay);
+    }
 
-		let vehicle = scene.addComponent(VehicleComponent);
-		vehicle.vehicleType = VehicleType.Pickup;
-		vehicle.addInitedFunction((vehicle: Object3D) => {
-			cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
-		}, this);
+    initGameComponents(scene: Scene3D, cameraCtrl: HoverCameraController) {
 
-	}
+        let axis = new AxisObject(250, 0.8);
+        scene.addChild(axis);
 
-	loop() {
-		// Physics.update()
-		let timeStep = 1 / (Engine3D.frameRate / 2.5);
-		Physics.world.stepSimulation(timeStep, 1, timeStep);
-	}
+        scene.addComponent(FrameTaskQueue);
+
+        scene.addComponent(TerrainComponent);
+
+        scene.addComponent(TreesComponent);
+
+        scene.addComponent(Grass);
+
+        // scene.addComponent(BoxGenerator)
+        
+        cameraCtrl.object3D.addComponent(InteractRay);
+
+
+        const onTerrainReady = () => {
+            let vehicle = scene.addComponent(VehicleComponent);
+            vehicle.vehicleType = VehicleType.Pickup;
+            vehicle.addInitedFunction((vehicle: Object3D) => {
+                cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
+            }, this);
+        }
+
+        Engine3D.inputSystem.addEventListener("TerrainInited", onTerrainReady, this);
+
+    }
+
+    loop() {
+        // Physics.update()
+        let timeStep = 1 / (Engine3D.frameRate / 2.5);
+        Physics.world.stepSimulation(timeStep, 1, timeStep);
+    }
 }
 
 
