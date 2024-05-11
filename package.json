@@ -1,10 +1,9 @@
 {
-  "name": "orillusion-offroad3d-game",
-  "version": "0.0.1",
+  "name": "offroad3d",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "vite",
-    "start": "vite",
     "build": "run-p type-check build-only",
     "preview": "vite preview",
     "build-only": "vite build",
