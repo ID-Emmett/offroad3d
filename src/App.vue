@@ -69,7 +69,7 @@ function resolveAssetPath(path: string) {
     } else {
         // 通过获取包含源文件路径到构建文件路径的映射的 manifest 文件来动态载入文件。
         if (!manifestFile) throw new Error('Failed to load manifest')
-        return manifestFile[`src${path}`].file
+        return `${__APP_NAME__}/${manifestFile[`src${path}`].file}`
     }
 }
 
@@ -141,7 +141,7 @@ function removeIframe() {
     </div>
     <div class="nav" :class="{ openNav }">
         <p class="close">
-            <a href="https://gitee.com/morenid/vue-orillusion" target="_blank" title="go to gitee">DEMO</a>
+            <a href="https://github.com/ID-Emmett/offroad3d" target="_blank" title="go to github">GAME</a>
             <img @click="switchNav" src="./assets/icons/close.svg" />
         </p>
         <div v-for="folder in fileGroupList" :key="folder.name" class="nav-list">

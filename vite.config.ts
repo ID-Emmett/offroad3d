@@ -11,7 +11,7 @@ export default defineConfig({
   define: {
     __APP_NAME__: JSON.stringify(packageJson.name),
   },
-  base: `/${packageJson.name}/`, // 等价 '/offroad3d/'
+  base: `/${packageJson.name}/`, // 部署到pages时作为子目录,需要确保资源正确引用，这样等价-> '/offroad3d/'  默认 './'
   server: {
     host: '0.0.0.0', // 配置IP访问
     port: 5555,
