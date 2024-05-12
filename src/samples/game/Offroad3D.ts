@@ -54,7 +54,7 @@ class Sample_game {
         // scene3D.envMap = sky.map
 
         /* 全景天空盒2 */
-        let skyTexture = await Engine3D.res.loadLDRTextureCube('sky/kloppenheim_07_puresky.jpg');
+        let skyTexture = await Engine3D.res.loadLDRTextureCube('sky/kloppenheim_07_puresky-min.jpg');
         let sky = scene.addComponent(SkyRenderer);
         sky.map = skyTexture;
         // sky.exposure = 0.6

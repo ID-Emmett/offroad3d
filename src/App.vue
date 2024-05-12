@@ -80,7 +80,7 @@ function addIframe() {
 
     console.log(path);
 
-    const Native_WebGPU_Script = path.includes("webGPU") ? `
+    const Native_WebGPU_Script = path.includes("WebGPU") ? `
 		let canvas = document.createElement('canvas');
 		canvas.style.display = 'block';
 		canvas.style.width = '100%';
