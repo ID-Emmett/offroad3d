@@ -92,8 +92,8 @@ class Sample_game {
 
 
         GUIHelp.init();
-        GUIHelp.addButton('reset', () => location.reload())
-
+        GUIHelp.addButton('Reload', () => location.reload())
+        GUIHelp.add({ 'Tips': 'Look at the console' }, 'Tips');
         this.initGameComponents(scene, cameraCtrl)
 
 
@@ -124,7 +124,7 @@ class Sample_game {
         scene.addComponent(Grass);
 
         // scene.addComponent(BoxGenerator)
-        
+
         cameraCtrl.object3D.addComponent(InteractRay);
 
 
@@ -138,7 +138,55 @@ class Sample_game {
 
         Engine3D.inputSystem.addEventListener("TerrainInited", onTerrainReady, this);
 
+        if (import.meta.env.PROD) {
+            this.printing()
+        }
     }
+
+
+    private printing() {
+        console.log(`%c半颗牙齿晒太阳 `, "color: #43bb88;font-size: 40px;font-weight: bold;margin:10px")
+        console.log(`%c🔗GitHub: https://github.com/ID-Emmett/offroad3d`, "color:#409eff;font-weight:bolder;font-size:15px;margin:10px 0;")
+        console.log(
+            "%c📚使用手册 Manual\n" +
+
+            "%c🖱️双击: %c隐藏光标,全屏控制\n" +
+            "%c🖱️右键: %c释放鼠标光标或生成盒子\n" +
+            "%c🖱️左键: %c按住车辆或红色松树，可以移动拖放\n\n" +
+
+            "%c⌨️WASD: %c载具移动\n" +
+            "%c⌨️K: %coff/on 相机避障系统\n" +
+            "%c⌨️O: %coff/on 相机自动回正模式\n" +
+            "%c⌨️L: %coff/on 相机固定跟随模式\n" +
+            "%c⌨️M: %coff/on 相机固定位置\n" +
+            "%c⌨️H: %coff/on 显示或隐藏调试器\n" +
+            "%c⌨️B: %c长按 相机拍摄目标前方\n" +
+            "%c⌨️P: %c重置车辆方向与高度，xz位置不变\n" +
+            "%c⌨️U: %c开启170FPS或60FPS，如果渲染帧率不匹配会直接影响到物理步进模拟速率\n" +
+            "%c⌨️7: %c+fov 视野缩放\n" +
+            "%c⌨️8: %c-fov 视野缩放\n",
+
+            "color: #ed4014;margin:10px 0 15px 0;font-size:20px;font-weight: bold;",
+
+            "color: #19be6b;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2d8cf0;font-weight: bold;font-size:14px", // 鼠标左键双击视图
+            "color: #19be6b;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2d8cf0;font-weight: bold;font-size:14px", // 鼠标右键
+            "color: #19be6b;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2d8cf0;font-size:14px", // 鼠标左键
+
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2b85e4;font-weight: bold;font-size:15px;", // WASD
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2b85e4;font-size:15px;", // K
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2b85e4;font-size:15px;", // O
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2b85e4;font-size:15px;", // L
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2b85e4;font-size:15px;", // M
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2b85e4;font-size:15px;", // H
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2b85e4;font-size:15px;", // B
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2b85e4;font-size:15px;", // P
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #ed4014;font-weight: bold;font-size:15px;", // U
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2b85e4;font-size:15px;", // 7
+            "color: #e96900;font-size:15px;margin-bottom:5px;font-weight: bold;", "color: #2b85e4;font-size:15px;"  // 8
+        );
+
+    }
+
 
     loop() {
         // Physics.update()

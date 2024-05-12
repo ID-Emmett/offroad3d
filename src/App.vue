@@ -19,7 +19,6 @@ const state = reactive({
 const { fileGroupList, activeTarget, openNav } = toRefs(state);
 
 function getSamplesFile() {
-    // const modules = import.meta.glob(['./samples/**/*.*s', '!./samples/**/*Component/*.*s'])
     const modules = import.meta.glob([
         "./samples/**/*.*s",
         "!./samples/**/_*.*s",
@@ -29,7 +28,8 @@ function getSamplesFile() {
     const disList: Project[] = [];
     for (const path in modules) {
         const arr = path.split("/");
-        const _folder = arr[2].slice(0, 1).toUpperCase() + arr[2].slice(1).toLowerCase();
+        // const _folder = arr[2].slice(0, 1).toUpperCase() + arr[2].slice(1).toLowerCase();
+        const _folder = arr[2].slice(0, 1).toUpperCase() + arr[2].slice(1);
         const _demo = arr[3].replace(/Sample_|\.ts|\.js/g, "");
 
         if (disList.some((t) => t.name === _folder)) {
@@ -63,14 +63,12 @@ async function loadManifest() {
 
 function resolveAssetPath(path: string) {
 
-    if (import.meta.env.DEV) {
-        return `src${path}`
-
-    } else {
-        // 通过获取包含源文件路径到构建文件路径的映射的 manifest 文件来动态载入文件。
-        if (!manifestFile) throw new Error('Failed to load manifest')
-        return `${__APP_NAME__}/${manifestFile[`src${path}`].file}`
+    let fillpath = `src${path}`
+    if (import.meta.env.PROD) {
+        return `${__APP_NAME__}/${manifestFile[fillpath].file}` // 通过获取包含源文件路径到构建文件路径的映射的 manifest 文件来动态载入脚本。
     }
+
+    return fillpath
 }
 
 function addIframe() {
@@ -82,7 +80,7 @@ function addIframe() {
 
     console.log(path);
 
-    const Native_WebGPU_Script = path.includes("WebGPU") ? `
+    const Native_WebGPU_Script = path.includes("webGPU") ? `
 		let canvas = document.createElement('canvas');
 		canvas.style.display = 'block';
 		canvas.style.width = '100%';
@@ -95,7 +93,7 @@ function addIframe() {
 		<style>html,body{margin:0;padding:0;overflow:hidden;height: 100%;width: 100%;}canvas{touch-action:none}.dg{z-index:1 !important;}</style>
 		<script>
 			import('/${path}');
-			${Native_WebGPU_Script};
+			${Native_WebGPU_Script}
 		</script` + ">";
     document.querySelector("#app")?.appendChild(iframe);
 }
@@ -141,7 +139,7 @@ function removeIframe() {
     </div>
     <div class="nav" :class="{ openNav }">
         <p class="close">
-            <a href="https://github.com/ID-Emmett/offroad3d" target="_blank" title="go to github">GAME</a>
+            <a href="https://github.com/ID-Emmett/offroad3d" target="_blank" title="go to github">DEMO</a>
             <img @click="switchNav" src="./assets/icons/close.svg" />
         </p>
         <div v-for="folder in fileGroupList" :key="folder.name" class="nav-list">
