@@ -45,13 +45,13 @@ export default defineConfig({
        *     "@orillusion/physics": "^0.2.2",
        *     "@orillusion/stats": "^0.2.2",
        */
-      '@orillusion/core': 'D:/code/orillusion/src/index',
-      "@orillusion/physics": "D:/code/orillusion/packages/physics/index",
-      "@orillusion/ammo": "D:/code/orillusion/packages/ammo/ammo",
-      "@orillusion/effect": "D:/code/orillusion/packages/effect/index",
-      "@orillusion/particle": "D:/code/orillusion/packages/particle/index",
-      "@orillusion/stats": "D:/code/orillusion/packages/stats/index",
-      "@orillusion/wasm-matrix": "D:/code/orillusion/packages/wasm-matrix",
+      // '@orillusion/core': 'D:/code/orillusion/src/index',
+      // "@orillusion/physics": "D:/code/orillusion/packages/physics/index",
+      // "@orillusion/ammo": "D:/code/orillusion/packages/ammo/ammo",
+      // "@orillusion/effect": "D:/code/orillusion/packages/effect/index",
+      // "@orillusion/particle": "D:/code/orillusion/packages/particle/index",
+      // "@orillusion/stats": "D:/code/orillusion/packages/stats/index",
+      // "@orillusion/wasm-matrix": "D:/code/orillusion/packages/wasm-matrix",
     }
   }
 })
