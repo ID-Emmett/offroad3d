@@ -40,7 +40,7 @@ class Sample_game {
             canvasConfig: { devicePixelRatio: 1 },
             renderLoop: () => this.loop()
         })
-
+        
         let scene = new Scene3D()
         scene.addComponent(Stats)
 

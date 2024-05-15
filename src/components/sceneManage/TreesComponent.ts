@@ -58,8 +58,6 @@ export class TreesComponent extends ComponentBase {
         let glftModel = await Engine3D.res.loadGltf('models/trees/pine_tree_blue.glb');  // 蓝色树
         glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 1;
 
-        console.log(glftModel);
-
         for (let i = 0, count = points.length / 3; i < count; i++) {
             let newModel = glftModel.clone()
             newModel.x = points[i * 3 + 0]
@@ -106,7 +104,7 @@ export class TreesComponent extends ComponentBase {
                 newModel.y = TerrainUtil.calculateHeightAtPoint(x, z, terrainGeometry)
                 newModel.z = z
                 newModel.rotationY = Math.floor(Math.random() * 360) - 180
-                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 1.7) + Math.round(Math.random() * (newModel.scaleX * 0.3))
+                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 1.7) + Math.round(Math.random() * (newModel.scaleX * 1.3))
 
                 // let rigidbody = newModel.addComponent(AmmoRigidBody)
                 // rigidbody.mass = 0;

@@ -118,6 +118,7 @@ onBeforeMount(async () => {
     getSamplesFile();
     manifestFile = import.meta.env.PROD && await loadManifest();
     addIframe();
+    console.log('Offroad3D Version', __VERSION__);
 });
 
 onBeforeUnmount(() => {

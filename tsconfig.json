@@ -9,8 +9,8 @@
     "cypress.config.*",
     "nightwatch.conf.*",
     "playwright.config.*",
-    // "D:/code/orillusion/packages/**/*", // 包含源码模块包
-    // "D:/code/orillusion/**/*" // 包含源码核心包
+    "D:/code/orillusion/packages/**/*", // 包含源码模块包
+    "D:/code/orillusion/**/*" // 包含源码核心包
   ],
   "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
@@ -19,10 +19,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      // "@orillusion/core": ["D:/code/orillusion/src"],
-      // "@orillusion/*": ["D:/code/orillusion/packages/*"]
+      "@orillusion/core": ["D:/code/orillusion/src"], // 源码核心包
+      "@orillusion/*": ["D:/code/orillusion/packages/*"] // 源码模块包
     },
-    // "rootDir": "D:/code", // 确保D:/code目录包含本项目与源码包
+    "rootDir": "D:/code", // 确保D:/code目录包含本项目与源码包
     "types": ["vite/client", "@webgpu/types", "dat.gui", "node"],
     "strictNullChecks": false,
     "module": "ESNext",

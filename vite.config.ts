@@ -10,6 +10,7 @@ import packageJson from './package.json';
 export default defineConfig({
   define: {
     __APP_NAME__: JSON.stringify(packageJson.name),
+    __VERSION__: JSON.stringify(packageJson.version)
   },
   base: `/${packageJson.name}/`, // 部署到pages时作为子目录,需要确保资源正确引用，这样等价-> '/offroad3d/'  默认 './'
   server: {
@@ -44,13 +45,13 @@ export default defineConfig({
        *     "@orillusion/physics": "^0.2.2",
        *     "@orillusion/stats": "^0.2.2",
        */
-      // '@orillusion/core': 'D:/code/orillusion/src/index',
-      // "@orillusion/physics": "D:/code/orillusion/packages/physics/index",
-      // "@orillusion/ammo": "D:/code/orillusion/packages/ammo/ammo",
-      // "@orillusion/effect": "D:/code/orillusion/packages/effect/index",
-      // "@orillusion/particle": "D:/code/orillusion/packages/particle/index",
-      // "@orillusion/stats": "D:/code/orillusion/packages/stats/index",
-      // "@orillusion/wasm-matrix": "D:/code/orillusion/packages/wasm-matrix",
+      '@orillusion/core': 'D:/code/orillusion/src/index',
+      "@orillusion/physics": "D:/code/orillusion/packages/physics/index",
+      "@orillusion/ammo": "D:/code/orillusion/packages/ammo/ammo",
+      "@orillusion/effect": "D:/code/orillusion/packages/effect/index",
+      "@orillusion/particle": "D:/code/orillusion/packages/particle/index",
+      "@orillusion/stats": "D:/code/orillusion/packages/stats/index",
+      "@orillusion/wasm-matrix": "D:/code/orillusion/packages/wasm-matrix",
     }
   }
 })
