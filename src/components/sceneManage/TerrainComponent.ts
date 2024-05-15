@@ -294,7 +294,7 @@ export class TerrainComponent extends ComponentBase {
         scene3D.addChild(glftModel)
 
 
-        let bodyRb = RigidBodyUtil.triangleMeshRigidBody(glftModel, 0)
+        let bodyRb = RigidBodyUtil.bvhTriangleMeshShapeRigidBody(glftModel, 0)
         Physics.world.addRigidBody(bodyRb);
 
     }
