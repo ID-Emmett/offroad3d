@@ -1,0 +1,3 @@
+# 合并分支时忽略这些文件，
+tsconfig.json merge=ours
+vite.config.ts merge=ours

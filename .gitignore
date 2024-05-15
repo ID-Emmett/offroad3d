@@ -13,8 +13,6 @@ dist
 dist-ssr
 coverage
 *.local
-package-lock.json
-src/TemporaryPaste.TEMP.ts
 
 /cypress/videos/
 /cypress/screenshots/
