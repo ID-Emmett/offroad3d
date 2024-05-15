@@ -14,6 +14,7 @@ declare module "@orillusion/physics" {
         }
 
         // export enum CollisionFlags {
+
         
         // }
 
