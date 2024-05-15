@@ -2,16 +2,6 @@ import { Vector3, BoxColliderShape, CapsuleColliderShape, ColliderComponent, Com
 import { Ammo, Physics, Rigidbody } from "@orillusion/physics";
 import { CollisionFlags, ActivationState, ShapeTypes, RigidBodyUtil, CollisionGroup, CollisionMask } from './index'
 
-enum CollisionObjectTypes {
-    COLLISION_OBJECT = 1,
-    RIGID_BODY = 2,
-    GHOST_OBJECT = 4,
-    SOFT_BODY = 8,
-    HF_FLUID = 16,
-    USER_TYPE = 32,
-    FEATHERSTONE_LINK = 64
-}
-
 /**
  * Rigidbody Component
  * 扩展，支持更多碰撞体类型，优化更新管理及其他
@@ -179,8 +169,12 @@ export class AmmoRigidBody extends ComponentBase {
                 this._btRigidbody = RigidBodyUtil.heightfieldTerrainShapeRigidBody(this.object3D, this.mass);
 
                 break;
-            case ShapeTypes.btConvexHullShape:// 凸包形
+            case ShapeTypes.btConvexHullShape: // 凸包形
                 this._btRigidbody = RigidBodyUtil.convexHullShapeRigidBody(this.object3D, this.mass);
+
+                break;
+            case ShapeTypes.btBvhTriangleMeshShape: // 三角网格
+                this._btRigidbody = RigidBodyUtil.bvhTriangleMeshShapeRigidBody(this.object3D, this.mass);
 
                 break;
             default:

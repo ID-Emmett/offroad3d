@@ -1,14 +1,31 @@
 {
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    },
-    {
-      "path": "./tsconfig.app.json"
-    }
+  "extends": ["@vue/tsconfig/tsconfig.json", "@tsconfig/node18/tsconfig.json"],
+  "include": [
+    "env.d.ts",
+    "src/**/*",
+    "src/**/*.vue",
+    "vite.config.*",
+    "vitest.config.*",
+    "cypress.config.*",
+    "nightwatch.conf.*",
+    "playwright.config.*",
+    // "D:/code/orillusion/packages/**/*", // 包含源码模块包
+    // "D:/code/orillusion/**/*" // 包含源码核心包
   ],
+  "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
     "lib": ["es2015", "dom"],
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      // "@orillusion/core": ["D:/code/orillusion/src"],
+      // "@orillusion/*": ["D:/code/orillusion/packages/*"]
+    },
+    // "rootDir": "D:/code", // 确保D:/code目录包含本项目与源码包
+    "types": ["vite/client", "@webgpu/types", "dat.gui", "node"],
+    "strictNullChecks": false,
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
   }
 }

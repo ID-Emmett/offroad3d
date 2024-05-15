@@ -1,4 +1,4 @@
-import { Object3D, BoundUtil, Vector3, Quaternion, Object3DUtil, MeshRenderer, VertexAttributeName, PlaneGeometry } from '@orillusion/core';
+import { Object3D, BoundUtil, Vector3, Quaternion, Object3DUtil, MeshRenderer, VertexAttributeName, PlaneGeometry, type ArrayBufferData } from '@orillusion/core';
 
 import { Ammo, Physics } from '@orillusion/physics';
 
@@ -147,9 +147,16 @@ export class RigidBodyUtil {
         return bodyRb;
     }
 
-
     /**
      * 高度场碰撞体，基于平面几何顶点构建
+     * @static
+     * @param {Object3D} graphic
+     * @param {number} [mass=0]
+     * @param {number} [heightScale=1]
+     * @param {number} [upAxis=1]
+     * @param {Ammo.PHY_ScalarType} [hdt='PHY_FLOAT']
+     * @param {boolean} [flipQuadEdges=false]
+     * @return {*}  {Ammo.btRigidBody}
      */
     public static heightfieldTerrainShapeRigidBody(
         graphic: Object3D,
@@ -229,13 +236,12 @@ export class RigidBodyUtil {
      */
     public static convexHullShapeRigidBody(graphic: Object3D, mass: number = 0) {
 
-        let mr = graphic.getComponents(MeshRenderer)
-        let posAttrData = mr[0].geometry.getAttribute(VertexAttributeName.position)
+        let positionData = this.mergerMeshVertices(graphic)
 
         let convexHullShape = new Ammo.btConvexHullShape();
         let point = new Ammo.btVector3();
-        for (let i = 0, count = posAttrData.data.length / 3; i < count; i++) {
-            point.setValue(posAttrData.data[3 * i], posAttrData.data[3 * i + 1], posAttrData.data[3 * i + 2]);
+        for (let i = 0, count = positionData.length / 3; i < count; i++) {
+            point.setValue(positionData[3 * i], positionData[3 * i + 1], positionData[3 * i + 2]);
             convexHullShape.addPoint(point, true);
         }
         Ammo.destroy(point);
@@ -248,27 +254,24 @@ export class RigidBodyUtil {
      * 仅计算模型中第一个网格对象的顶点
      * @param graphic 
      * @param mass 
-     * @returns Shapes data
+     * @returns bodyRb
      */
-    public static triangleMeshRigidBody(graphic: Object3D, mass: number = 0) {
-        let mr = graphic.getComponents(MeshRenderer)
-        let posAttrData = mr[0].geometry.getAttribute(VertexAttributeName.position)
+    public static bvhTriangleMeshShapeRigidBody(graphic: Object3D, mass: number = 0) {
 
-        console.warn('实验性类型');
-        console.log('triangleMeshRigidBody posAttrDataLength:', posAttrData.data.length);
+        let positionData = this.mergerMeshVertices(graphic)
 
         let triangleMesh = new Ammo.btTriangleMesh();
 
-        // 每三个顶点形成一个三角形 posAttrData.data 是 Float32Array，包含所有顶点的 xyz 坐标
+        // 每三个顶点形成一个三角形
         {
             let v0 = new Ammo.btVector3();
             let v1 = new Ammo.btVector3();
             let v2 = new Ammo.btVector3();
-            for (let i = 0; i < posAttrData.data.length; i += 9) {
+            for (let i = 0; i < positionData.length; i += 9) {
                 // 创建向量实例
-                v0.setValue(posAttrData.data[i], posAttrData.data[i + 1], posAttrData.data[i + 2]);
-                v1.setValue(posAttrData.data[i + 3], posAttrData.data[i + 4], posAttrData.data[i + 5]);
-                v2.setValue(posAttrData.data[i + 6], posAttrData.data[i + 7], posAttrData.data[i + 8]);
+                v0.setValue(positionData[i], positionData[i + 1], positionData[i + 2]);
+                v1.setValue(positionData[i + 3], positionData[i + 4], positionData[i + 5]);
+                v2.setValue(positionData[i + 6], positionData[i + 7], positionData[i + 8]);
 
                 // 添加三角形
                 triangleMesh.addTriangle(v0, v1, v2, true);
@@ -279,12 +282,13 @@ export class RigidBodyUtil {
             Ammo.destroy(v2);
         }
 
-        // 应用缩放
+        // 应用缩放，无法处理建模软件中设定的缩放，仅支持图形引擎应用的缩放，理想状态下建模时模型缩放应默认为 1 ，缩放变换由图形引擎控制。
         let scaling = new Ammo.btVector3(graphic.scaleX, graphic.scaleY, graphic.scaleZ)
         triangleMesh.setScaling(scaling);
         Ammo.destroy(scaling)
 
-        let useQuantizedAabbCompression = false;
+        // 启用 AABB 树的量化压缩 为 true 可以提高性能，尤其是在处理大型或复杂的网格时可以更快地处理碰撞检测，但精准度可能会有略微影响。
+        let useQuantizedAabbCompression = true;
         let shape = new Ammo.btBvhTriangleMeshShape(triangleMesh, useQuantizedAabbCompression);
 
         let bodyRb = this.createRigidBody(shape, mass, graphic.transform.worldPosition, graphic.localQuaternion)
@@ -292,6 +296,38 @@ export class RigidBodyUtil {
         return bodyRb
     }
 
+    /**
+     * 合并3D对象的所有网格顶点
+     * @param graphic
+     * @returns vertex data
+     */
+    protected static mergerMeshVertices(graphic: Object3D): Float32Array {
+
+        let mr = graphic.getComponents(MeshRenderer)
+
+        if (mr.length === 1) {
+            return mr[0].geometry.getAttribute(VertexAttributeName.position).data as Float32Array;
+        }
+
+        // 计算总长度
+        let totalLength = 0;
+        mr.forEach(e => {
+            totalLength += e.geometry.getAttribute(VertexAttributeName.position).data.length;
+        });
+
+        // 分配大小
+        let positionData = new Float32Array(totalLength);
+
+        // 填充数据
+        let offset = 0;
+        mr.forEach(e => {
+            let data = e.geometry.getAttribute(VertexAttributeName.position).data;
+            positionData.set(data, offset);
+            offset += data.length;
+        });
+
+        return positionData
+    }
 
     /**
      * Create a composite rigid body

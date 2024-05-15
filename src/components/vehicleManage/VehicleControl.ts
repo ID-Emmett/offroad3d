@@ -1,7 +1,7 @@
 import { Scene3D, Object3D, Engine3D, ColliderComponent, BoxColliderShape, Vector3, ComponentBase, KeyCode, KeyEvent, Quaternion, BoundUtil, Camera3D, Vector3Ex, MeshRenderer, LitMaterial, Color, BoxGeometry, AtmosphericComponent, CameraUtil, DirectLight, KelvinUtil, View3D, BlendMode, BitmapTexture2D, UnLitMaterial, Time, lerpVector3, Matrix4, Orientation3D } from '@orillusion/core';
 import { Ammo, Physics, Rigidbody } from '@orillusion/physics';
 
-import { eventBus } from '@/store/index'
+import { eventBus } from '@/modules/store/index'
 import { AmmoRigidBody, RigidBodyUtil } from '@/physics';
 
 enum VehicleControlType {
