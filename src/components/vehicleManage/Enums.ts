@@ -13,5 +13,9 @@ export enum VehicleType {
     /**
      * 消防车
      */
-    FireTruck
+    FireTruck,
+    /**
+     * 大皮卡
+     */
+    LargePickup
 }

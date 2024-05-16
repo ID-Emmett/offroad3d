@@ -365,8 +365,8 @@ export class InteractRay extends ComponentBase {
     private _addBox(pos: Vector3): void {
         const obj = new Object3D()
         let mr = obj.addComponent(MeshRenderer)
-        // mr.geometry = new SphereGeometry(5, 32, 32); // 球
-        mr.geometry = new BoxGeometry(5, 5, 5) // 盒子
+        mr.geometry = new SphereGeometry(5, 32, 32); // 球
+        // mr.geometry = new BoxGeometry(5, 5, 5) // 盒子
         // mr.geometry = new CylinderGeometry(15, 15, 20, 32, 32); // 圆柱
         let mat = new LitMaterial()
         mat.baseColor = new Color(Math.random(), Math.random(), Math.random(), 1.0)
@@ -376,15 +376,15 @@ export class InteractRay extends ComponentBase {
         obj.y = pos.y + 5
         obj.z = pos.z
         let rigidbody = obj.addComponent(AmmoRigidBody)
-        rigidbody.shape = ShapeTypes.btBoxShape
+        rigidbody.shape = ShapeTypes.btSphereShape
         rigidbody.mass = 100
         rigidbody.restitution = 1
         rigidbody.addInitedFunction(() => {
             rigidbody.btRigidbody.setUserIndex(1000)
         }, this)
 
-        rigidbody.size = new Vector3(5, 5, 5);
-        // rigidbody.radius = 5
+        // rigidbody.size = new Vector3(5, 5, 5);
+        rigidbody.radius = 5
         // rigidbody.height = 20
 
 

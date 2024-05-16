@@ -31,7 +31,8 @@ export class BoxGenerator extends ComponentBase {
         let mat = new LitMaterial()
         mat.baseColor = new Color(Math.random(), Math.random(), Math.random(), 1.0)
         mr.material = mat;
-        obj.localPosition = new Vector3(Math.random() * 1000 - 500, this.hieght, Math.random() * 1000 - 500)
+        // obj.localPosition = new Vector3(Math.random() * 1000 - 500, this.hieght, Math.random() * 1000 - 500)
+        obj.localPosition = new Vector3(Math.random() * 200 - 100, this.hieght, Math.random() * 200 - 100)
         obj.localRotation = new Vector3(Math.random() * 360, Math.random() * 360, Math.random() * 360)
         // add a rigidbody with mass 10
         let rigidbody = obj.addComponent(AmmoRigidBody)

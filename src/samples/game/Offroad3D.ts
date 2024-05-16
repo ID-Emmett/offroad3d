@@ -11,6 +11,8 @@ import { PostProcessingSetup } from '@/effects/Postprocessing';
 import { GUIHelp } from "@/utils/debug/GUIHelp";
 import { GUIUtil } from '@/utils/GUIUtil'
 
+import { TrainingGrounds } from '@/components/sceneManage/TrainingGrounds'
+
 // import { SimpleDebugDrawer } from '@/physics/DebugDrawer'
 
 /**
@@ -40,7 +42,7 @@ class Sample_game {
             canvasConfig: { devicePixelRatio: 1 },
             renderLoop: () => this.loop()
         })
-        
+
         let scene = new Scene3D()
         scene.addComponent(Stats)
 
@@ -123,6 +125,8 @@ class Sample_game {
 
         scene.addComponent(Grass);
 
+        // scene.addComponent(TrainingGrounds)
+
         // scene.addComponent(BoxGenerator)
 
         cameraCtrl.object3D.addComponent(InteractRay);
@@ -130,7 +134,7 @@ class Sample_game {
 
         const onTerrainReady = () => {
             let vehicle = scene.addComponent(VehicleComponent);
-            vehicle.vehicleType = VehicleType.Pickup;
+            vehicle.vehicleType = VehicleType.LargePickup;
             vehicle.addInitedFunction((vehicle: Object3D) => {
                 cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
             }, this);
