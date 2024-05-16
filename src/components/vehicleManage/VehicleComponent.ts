@@ -1,6 +1,8 @@
 import { ComponentBase, Engine3D, Object3D, Vector2, Vector3 } from '@orillusion/core'
 import { AmmoRigidBody, CollisionFlags, ActivationState, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil } from "@/physics";
 import { VehicleControl, VehicleType } from './index'
+import { GUIUtil } from '@/utils/GUIUtil'
+import { HoverCameraController } from '../cameraController';
 
 /**
  * 载具组件
@@ -9,7 +11,7 @@ export class VehicleComponent extends ComponentBase {
 
     private vehicle: Object3D
 
-    private _position: Vector3 = new Vector3(0, -30, 0)
+    private _position: Vector3 = new Vector3(0, 10, 0)
     private _vehicleType: VehicleType = VehicleType.Pickup
 
     private _initedFunctions: { fun: Function; thisObj: Object }[] = [];
@@ -209,16 +211,58 @@ export class VehicleComponent extends ComponentBase {
                     { x: -1.44, z: -2.55 },
                 ]
             }
+            case VehicleType.LargePickup: {
+                let wheel = await Engine3D.res.loadGltf('models/vehicles/largeWheel.glb')
+                vehicle = await Engine3D.res.loadGltf('models/vehicles/largePickup_chassis.glb');                
+                vehicle.localPosition = this.position
+                vehicle.name = 'vehicle'
+
+                this.object3D.addChild(vehicle);
+
+                // 加载碰撞体数据
+                const response = await fetch('json/vertices/largePickup.json')
+                const data = await response.json();
+                const vertices = new Float32Array(data.vertices);
+
+                // 创建刚体
+                let rigidBodyComponent = this.initRigidBody(vehicle, 2000)
+                rigidBodyComponent.collisionVertices = vertices
+
+                // 载具控制器依赖载具刚体，需要先为载具添加刚体再添加控制器
+                let controller = vehicle.addComponent(VehicleControl);
+                controller.mVehicleArgs = {
+                    wheelSize: 1.1,
+                    friction: 1000, // 摩擦力 1000 值越大越滑
+                    suspensionStiffness: 8.0, // 悬架刚度 20.0
+                    suspensionDamping: 0.4, // 悬架阻尼 2.3
+                    suspensionCompression: 0.4, // 悬架压缩 4.4
+                    suspensionRestLength: 0.7, // 悬架未受压时的长度 0.6  
+                    rollInfluence: 0.5, // 离心力 影响力 0.2
+                    steeringIncrement: 0.003,  // 转向增量 0.04
+                    steeringClamp: 0.35, // 转向钳 0.5
+                    maxEngineForce: 1500, // 最大发动机力 1500
+                    maxBreakingForce: 50, // 最大断裂力 500
+                    maxSuspensionTravelCm: 135 // 最大悬架行程
+                }
+                controller.wheelObject = wheel
+                controller.wheelPosOffset = [
+                    { x: 1.2, z: 1.25 },
+                    { x: -1.2, z: 1.25 },
+                    { x: 1.2, z: -1.25 },
+                    { x: -1.2, z: -1.25 },
+                ]
+            }
                 break;
             default:
                 throw new Error("Wrong Vehicle Type");
         }
 
         this.vehicle = vehicle;
+        this.debug()
 
     }
 
-    private initRigidBody(vehicle: Object3D, mass: number, damping?: Vector2) {
+    private initRigidBody(vehicle: Object3D, mass: number, damping?: Vector2): AmmoRigidBody {
         const rigidBodyComponent = vehicle.addComponent(AmmoRigidBody)
         rigidBodyComponent.mass = mass;
         rigidBodyComponent.damping = damping || new Vector2(0.2, 0);
@@ -230,8 +274,35 @@ export class VehicleComponent extends ComponentBase {
         rigidBodyComponent.mask = CollisionMask.DEFAULT_MASK
         rigidBodyComponent.activationState = ActivationState.DISABLE_DEACTIVATION
         rigidBodyComponent.enable = false; // 由于载具为复杂刚体类，此处刚体组件只进行刚体构建，不需要内部进行更新
+        return rigidBodyComponent
     }
 
+    private debug() {
+        let gui = GUIUtil.GUI
+        let f = gui.addFolder('vehicle')
+
+        // 提取枚举键值对
+        const vehicleTypeObject = Object.keys(VehicleType)
+            .filter(key => isNaN(Number(key))) // 过滤出非数值键
+            .reduce((obj, key) => {
+                obj[key] = VehicleType[key as keyof typeof VehicleType];
+                return obj;
+            }, {} as Record<string, VehicleType>);
+
+        const params = { vehicleType: this._vehicleType }; // 默认值
+
+        f.add(params, 'vehicleType', vehicleTypeObject)
+            .onChange(value => {
+                console.log('Selected vehicle type:', value);
+                this.vehicleType = +value
+                setTimeout(() => {
+                    this.transform.view3D.camera.object3D.getComponent(HoverCameraController).flowTarget(this.vehicle, new Vector3(0, 2, 0));
+                }, 2000);
+            });
+
+        f.open()
+
+    }
     /**
       * @internal
       */

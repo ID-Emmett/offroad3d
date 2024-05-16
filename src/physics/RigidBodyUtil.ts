@@ -229,14 +229,17 @@ export class RigidBodyUtil {
 
     /**
      * Create a Convex Hull RigidBody.
-     * 仅计算模型中第一个网格对象的顶点 凸包形状 形状将会“填满”模型的凹部
+     * 凸包形状 形状将会“填满”模型的凹部
      * @param graphic 
      * @param mass 
-     * @returns Shapes data
+     * @param collisionVertices 可选，碰撞体需要的顶点数据，默认值为图形对象的顶点数据
+     * @param lowObject 可选，从该图形对象取得顶点数据构建碰撞体
+     * @returns Ammo.btRigidBody
      */
-    public static convexHullShapeRigidBody(graphic: Object3D, mass: number = 0) {
+    public static convexHullShapeRigidBody(graphic: Object3D, mass: number = 0, collisionVertices: Float32Array = null, lowObject: Object3D = null) {
 
-        let positionData = this.mergerMeshVertices(graphic)
+        let positionData = collisionVertices || this.mergerMeshVertices(lowObject || graphic)
+        // console.log(positionData);
 
         let convexHullShape = new Ammo.btConvexHullShape();
         let point = new Ammo.btVector3();
@@ -284,12 +287,13 @@ export class RigidBodyUtil {
 
         // 应用缩放，无法处理建模软件中设定的缩放，仅支持图形引擎应用的缩放，理想状态下建模时模型缩放应默认为 1 ，缩放变换由图形引擎控制。
         let scaling = new Ammo.btVector3(graphic.scaleX, graphic.scaleY, graphic.scaleZ)
-        triangleMesh.setScaling(scaling);
-        Ammo.destroy(scaling)
+        // triangleMesh.setScaling(scaling);
 
         // 启用 AABB 树的量化压缩 为 true 可以提高性能，尤其是在处理大型或复杂的网格时可以更快地处理碰撞检测，但精准度可能会有略微影响。
         let useQuantizedAabbCompression = true;
         let shape = new Ammo.btBvhTriangleMeshShape(triangleMesh, useQuantizedAabbCompression);
+        shape.setLocalScaling(scaling)
+        Ammo.destroy(scaling)
 
         let bodyRb = this.createRigidBody(shape, mass, graphic.transform.worldPosition, graphic.localQuaternion)
 

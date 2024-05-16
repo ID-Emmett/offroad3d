@@ -56,8 +56,7 @@ export class VehicleControl extends ComponentBase {
     async start() {
 
         this.scene = this.transform.scene3D
-        this.object3D = this.object3D;
-        this.rigidbody = this.object3D.getComponent(AmmoRigidBody).btRigidbody;
+        this.rigidbody = this.object3D.getComponent(AmmoRigidBody)?.btRigidbody;
 
         this.wheelObject ||= await Engine3D.res.loadGltf('models/vehicles/wheel_1.glb');
 

@@ -1,4 +1,4 @@
-import { Vector3, BoxColliderShape, CapsuleColliderShape, ColliderComponent, ComponentBase, MeshColliderShape, Quaternion, SphereColliderShape, Vector2 } from '@orillusion/core'
+import { Vector3, BoxColliderShape, CapsuleColliderShape, ColliderComponent, ComponentBase, MeshColliderShape, Quaternion, SphereColliderShape, Vector2, Object3D } from '@orillusion/core'
 import { Ammo, Physics, Rigidbody } from "@orillusion/physics";
 import { CollisionFlags, ActivationState, ShapeTypes, RigidBodyUtil, CollisionGroup, CollisionMask } from './index'
 
@@ -49,6 +49,14 @@ export class AmmoRigidBody extends ComponentBase {
 
     public userIndex: number
 
+    /**
+     * 碰撞体顶点数据（凸包可用），构建碰撞体时将使用这些顶点数据，未传入时使用网格顶点
+     */
+    public collisionVertices: Float32Array; 
+    /**
+     * 测试使用，仅为创建碰撞体时提供顶点数据
+     */
+    public lowObject: Object3D; 
     // -----------------END----------------
 
     init(): void {
@@ -170,7 +178,7 @@ export class AmmoRigidBody extends ComponentBase {
 
                 break;
             case ShapeTypes.btConvexHullShape: // 凸包形
-                this._btRigidbody = RigidBodyUtil.convexHullShapeRigidBody(this.object3D, this.mass);
+                this._btRigidbody = RigidBodyUtil.convexHullShapeRigidBody(this.object3D, this.mass, this.collisionVertices, this.lowObject);
 
                 break;
             case ShapeTypes.btBvhTriangleMeshShape: // 三角网格
