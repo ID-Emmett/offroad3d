@@ -63,7 +63,7 @@ export class TreesComponent extends ComponentBase {
             newModel.x = points[i * 3 + 0]
             newModel.y = points[i * 3 + 1]
             newModel.z = points[i * 3 + 2]
-            newModel.addComponent(AmmoRigidBody).shape = ShapeTypes.btBvhTriangleMeshShape
+            // newModel.addComponent(AmmoRigidBody).shape = ShapeTypes.btBvhTriangleMeshShape
             this.terrain.addChild(newModel)
         }
 

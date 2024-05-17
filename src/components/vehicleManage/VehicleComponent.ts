@@ -73,7 +73,7 @@ export class VehicleComponent extends ComponentBase {
         switch (this.vehicleType) {
             case VehicleType.Pickup: {
 
-                vehicle = await Engine3D.res.loadGltf('models/vehicles/redPickup_chassis.glb');
+                vehicle = await Engine3D.res.loadGltf('models/vehicles/red_pickup_chassis.glb');
                 vehicle.localPosition = this.position
                 vehicle.name = 'vehicle'
                 this.object3D.addChild(vehicle);
@@ -179,7 +179,7 @@ export class VehicleComponent extends ComponentBase {
             }
                 break;
             case VehicleType.FireTruck: {
-                vehicle = await Engine3D.res.loadGltf('models/vehicles/fireTruck_chassis2.glb');
+                vehicle = await Engine3D.res.loadGltf('models/vehicles/fire_truck_chassis.glb');
                 vehicle.localPosition = this.position
                 vehicle.name = 'vehicle'
 
@@ -212,35 +212,35 @@ export class VehicleComponent extends ComponentBase {
                 ]
             }
             case VehicleType.LargePickup: {
-                let wheel = await Engine3D.res.loadGltf('models/vehicles/largeWheel.glb')
-                vehicle = await Engine3D.res.loadGltf('models/vehicles/largePickup_chassis.glb');                
+                let wheel = await Engine3D.res.loadGltf('models/vehicles/large_wheel.glb')
+                vehicle = await Engine3D.res.loadGltf('models/vehicles/large_pickup_chassis.glb');
                 vehicle.localPosition = this.position
                 vehicle.name = 'vehicle'
 
                 this.object3D.addChild(vehicle);
 
                 // 加载碰撞体数据
-                const response = await fetch('json/vertices/largePickup.json')
-                const data = await response.json();
+                const response = await fetch('json/modelData/large_pickup.json')
+                const data = await response.json() as { vertices: Float32Array };
                 const vertices = new Float32Array(data.vertices);
 
                 // 创建刚体
                 let rigidBodyComponent = this.initRigidBody(vehicle, 2000)
-                rigidBodyComponent.collisionVertices = vertices
+                rigidBodyComponent.modelVertices = vertices
 
                 // 载具控制器依赖载具刚体，需要先为载具添加刚体再添加控制器
                 let controller = vehicle.addComponent(VehicleControl);
                 controller.mVehicleArgs = {
-                    wheelSize: 1.1,
+                    wheelSize: 1.0,
                     friction: 1000, // 摩擦力 1000 值越大越滑
                     suspensionStiffness: 8.0, // 悬架刚度 20.0
                     suspensionDamping: 0.4, // 悬架阻尼 2.3
                     suspensionCompression: 0.4, // 悬架压缩 4.4
-                    suspensionRestLength: 0.7, // 悬架未受压时的长度 0.6  
+                    suspensionRestLength: 0.5, // 悬架未受压时的长度 0.6  
                     rollInfluence: 0.5, // 离心力 影响力 0.2
                     steeringIncrement: 0.003,  // 转向增量 0.04
                     steeringClamp: 0.35, // 转向钳 0.5
-                    maxEngineForce: 1500, // 最大发动机力 1500
+                    maxEngineForce: 2500, // 最大发动机力 1500
                     maxBreakingForce: 50, // 最大断裂力 500
                     maxSuspensionTravelCm: 135 // 最大悬架行程
                 }
@@ -258,7 +258,7 @@ export class VehicleComponent extends ComponentBase {
         }
 
         this.vehicle = vehicle;
-        this.debug()
+        // this.debug()
 
     }
 
@@ -278,7 +278,9 @@ export class VehicleComponent extends ComponentBase {
     }
 
     private debug() {
+        
         let gui = GUIUtil.GUI
+        gui.removeFolder('vehicle')
         let f = gui.addFolder('vehicle')
 
         // 提取枚举键值对
@@ -297,10 +299,10 @@ export class VehicleComponent extends ComponentBase {
                 this.vehicleType = +value
                 setTimeout(() => {
                     this.transform.view3D.camera.object3D.getComponent(HoverCameraController).flowTarget(this.vehicle, new Vector3(0, 2, 0));
-                }, 2000);
+                }, 5000);
             });
 
-        f.open()
+        // f.open()
 
     }
     /**
