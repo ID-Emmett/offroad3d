@@ -58,7 +58,7 @@ export class VehicleControl extends ComponentBase {
         this.scene = this.transform.scene3D
         this.rigidbody = this.object3D.getComponent(AmmoRigidBody)?.btRigidbody;
 
-        this.wheelObject ||= await Engine3D.res.loadGltf('models/vehicles/wheel_1.glb');
+        this.wheelObject ||= await Engine3D.res.loadGltf('models/vehicles/low_poly_wheel.glb');
 
         // 添加轮胎
         for (let index = 0; index < this.wheelPosOffset.length; index++) {

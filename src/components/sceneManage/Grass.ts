@@ -42,6 +42,7 @@ export class Grass extends ComponentBase {
         grass.name = 'grass'
 
         let grassCom = grass.addComponent(GrassComponent)
+        grassCom.enable = this.enable;
         grassCom.setGrassTexture(Engine3D.res.whiteTexture)
         // grassCom.setGrassTexture(grassTexture);
         grassCom.setWindNoiseTexture(gustNoiseTexture)
@@ -113,34 +114,47 @@ export class Grass extends ComponentBase {
         // })
 
 
-        // this.debug(grassCom)
+        this.debug(grassCom)
 
     }
 
     private debug(grassCom: GrassComponent) {
+
         // let gui = new dat.GUI()
         let gui = GUIUtil.GUI
-        let dir = gui.addFolder('grass-wind')
-        dir.addColor(grassCom.grassMaterial, 'grassBaseColor')
-        dir.addColor(grassCom.grassMaterial, 'grassTopColor')
-        dir.add(grassCom.grassMaterial.windDirection, 'x', -1.0, 1, 0.0001).onChange((v: any) => {
-            let tv = grassCom.grassMaterial.windDirection
-            tv.x = v
-            grassCom.grassMaterial.windDirection = tv
-        })
-        dir.add(grassCom.grassMaterial.windDirection, 'y', -1.0, 1, 0.0001).onChange((v: any) => {
-            let tv = grassCom.grassMaterial.windDirection
-            tv.y = v
-            grassCom.grassMaterial.windDirection = tv
-        })
-        dir.add(grassCom.grassMaterial, 'windPower', 0.0, 20, 0.0001)
-        dir.add(grassCom.grassMaterial, 'windSpeed', 0.0, 20, 0.0001)
-        dir.add(grassCom.grassMaterial, 'curvature', 0.0, 1, 0.0001)
-        dir.add(grassCom.grassMaterial, 'grassHeight', 0.0, 100, 0.0001)
-        dir.add(grassCom.grassMaterial, 'roughness', 0.0, 1, 0.0001)
-        dir.add(grassCom.grassMaterial, 'translucent', 0.0, 1, 0.0001)
-        dir.add(grassCom.grassMaterial, 'soft', 0.0, 10, 0.0001)
-        dir.add(grassCom.grassMaterial, 'specular', 0.0, 10, 0.0001)
+        let dir = gui.addFolder('grass')
+        dir.add(grassCom, 'enable')
+        // dir.addColor(grassCom.grassMaterial, 'grassBaseColor')
+        // dir.addColor(grassCom.grassMaterial, 'grassTopColor')
+        dir.addColor({ grassBaseColor: Object.values(grassCom.grassMaterial.grassBaseColor).map((v, i) => i === 3 ? v : v * 255) }, 'grassBaseColor').onChange(v => {
+            let color = grassCom.grassMaterial.grassBaseColor;
+            color.copyFromArray(v);
+            grassCom.grassMaterial.grassBaseColor = color;
+        });
+        dir.addColor({ grassTopColor: Object.values(grassCom.grassMaterial.grassTopColor).map((v, i) => i === 3 ? v : v * 255) }, 'grassTopColor').onChange(v => {
+            let color = grassCom.grassMaterial.grassTopColor;
+            color.copyFromArray(v);
+            grassCom.grassMaterial.grassTopColor = color;
+        });
+
+        // dir.add(grassCom.grassMaterial.windDirection, 'x', -1.0, 1, 0.0001).onChange((v: any) => {
+        //     let tv = grassCom.grassMaterial.windDirection
+        //     tv.x = v
+        //     grassCom.grassMaterial.windDirection = tv
+        // })
+        // dir.add(grassCom.grassMaterial.windDirection, 'y', -1.0, 1, 0.0001).onChange((v: any) => {
+        //     let tv = grassCom.grassMaterial.windDirection
+        //     tv.y = v
+        //     grassCom.grassMaterial.windDirection = tv
+        // })
+        // dir.add(grassCom.grassMaterial, 'windPower', 0.0, 20, 0.0001)
+        // dir.add(grassCom.grassMaterial, 'windSpeed', 0.0, 20, 0.0001)
+        // dir.add(grassCom.grassMaterial, 'curvature', 0.0, 1, 0.0001)
+        // dir.add(grassCom.grassMaterial, 'grassHeight', 0.0, 100, 0.0001)
+        // dir.add(grassCom.grassMaterial, 'roughness', 0.0, 1, 0.0001)
+        // dir.add(grassCom.grassMaterial, 'translucent', 0.0, 1, 0.0001)
+        // dir.add(grassCom.grassMaterial, 'soft', 0.0, 10, 0.0001)
+        // dir.add(grassCom.grassMaterial, 'specular', 0.0, 10, 0.0001)
     }
 
     destroy(force?: boolean): void {

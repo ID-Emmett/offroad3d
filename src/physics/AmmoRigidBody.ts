@@ -50,13 +50,17 @@ export class AmmoRigidBody extends ComponentBase {
     public userIndex: number
 
     /**
-     * 碰撞体顶点数据（凸包可用），构建碰撞体时将使用这些顶点数据，未传入时使用网格顶点
+     * 模型顶点数据（凸包与三角网格形状可用），构建碰撞体时将使用这些顶点数据，未传入时使用网格顶点
      */
-    public collisionVertices: Float32Array; 
+    public modelVertices: Float32Array;
+    /**
+     * 模型索引数据（三角网格形状可用），构建碰撞体时将使用这些索引数据，未传入时使用网格索引
+     */
+    public modelIndices: Uint16Array;
     /**
      * 测试使用，仅为创建碰撞体时提供顶点数据
      */
-    public lowObject: Object3D; 
+    public lowObject: Object3D;
     // -----------------END----------------
 
     init(): void {
@@ -178,17 +182,17 @@ export class AmmoRigidBody extends ComponentBase {
 
                 break;
             case ShapeTypes.btConvexHullShape: // 凸包形
-                this._btRigidbody = RigidBodyUtil.convexHullShapeRigidBody(this.object3D, this.mass, this.collisionVertices, this.lowObject);
+                this._btRigidbody = RigidBodyUtil.convexHullShapeRigidBody(this.object3D, this.mass, this.modelVertices, this.lowObject);
 
                 break;
             case ShapeTypes.btBvhTriangleMeshShape: // 三角网格
-                this._btRigidbody = RigidBodyUtil.bvhTriangleMeshShapeRigidBody(this.object3D, this.mass);
+                this._btRigidbody = RigidBodyUtil.bvhTriangleMeshShapeRigidBody(this.object3D, this.mass, this.modelVertices, this.modelIndices, this.lowObject);
 
                 break;
             default:
                 // 使用原始碰撞体组件构建刚体
                 let shape = this.originShape()
-                this._btRigidbody = RigidBodyUtil.createRigidBody(shape, this.mass, this.object3D.localPosition, this.object3D.localQuaternion)
+                this._btRigidbody = RigidBodyUtil.createRigidBody(shape, this.mass, this.object3D.localPosition, this.object3D.localRotation)
         }
 
         this._btRigidbody.setRestitution(this.restitution);
@@ -273,9 +277,9 @@ export class AmmoRigidBody extends ComponentBase {
 
     onUpdate(): void {
 
-        if (this._btRigidbody.isActive()) {
+        if (this._btRigidbody?.isActive()) {
 
-            console.log('同步图形变换');
+            // console.log('同步图形变换');
 
             this._btRigidbody.getMotionState().getWorldTransform(Physics.TEMP_TRANSFORM);
 

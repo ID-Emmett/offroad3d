@@ -3,15 +3,13 @@ import { Physics } from '@orillusion/physics'
 import { Stats } from "@orillusion/stats"
 import { HoverCameraController } from '@/components/cameraController'
 import { InteractRay } from '@/components/ammoRay/InteractRay';
-import { TerrainComponent, TreesComponent, Grass, BoxGenerator } from '@/components/sceneManage';
+import { TerrainComponent, TreesComponent, Grass, BoxGenerator, MainModelComponent } from '@/components/sceneManage';
 import { VehicleComponent, VehicleType } from '@/components/vehicleManage';
 import { FrameTaskQueue } from '@/components/systems/FrameTaskQueue';
 import { PostProcessingSetup } from '@/effects/Postprocessing';
 
 import { GUIHelp } from "@/utils/debug/GUIHelp";
 import { GUIUtil } from '@/utils/GUIUtil'
-
-import { TrainingGrounds } from '@/components/sceneManage/TrainingGrounds'
 
 // import { SimpleDebugDrawer } from '@/physics/DebugDrawer'
 
@@ -56,7 +54,7 @@ class Sample_game {
         // scene3D.envMap = sky.map
 
         /* 全景天空盒2 */
-        let skyTexture = await Engine3D.res.loadLDRTextureCube('sky/kloppenheim_07_puresky-min.jpg');
+        let skyTexture = await Engine3D.res.loadLDRTextureCube('textures/sky/kloppenheim_07_puresky-min.jpg');
         let sky = scene.addComponent(SkyRenderer);
         sky.map = skyTexture;
         // sky.exposure = 0.6
@@ -116,6 +114,10 @@ class Sample_game {
 
         let axis = new AxisObject(250, 0.8);
         scene.addChild(axis);
+        axis.transform.enable = false;
+
+        GUIHelp.addFolder('Axis')
+        GUIHelp.add(axis.transform, 'enable');
 
         scene.addComponent(FrameTaskQueue);
 
@@ -123,11 +125,11 @@ class Sample_game {
 
         scene.addComponent(TreesComponent);
 
-        scene.addComponent(Grass);
+        scene.addComponent(Grass).enable = false; // gui control
 
-        // scene.addComponent(TrainingGrounds)
+        scene.addComponent(MainModelComponent)
 
-        // scene.addComponent(BoxGenerator)
+        scene.addComponent(BoxGenerator).enable = false; // gui control
 
         cameraCtrl.object3D.addComponent(InteractRay);
 
