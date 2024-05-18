@@ -5,7 +5,6 @@ import { GUIUtil } from '@/utils/GUIUtil'
 enum GeometryShape {
     'Box',
     'Sphere',
-    'Cylinder',
 }
 export class BoxGenerator extends ComponentBase {
 
@@ -37,8 +36,7 @@ export class BoxGenerator extends ComponentBase {
             // add a box
             this._addBox()
             // remove the first box after 100 boxes
-            if (this.container.entityChildren.length > 100) {
-                // this.container.removeChildByIndex(0)
+            if (this.container.numChildren > 100) {
                 this.container.getChildByIndex(0).destroy()
             }
             // save current time
@@ -55,17 +53,11 @@ export class BoxGenerator extends ComponentBase {
             mr.geometry = new SphereGeometry(this.size, 32, 32)
         } else if (this.geometryShape === GeometryShape.Box) {
             mr.geometry = new BoxGeometry(this.size, this.size, this.size)
-        } else {
-            mr.geometry = new CylinderGeometry(this.size, this.size, this.size, 32, 32)
         }
 
         let mat = new LitMaterial()
         mat.baseColor = new Color(Math.random(), Math.random(), Math.random(), 1.0)
-        if (this.geometryShape === GeometryShape.Cylinder) {
-            mr.materials = [mat, mat, mat];
-        } else {
-            mr.material = mat;
-        }
+        mr.material = mat;
 
         obj.x = Math.random() * this.posRange - this.posRange / 2 + this.offsetX
         obj.y = this.positionY
@@ -77,9 +69,7 @@ export class BoxGenerator extends ComponentBase {
         // add a rigidbody
         let rigidbody = obj.addComponent(AmmoRigidBody)
         rigidbody.mass = this.mass
-        rigidbody.shape = this.geometryShape === GeometryShape.Sphere
-            ? ShapeTypes.btSphereShape : this.geometryShape === GeometryShape.Box
-                ? ShapeTypes.btBoxShape : ShapeTypes.btCylinderShape
+        rigidbody.shape = this.geometryShape === GeometryShape.Sphere ? ShapeTypes.btSphereShape : ShapeTypes.btBoxShape
 
         this.container.addChild(obj)
     }
@@ -106,7 +96,7 @@ export class BoxGenerator extends ComponentBase {
             this.geometryShape = +v
         })
 
-        gui.addButton('numChildren', () => console.log(`boxGenerator numChildren: ${this.container.numChildren}`))
+        gui.addButton('numChildren', () => console.log(`boxGenerator numChildren: ${this.container.numChildren || 0}`))
         gui.addButton('deleteChildren', () => {
             console.log(this.container.entityChildren.length);
             this.container.entityChildren.forEach(entity => entity.destroy())

@@ -1,7 +1,7 @@
-import { Color, ComponentBase, LitMaterial, MeshRenderer, Object3D, Vector3, SphereGeometry, Engine3D, Quaternion } from '@orillusion/core'
-import { ActivationState, AmmoRigidBody, ShapeTypes } from "@/physics";
+import { Color, ComponentBase, LitMaterial, MeshRenderer, Object3D, Vector3, SphereGeometry, Engine3D, Quaternion, Object3DUtil } from '@orillusion/core'
+import { ActivationState, AmmoRigidBody, CollisionFlags, ShapeTypes, RigidBodyUtil, rigidBodyMapping } from "@/physics";
 import { GUIUtil } from '@/utils/GUIUtil'
-import { Physics } from '@orillusion/physics';
+import { Ammo, Physics } from '@orillusion/physics';
 
 
 export class MainModelComponent extends ComponentBase {
@@ -16,7 +16,7 @@ export class MainModelComponent extends ComponentBase {
         // 训练场
         let model = await Engine3D.res.loadGltf('models/scene/training_grounds_modify.glb')
 
-        // 加载碰撞体数据
+        // 加载模型顶点数据
         // const response = await fetch('json/modelData/level_blockout_modify.json')
         // const data = await response.json() as { vertices: Float32Array, indices: Uint16Array };
         // const vertices = new Float32Array(data.vertices);
@@ -26,6 +26,8 @@ export class MainModelComponent extends ComponentBase {
         // model.scaleX = model.scaleY = model.scaleZ = 15
         // model.localQuaternion = new Quaternion(0.75, 0, 0, -0.75)
 
+        model.y = -33
+
         let rigidbody = model.addComponent(AmmoRigidBody)
         rigidbody.shape = ShapeTypes.btBvhTriangleMeshShape
         // rigidbody.modelVertices = vertices
@@ -34,6 +36,14 @@ export class MainModelComponent extends ComponentBase {
         this.object3D.transform.scene3D.addChild(model)
 
         this.debug(model, rigidbody)
+
+
+        let testHollow = Object3DUtil.GetSingleCube(0.1, 0.1, 0.1, 0.5, 0.2, 0.9)
+        let shapes = RigidBodyUtil.generatesHollowShapes(new Vector3(13, 2, 15), new Vector3(1, 2, 1), Vector3.ZERO, 'Y')
+        let testRBC = testHollow.addComponent(AmmoRigidBody)
+        testRBC.shape = ShapeTypes.btCompoundShape
+        testRBC.childShapes = shapes
+        this.object3D.transform.scene3D.addChild(testHollow)
     }
 
     private debug(model: Object3D, rigidbody: AmmoRigidBody) {
@@ -47,9 +57,13 @@ export class MainModelComponent extends ComponentBase {
             } else {
                 rigidbody.btRigidbody.setActivationState(ActivationState.DISABLE_SIMULATION);
                 Physics.world.removeRigidBody(rigidbody.btRigidbody);
+
+                // 激活所有动态刚体
+                RigidBodyUtil.activateAllKinematicObject()
             }
         })
     }
+
     public onUpdate(): void {
 
     }

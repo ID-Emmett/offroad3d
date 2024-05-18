@@ -222,3 +222,13 @@ export enum CollisionMask {
      */
     DYNAMIC_MASK = CollisionGroup.VEHICLE | CollisionGroup.DYNAMIC1 | CollisionGroup.DYNAMIC2,
 }
+
+/**
+ * Ammo 复合子形状类型
+ */
+export type ChildShapes = {
+    shape?: ShapeTypes;
+    position: { x: number; y: number; z: number };
+    rotation?: { x: number; y: number; z: number, w: number };
+    size: { width: number; height: number; depth: number };
+};

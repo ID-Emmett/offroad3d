@@ -4,9 +4,7 @@ import { AmmoRigidBody, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil
 import { Physics } from '@orillusion/physics';
 import { perlinNoise, createNoiseSeed } from '@/utils/perlin.js';
 import { GUIUtil } from '@/utils/GUIUtil'
-import { GUIHelp } from '@/utils/debug/GUIHelp'
-import dat from 'dat.gui'
-import { FrameTaskQueue } from '../systems/FrameTaskQueue';
+import { FrameTaskQueue } from '@/components/systems/FrameTaskQueue';
 import { TerrainUtil } from "@/utils/TerrainUtil";
 
 
@@ -114,7 +112,7 @@ export class TerrainComponent extends ComponentBase {
         mat.roughness = 2
         // mat.acceptShadow = true
 
-        texture.addressModeU = GPUAddressMode.repeat;     // 水平方向与竖直方向
+        texture.addressModeU = GPUAddressMode.repeat; // 水平方向与竖直方向
         texture.addressModeV = GPUAddressMode.repeat;
 
         mr.material = mat;
@@ -271,6 +269,8 @@ export class TerrainComponent extends ComponentBase {
                     child.getComponent(AmmoRigidBody)?.resetRigidBody()
                 })
             })
+
+            RigidBodyUtil.activateAllKinematicObject()
         }
 
         GUIUtil.renderLitMaterial((terrain.getComponent(MeshRenderer).material as LitMaterial), false, 'terrainMaterial')

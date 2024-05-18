@@ -1,10 +1,10 @@
 import { Vector3, BoxColliderShape, CapsuleColliderShape, ColliderComponent, ComponentBase, MeshColliderShape, Quaternion, SphereColliderShape, Vector2, Object3D } from '@orillusion/core'
 import { Ammo, Physics, Rigidbody } from "@orillusion/physics";
-import { CollisionFlags, ActivationState, ShapeTypes, RigidBodyUtil, CollisionGroup, CollisionMask } from './index'
+import { CollisionFlags, ActivationState, ShapeTypes, RigidBodyUtil, CollisionGroup, CollisionMask, type ChildShapes } from './index'
 
 /**
  * Rigidbody Component
- * 扩展，支持更多碰撞体类型，优化更新管理及其他
+ * 扩展，支持更多碰撞体类型，优化更新管理等
  * @group Components
  */
 export class AmmoRigidBody extends ComponentBase {
@@ -22,56 +22,70 @@ export class AmmoRigidBody extends ComponentBase {
     private _rollingFriction: number = 0.1;
     private _restitution: number = 0.8
 
-    private _damping: Vector2;
+    private _damping: Vector2 = new Vector2(0.1, 0.1);
     private _activationState: ActivationState;
     private _collisionFlags: CollisionFlags;
 
     private _initedFunctions: { fun: Function; thisObj: Object }[] = [];
 
     // -----------------ADD----------------
+    /**
+     * 碰撞体形状
+     */
     public shape: ShapeTypes;
-
     /**
      * 碰撞体大小，需要完整尺寸，箱形设置有效。
      */
     public size: Vector3;
     /**
-     * 碰撞体完整高度，圆柱体与胶囊体形设置有效，胶囊形状时表示圆柱部分高度
+     * 碰撞体完整高度，圆柱体与胶囊体形设置有效，胶囊形状时表示圆柱部分高度。
      */
     public height: number;
     /**
      * 碰撞体半径，球形，圆柱形，胶囊形设置有效。
      */
     public radius: number;
-
-    public group: CollisionGroup;
-    public mask: CollisionMask;
-
-    public userIndex: number
-
     /**
-     * 模型顶点数据（凸包与三角网格形状可用），构建碰撞体时将使用这些顶点数据，未传入时使用网格顶点
+     * 静态平面的法线向量，用于定义平面的方向。
+     */
+    public planeNormal: Vector3;
+    /**
+     * 静态平面的常数项，用于定义平面的位置。它表示从原点到平面的距离。
+     */
+    public planeConstant: number;
+    /**
+     * 复合型碰撞体
+     */
+    public childShapes: ChildShapes[];
+    /**
+     * 刚体碰撞组
+     */
+    public group: CollisionGroup;
+    /**
+     * 刚体碰撞掩码
+     */
+    public mask: CollisionMask;
+    /**
+     * 用户索引，仅数字类型，可以作为刚体标识
+     */
+    public userIndex: number
+    /**
+     * 模型顶点数据（凸包与三角网格形状可用），默认通过图形引擎获取模型对象的网格顶点数据
      */
     public modelVertices: Float32Array;
     /**
-     * 模型索引数据（三角网格形状可用），构建碰撞体时将使用这些索引数据，未传入时使用网格索引
+     * 模型索引数据（三角网格形状可用），默认通过图形引擎获取模型对象的网格索引数据
      */
     public modelIndices: Uint16Array;
     /**
-     * 测试使用，仅为创建碰撞体时提供顶点数据
+     * 测试使用，仅为创建碰撞体时提供顶点与索引数据
      */
     public lowObject: Object3D;
     // -----------------END----------------
 
-    init(): void {
-
-    }
-
-    public start(): void {
-
-        this.initRigidbody();
-    }
-
+    /**
+     * 激活状态
+     */
     public get activationState() {
         return this._activationState;
     }
@@ -81,6 +95,9 @@ export class AmmoRigidBody extends ComponentBase {
         if (this._btRigidbody) this._btRigidbody.setActivationState(value);
     }
 
+    /**
+     * 碰撞标志
+     */
     public get collisionFlags() {
         return this._collisionFlags;
     }
@@ -90,6 +107,9 @@ export class AmmoRigidBody extends ComponentBase {
         if (this._btRigidbody) this._btRigidbody.setCollisionFlags(value);
     }
 
+    /**
+     * 刚体阻尼
+     */
     public get damping() {
         return this._damping;
     }
@@ -144,6 +164,15 @@ export class AmmoRigidBody extends ComponentBase {
         return this._btRigidbodyInited;
     }
 
+    init(): void {
+
+    }
+
+    public start(): void {
+
+        this.initRigidbody();
+    }
+
     private initRigidbody(): void {
         if (Number.isNaN(this.transform.worldPosition.x) || Number.isNaN(this.transform.worldPosition.y) || Number.isNaN(this.transform.worldPosition.z)) {
             console.warn('位置错误');
@@ -161,7 +190,11 @@ export class AmmoRigidBody extends ComponentBase {
 
     private addAmmoRigidbody(): void {
         switch (this.shape) {
-            case ShapeTypes.btBoxShape: // 箱形		
+            case ShapeTypes.btStaticPlaneShape: // 平面
+                this._btRigidbody = RigidBodyUtil.staticPlaneShapeRigidBody(this.object3D, this.mass, this.planeNormal, this.planeConstant);
+
+                break;
+            case ShapeTypes.btBoxShape: // 箱形
                 this._btRigidbody = RigidBodyUtil.boxShapeRigidBody(this.object3D, this.mass, this.size);
 
                 break;
@@ -169,12 +202,16 @@ export class AmmoRigidBody extends ComponentBase {
                 this._btRigidbody = RigidBodyUtil.sphereShapeRigidBody(this.object3D, this.mass, this.radius);
 
                 break;
+            case ShapeTypes.btCapsuleShape: // 胶囊形
+                this._btRigidbody = RigidBodyUtil.capsuleShapeRigidBody(this.object3D, this.mass, this.radius, this.height);
+
+                break;
             case ShapeTypes.btCylinderShape: // 圆柱形
                 this._btRigidbody = RigidBodyUtil.cylinderShapeRigidBody(this.object3D, this.mass, this.radius, this.height);
 
                 break;
-            case ShapeTypes.btCapsuleShape: // 胶囊形
-                this._btRigidbody = RigidBodyUtil.capsuleShapeRigidBody(this.object3D, this.mass, this.radius, this.height);
+            case ShapeTypes.btConeShape: // 圆锥形
+                this._btRigidbody = RigidBodyUtil.coneShapeRigidBody(this.object3D, this.mass, this.radius, this.height);
 
                 break;
             case ShapeTypes.btHeightfieldTerrainShape: // 高度场
@@ -189,10 +226,14 @@ export class AmmoRigidBody extends ComponentBase {
                 this._btRigidbody = RigidBodyUtil.bvhTriangleMeshShapeRigidBody(this.object3D, this.mass, this.modelVertices, this.modelIndices, this.lowObject);
 
                 break;
+            case ShapeTypes.btCompoundShape: // 复合形
+                this._btRigidbody = RigidBodyUtil.compoundShapeRigidBody(this.object3D, this.mass, this.childShapes);
+
+                break;
             default:
                 // 使用原始碰撞体组件构建刚体
                 let shape = this.originShape()
-                this._btRigidbody = RigidBodyUtil.createRigidBody(shape, this.mass, this.object3D.localPosition, this.object3D.localRotation)
+                this._btRigidbody = RigidBodyUtil.createRigidBody(shape, this.mass, this.object3D)
         }
 
         this._btRigidbody.setRestitution(this.restitution);
@@ -295,19 +336,19 @@ export class AmmoRigidBody extends ComponentBase {
 
     /**
      * 重设刚体变换
-     * @param newPosition 可选，默认为图形对象的当前位置
-     * @param newRotation 可选，默认为图形对象的当前旋转
+     * @param newPosition 可选，默认为图形对象的位置
+     * @param newRotation 可选，默认为图形对象的欧拉角旋转
      */
-    public resetRigidBody(newPosition?: Vector3, newRotation?: Quaternion): void {
+    public resetRigidBody(newPosition?: Vector3, newRotation?: Vector3 | Quaternion): void {
         if (!this._btRigidbody) return console.error('No rigid body');
 
         newPosition ||= this.transform.localPosition;
-        newRotation ||= this.transform.localRotQuat;
+        newRotation ||= this.transform.localRotation;
         RigidBodyUtil.resetRigidBody(this.btRigidbody, newPosition, newRotation)
     }
 
     public destroy(force?: boolean): void {
-        console.log('AmmoRigidBody Component destroy');
+        console.log('AmmoRigidBody Component Destroy');
 
         RigidBodyUtil.destroyRigidBody(this._btRigidbody)
 

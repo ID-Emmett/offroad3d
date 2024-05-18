@@ -127,22 +127,22 @@ class Sample_game {
 
         scene.addComponent(Grass).enable = false; // gui control
 
-        scene.addComponent(MainModelComponent)
-
         scene.addComponent(BoxGenerator).enable = false; // gui control
 
         cameraCtrl.object3D.addComponent(InteractRay);
-
 
         const onTerrainReady = () => {
             let vehicle = scene.addComponent(VehicleComponent);
             vehicle.vehicleType = VehicleType.LargePickup;
             vehicle.addInitedFunction((vehicle: Object3D) => {
-                cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
+                // cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
+                cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 2, 0));
             }, this);
         }
 
         Engine3D.inputSystem.addEventListener("TerrainInited", onTerrainReady, this);
+
+        scene.addComponent(MainModelComponent)
 
         if (import.meta.env.PROD) {
             this.printing()

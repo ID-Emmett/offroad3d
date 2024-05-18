@@ -377,8 +377,8 @@ export class InteractRay extends ComponentBase {
         obj.z = pos.z
         let rigidbody = obj.addComponent(AmmoRigidBody)
         rigidbody.shape = ShapeTypes.btSphereShape
-        rigidbody.mass = 100
-        rigidbody.restitution = 1
+        rigidbody.mass = 1
+        // rigidbody.restitution = 1
         rigidbody.addInitedFunction(() => {
             rigidbody.btRigidbody.setUserIndex(1000)
         }, this)

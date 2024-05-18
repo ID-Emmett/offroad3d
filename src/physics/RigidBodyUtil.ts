@@ -2,12 +2,7 @@ import { Object3D, BoundUtil, Vector3, Quaternion, Object3DUtil, MeshRenderer, V
 
 import { Ammo, Physics } from '@orillusion/physics';
 
-type RigidBodyData = {
-    type?: string;
-    position: { x: number; y: number; z: number };
-    rotation?: { x: number; y: number; z: number, w: number };
-    size: { width: number; height: number; depth: number };
-};
+import { type ChildShapes, ShapeTypes, rigidBodyMapping } from './index';
 
 /* 对于图形与物理对象的同步问题，以下有三种解决方案 （ori中应该是第一种）*/
 
@@ -35,7 +30,19 @@ type RigidBodyData = {
  * 刚体工具
  */
 export class RigidBodyUtil {
+    /**
+     * 平面碰撞体，适用于静态无限平面的碰撞形状，通常用于表示地面、墙壁等静态平面
+     */
+    public static staticPlaneShapeRigidBody(graphic: Object3D, mass: number, planeNormal: Vector3 = Vector3.UP, planeConstant: number = 0) {
 
+        const normal = new Ammo.btVector3(planeNormal.x, planeNormal.y, planeNormal.z);
+
+        const shape = new Ammo.btStaticPlaneShape(normal, planeConstant);
+
+        Ammo.destroy(normal)
+
+        return this.createRigidBody(shape, mass, graphic);
+    }
     /**
      * 盒型碰撞体，未指定尺寸时默认使用包围盒大小，使用包围盒时需要禁止应用旋转，否则包围盒尺寸数据将无法准确匹配
      */
@@ -46,7 +53,7 @@ export class RigidBodyUtil {
         let shape = new Ammo.btBoxShape(halfExtents);
         Ammo.destroy(halfExtents)
 
-        return this.createRigidBody(shape, mass, graphic.localPosition, graphic.localRotation)
+        return this.createRigidBody(shape, mass, graphic)
     }
 
     /**
@@ -56,7 +63,29 @@ export class RigidBodyUtil {
         radius ||= BoundUtil.genMeshBounds(graphic).extents.x;
         let shape = new Ammo.btSphereShape(radius);
 
-        return this.createRigidBody(shape, mass, graphic.localPosition, graphic.localRotation)
+        return this.createRigidBody(shape, mass, graphic)
+    }
+
+    /**
+     * 胶囊型碰撞体，未指定尺寸时默认使用包围盒半径和高度
+     * @param {Object3D} graphic - 用于创建碰撞体的三维对象。
+     * @param {number} mass - 碰撞体的质量。
+     * @param {number} [radius] - 胶囊的半径。
+     * @param {number} [height] - 胶囊中间的圆柱部分的高度。
+     * @param {Vector3} [boundSize] - 三维对象的包围盒尺寸。
+     * @returns  The newly created Ammo.btRigidBody object.
+     */
+    public static capsuleShapeRigidBody(graphic: Object3D, mass: number, radius?: number, height?: number, boundSize?: Vector3) {
+        if (!radius || !height) boundSize ||= BoundUtil.genMeshBounds(graphic).size;
+
+        radius ||= boundSize.x / 2;
+        height ||= boundSize.y - radius * 2;
+
+        // graphic.addChild(Object3DUtil.GetSingleCube(radius, height, radius, 1, 1, 1));
+
+        let shape = new Ammo.btCapsuleShape(radius, height);
+
+        return this.createRigidBody(shape, mass, graphic);
     }
 
     /**
@@ -81,33 +110,31 @@ export class RigidBodyUtil {
         let shape = new Ammo.btCylinderShape(halfExtents);
         Ammo.destroy(halfExtents)
 
-        return this.createRigidBody(shape, mass, graphic.localPosition, graphic.localRotation)
+        return this.createRigidBody(shape, mass, graphic)
     }
 
     /**
-     * 胶囊型碰撞体，未指定尺寸时默认使用包围盒半径和高度
+     * 圆锥形碰撞体，如果未指定尺寸则默认使用包围盒半径和高度
      * @param {Object3D} graphic - 用于创建碰撞体的三维对象。
      * @param {number} mass - 碰撞体的质量。
-     * @param {number} [radius] - 胶囊的半径。
-     * @param {number} [height] - 胶囊中间的圆柱部分的高度。
+     * @param {number} [radius] - 圆锥的半径。
+     * @param {number} [height] - 圆锥的高度。
      * @param {Vector3} [boundSize] - 三维对象的包围盒尺寸。
      * @returns  The newly created Ammo.btRigidBody object.
      */
-    public static capsuleShapeRigidBody(graphic: Object3D, mass: number, radius?: number, height?: number, boundSize?: Vector3) {
+    public static coneShapeRigidBody(graphic: Object3D, mass: number, radius?: number, height?: number, boundSize?: Vector3) {
         if (!radius || !height) boundSize ||= BoundUtil.genMeshBounds(graphic).size;
 
         radius ||= boundSize.x / 2;
-        height ||= boundSize.y - radius * 2;
+        height ||= boundSize.y;
 
-        // graphic.addChild(Object3DUtil.GetSingleCube(radius, height, radius, 1, 1, 1));
+        const shape = new Ammo.btConeShape(radius, height);
 
-        let shape = new Ammo.btCapsuleShape(radius, height);
-
-        return this.createRigidBody(shape, mass, graphic.localPosition, graphic.localRotation);
+        return this.createRigidBody(shape, mass, graphic);
     }
 
     /**
-     * 高度场碰撞体，基于平面几何顶点
+     * 高度场形状刚体体，基于平面几何顶点
      * @static
      * @param {Object3D} graphic
      * @param {number} [mass=0]
@@ -115,7 +142,7 @@ export class RigidBodyUtil {
      * @param {number} [upAxis=1]
      * @param {Ammo.PHY_ScalarType} [hdt='PHY_FLOAT']
      * @param {boolean} [flipQuadEdges=false]
-     * @return {*}  {Ammo.btRigidBody}
+     * @return  Ammo.btRigidBody
      */
     public static heightfieldTerrainShapeRigidBody(
         graphic: Object3D,
@@ -173,9 +200,9 @@ export class RigidBodyUtil {
 
         // 设置位置
         let averageHeight = (minHeight + maxHeight) / 2;
-        let origin = new Vector3(0, averageHeight, 0);
+        let newPosition = graphic.localPosition.add(Vector3.HELP_0.set(0, averageHeight, 0));
 
-        let bodyRb = this.createRigidBody(terrainShape, mass, origin, graphic.localRotation)
+        let bodyRb = this.createRigidBody(terrainShape, mass, graphic, newPosition)
 
         // body.setCcdMotionThreshold(1e-7);
         // body.setCcdSweptSphereRadius(0.2); // 根据实际尺寸调整
@@ -187,8 +214,7 @@ export class RigidBodyUtil {
     }
 
     /**
-     * Create a Convex Hull RigidBody.
-     * 凸包形状 形状将会“填满”模型的凹部
+     * 凸包形状刚体 形状将会“填满”模型的凹部
      * @param graphic 
      * @param mass 
      * @param modelVertices 可选，碰撞体需要的顶点数据，默认值为图形对象的顶点数据
@@ -197,7 +223,7 @@ export class RigidBodyUtil {
      */
     public static convexHullShapeRigidBody(graphic: Object3D, mass: number = 0, modelVertices: Float32Array = null, lowObject: Object3D = null) {
 
-        let vertices = modelVertices || this.mergerMeshVertices(lowObject || graphic).vertices
+        let vertices = modelVertices || this.getMeshVerticesAndIndices(lowObject || graphic).vertices
 
         // console.log(vertices);
 
@@ -209,12 +235,11 @@ export class RigidBodyUtil {
         }
         Ammo.destroy(point);
 
-        return this.createRigidBody(convexHullShape, mass, graphic.localPosition, graphic.localRotation)
+        return this.createRigidBody(convexHullShape, mass, graphic)
     }
 
     /**
-     * Create a triangle Mesh RigidBody.
-     * 仅计算模型中第一个网格对象的顶点
+     * 三角网格形状刚体
      * @param graphic 
      * @param mass 
      * @param modelVertices 可选，碰撞体需要的顶点数据，默认值为图形对象的顶点数据
@@ -226,7 +251,7 @@ export class RigidBodyUtil {
         // orillusion图形引擎中解析的模型顶点与索引值与blender脚本导出的json数据不一致，具体实现有差异，但均能正常工作，前提是vertices与indices必须同一来源。
         const { vertices, indices } = (modelVertices && modelIndices)
             ? { vertices: modelVertices, indices: modelIndices }
-            : this.mergerMeshVertices(lowObject || graphic);
+            : this.getMeshVerticesAndIndices(lowObject || graphic);
 
         // modelVertices && modelIndices && console.log('使用内部数据构建TriangleMeshShape')
         // console.log('vertices', vertices.length);
@@ -264,39 +289,117 @@ export class RigidBodyUtil {
         shape.setLocalScaling(scaling)
         Ammo.destroy(scaling)
 
-        let bodyRb = this.createRigidBody(shape, mass, graphic.transform.worldPosition, graphic.localRotation)
+        let bodyRb = this.createRigidBody(shape, mass, graphic)
 
         return bodyRb
     }
 
     /**
-     * Creates a rigid body with specified properties.
-     * @param mass The mass of the rigid body, where 0 represents an immovable object.
-     * @param shape The collision shape of the body, defined as any valid Ammo physics shape.
-     * @param position The starting world position of the rigid body as a Vector3.
-     * @param rotation The initial rotation of the rigid body as a Vector3 or Quaternion. 注意图形引擎中设置欧拉角并不会同步更新旋转四元数的值
-     * @returns The newly created Ammo.btRigidBody object.
+     * 复合形状刚体，支持简单的几何形状组合 箱形、球形、胶囊形、圆柱形、圆锥形，半径参数使用 size.width
+     * @param graphic - 用于创建碰撞体的三维对象。
+     * @param mass - 碰撞体的质量。
+     * @param childShapes - 子形状数组。
+     * @returns Ammo.btRigidBod
      */
-    public static createRigidBody(shape: Ammo.btCollisionShape, mass: number, position: Vector3, rotation?: Vector3 | Quaternion): Ammo.btRigidBody {
-        const transform = Physics.TEMP_TRANSFORM;
-        transform.setIdentity();
+    public static compoundShapeRigidBody(graphic: Object3D, mass: number, childShapes: ChildShapes[]): Ammo.btRigidBody {
+        const compoundShape = new Ammo.btCompoundShape();
+        const btTransform = Physics.TEMP_TRANSFORM;
+        const position = new Ammo.btVector3()
+        const rotation = new Ammo.btQuaternion(0, 0, 0, 1)
+        const size = new Ammo.btVector3()
 
-        const origin = new Ammo.btVector3(position.x, position.y, position.z);
-        transform.setOrigin(origin);
-        Ammo.destroy(origin); // 立即销毁
+        childShapes.forEach(rb => {
+            let shape: Ammo.btCollisionShape
+            switch (rb.shape) {
+                case ShapeTypes.btBoxShape: // 箱形		
+                    size.setValue(rb.size.width, rb.size.height, rb.size.depth);
+                    shape = new Ammo.btBoxShape(size);
 
-        if (rotation) {
-            let rotQuat: Ammo.btQuaternion
-            if (rotation instanceof Vector3) {
-                Quaternion.HELP_0.fromEulerAngles(rotation.x, rotation.y, rotation.z);
-                rotQuat = new Ammo.btQuaternion(Quaternion.HELP_0.x, Quaternion.HELP_0.y, Quaternion.HELP_0.z, Quaternion.HELP_0.w);
-            } else {
-                rotQuat = new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+                    break;
+                case ShapeTypes.btSphereShape: // 球形
+                    shape = new Ammo.btSphereShape(rb.size.width);
+
+                    break;
+                case ShapeTypes.btCapsuleShape: // 胶囊形
+                    shape = new Ammo.btCapsuleShape(rb.size.width, rb.size.height)
+
+                    break;
+                case ShapeTypes.btCylinderShape: // 圆柱形
+                    size.setValue(rb.size.width, rb.size.height, rb.size.depth);
+                    shape = new Ammo.btCylinderShape(size);
+
+                    break;
+                case ShapeTypes.btConeShape: // 圆锥形
+                    shape = new Ammo.btConeShape(rb.size.width, rb.size.height)
+
+                    break;
+                default:
+                    console.warn('复合刚体 错误的子形状类型, 默认应用箱型');
+
+                    size.setValue(rb.size.width, rb.size.height, rb.size.depth);
+                    shape = new Ammo.btBoxShape(size);
             }
 
-            transform.setRotation(rotQuat);
-            Ammo.destroy(rotQuat); // 立即销毁
+            btTransform.setIdentity();
+
+            position.setValue(rb.position.x, rb.position.y, rb.position.z)
+            btTransform.setOrigin(position);
+
+            if (rb.rotation) {
+                rotation.setValue(rb.rotation.x, rb.rotation.y, rb.rotation.z, rb.rotation.w);
+                btTransform.setRotation(rotation);
+            }
+
+            compoundShape.addChildShape(btTransform, shape);
+
+            /* Visual object debug physicalVisualDebug */
+            let visualObject = Object3DUtil.GetSingleCube(rb.size.width * 2, rb.size.height * 2, rb.size.depth * 2, Math.random(), Math.random(), Math.random())
+            visualObject.transform.localPosition = new Vector3(rb.position.x, rb.position.y, rb.position.z)
+            if (rb.rotation) {
+                visualObject.transform.localRotQuat = new Quaternion(rb.rotation.x, rb.rotation.y, rb.rotation.z, rb.rotation.w)
+            }
+            graphic.addChild(visualObject)
+
+        })
+
+        Ammo.destroy(position);
+        Ammo.destroy(rotation);
+        Ammo.destroy(size);
+
+        let bodyRb = this.createRigidBody(compoundShape, mass, graphic)
+
+        return bodyRb
+    };
+
+    /**
+     * 创建刚体的通用方法
+     * @param shape 碰撞形状。
+     * @param mass 碰撞体的质量。
+     * @param graphic 图形对象。
+     * @param position 可选，刚体的位置，默认使用图形对象的位置
+     * @param rotation 可选，刚体的旋转，默认使用图形对象的欧拉角旋转。注意图形引擎中设置对象的欧拉角并不会同步更新旋转四元数的值。
+     * @returns 新创建的 Ammo.btRigidBody 对象。
+     */
+    public static createRigidBody(shape: Ammo.btCollisionShape, mass: number, graphic: Object3D, position?: Vector3, rotation?: Vector3 | Quaternion): Ammo.btRigidBody {
+        position ||= graphic.localPosition;
+        rotation ||= graphic.localRotation;
+
+        const transform = Physics.TEMP_TRANSFORM;
+        transform.setIdentity();
+        const origin = new Ammo.btVector3(position.x, position.y, position.z);
+        transform.setOrigin(origin);
+        Ammo.destroy(origin);
+
+        let rotQuat: Ammo.btQuaternion
+        if (rotation instanceof Vector3) {
+            Quaternion.HELP_0.fromEulerAngles(rotation.x, rotation.y, rotation.z);
+            rotQuat = new Ammo.btQuaternion(Quaternion.HELP_0.x, Quaternion.HELP_0.y, Quaternion.HELP_0.z, Quaternion.HELP_0.w);
+        } else {
+            rotQuat = new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w);
         }
+
+        transform.setRotation(rotQuat);
+        Ammo.destroy(rotQuat);
 
         const motionState = new Ammo.btDefaultMotionState(transform);
         const localInertia = new Ammo.btVector3(0, 0, 0);
@@ -307,9 +410,10 @@ export class RigidBodyUtil {
         const rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
         const bodyRb = new Ammo.btRigidBody(rbInfo);
 
-        // 清理不再需要的实例
         Ammo.destroy(localInertia);
 
+        // 映射图形与物理对象
+        rigidBodyMapping.addMapping(graphic, bodyRb)
 
         // bodyRb.setFriction(1.0);  // 高摩擦系数以防止滑动
         // bodyRb.setRestitution(0.0);  // 低恢复系数以减少弹跳
@@ -317,11 +421,11 @@ export class RigidBodyUtil {
     }
 
     /**
-     * 合并3D对象的所有网格顶点
+     * 获取3D对象的所有网格顶点与索引
      * @param graphic
      * @returns vertex data and  indices data
      */
-    protected static mergerMeshVertices(graphic: Object3D): { vertices: Float32Array, indices: Uint16Array } {
+    protected static getMeshVerticesAndIndices(graphic: Object3D): { vertices: Float32Array, indices: Uint16Array } {
         let mr = graphic.getComponents(MeshRenderer);
 
         if (mr.length === 1) {
@@ -365,62 +469,7 @@ export class RigidBodyUtil {
     }
 
     /**
-     * Create a composite rigid body
-     * @param graphic Graphic Object
-     * @param mass The total mass of the rigid body
-     * @param compoundShapeData  Data required for compound rigid body
-     */
-    public static createCompoundRigidBody(graphic: Object3D, mass: number, compoundShapeData: RigidBodyData[]): Ammo.btRigidBody {
-        const compoundShape = new Ammo.btCompoundShape();
-        const btTransform = Physics.TEMP_TRANSFORM;
-
-        compoundShapeData.forEach(rb => {
-            let shape: Ammo.btCollisionShape
-            if (rb.type === 'Circle') {
-                shape = new Ammo.btCapsuleShape(rb.size.width, rb.size.height);
-            } else {
-                let boxSize = new Ammo.btVector3(rb.size.width, rb.size.height, rb.size.depth);
-                shape = new Ammo.btBoxShape(boxSize);
-                Ammo.destroy(boxSize); // 立即销毁
-            }
-
-            btTransform.setIdentity();
-
-            let origin = new Ammo.btVector3(rb.position.x, rb.position.y, rb.position.z)
-            btTransform.setOrigin(origin);
-            Ammo.destroy(origin)
-
-            if (rb.rotation) {
-                const rotation = new Ammo.btQuaternion(rb.rotation.x, rb.rotation.y, rb.rotation.z, rb.rotation.w);
-                btTransform.setRotation(rotation);
-                Ammo.destroy(rotation); // 立即销毁
-            }
-
-            compoundShape.addChildShape(btTransform, shape);
-
-            /* Visual object debug physicalVisualDebug */
-
-            let visualObject = Object3DUtil.GetSingleCube(rb.size.width * 2, rb.size.height * 2, rb.size.depth * 2, Math.random(), Math.random(), Math.random())
-            visualObject.transform.localPosition = new Vector3(rb.position.x, rb.position.y, rb.position.z)
-            if (rb.rotation) {
-                visualObject.transform.localRotQuat = new Quaternion(rb.rotation.x, rb.rotation.y, rb.rotation.z, rb.rotation.w)
-            }
-            graphic.addChild(visualObject)
-
-        })
-
-        // 1*1*1 box test Visual object debug
-        // let visualObject = Object3DUtil.GetSingleCube(1, 1, 1, Math.random(), Math.random(), Math.random())
-        // visualObject.transform.localPosition = new Vector3(4, 3.5, 0)
-        // graphic.addChild(visualObject)
-
-        let bodyRb = this.createRigidBody(compoundShape, mass, graphic.transform.worldPosition, graphic.localRotation)
-
-        return bodyRb
-    };
-
-    /**
-     * Create a hollow composite shape.
+     * 空心复合形状
      * 相同的参数应用在不同的空心轴上可能会有意外结果，先确定轴向再指定空心区域的大小与偏移。
      * @param outsideSize 
      * @param insideSize 
@@ -428,25 +477,23 @@ export class RigidBodyUtil {
      * @param hollowAxis Specifies the axis along which the hollow section runs: 'X' for left-to-right, 'Y' for top-to-bottom, 'Z' for front-to-back, Defaults to Y.
      * @returns Shapes data
      */
-    public static createHollowShapes(
+    public static generatesHollowShapes(
         outsideSize: Vector3,
         insideSize: Vector3,
         offset: Vector3 = Vector3.ZERO,
         hollowAxis: 'X' | 'Y' | 'Z' = 'Y',
 
-    ): RigidBodyData[] {
+    ): ChildShapes[] {
 
-        let shapesInfo: RigidBodyData[]
+        let shapesInfo: ChildShapes[]
 
-        let { x: outsideWidth, y: outsideHeight, z: outsideDepth } = outsideSize.scaleBy(0.5)
-        let { x: insideWidth, y: insideHeight, z: insideDepth } = insideSize.scaleBy(0.5)
-        let { x: insideOffsetX, y: insideOffsetY, z: insideOffsetZ } = offset.scaleBy(0.5)
+        let { x: outsideWidth, y: outsideHeight, z: outsideDepth } = outsideSize.mul(0.5);
+        let { x: insideWidth, y: insideHeight, z: insideDepth } = insideSize.mul(0.5);
+        let { x: insideOffsetX, y: insideOffsetY, z: insideOffsetZ } = offset.mul(0.5);
 
-        outsideSize = insideSize = offset = null
-
-        insideWidth = Math.min(insideWidth, outsideWidth - 0.01)
-        insideHeight = Math.min(insideHeight, outsideHeight - 0.01)
-        insideDepth = Math.min(insideDepth, outsideDepth - 0.01)
+        insideWidth = Math.min(insideWidth, outsideWidth - 0.01);
+        insideHeight = Math.min(insideHeight, outsideHeight - 0.01);
+        insideDepth = Math.min(insideDepth, outsideDepth - 0.01);
 
         insideOffsetX = insideOffsetX > 0 ? Math.min(outsideWidth - insideWidth, insideOffsetX) : Math.max(insideWidth - outsideWidth, insideOffsetX)
         insideOffsetY = insideOffsetY > 0 ? Math.min(outsideHeight - insideHeight, insideOffsetY) : Math.max(insideHeight - outsideHeight, insideOffsetY)
@@ -601,22 +648,40 @@ export class RigidBodyUtil {
     }
 
     /**
+     * 激活所有动态刚体
+     */
+    public static activateAllKinematicObject() {
+        rigidBodyMapping.getAllPhysicsObjectMap.forEach((graphic, rigidBody) => {
+            // 检查是否是动态刚体
+            if (!rigidBody.isStaticObject() && !rigidBody.isKinematicObject()) {
+                rigidBody.activate();
+            }
+        })
+    }
+
+    /**
      * Reset the rigid body transform
      * @param bodyRb rigid body
      * @param newPosition
      * @param newRotation
      */
-    public static resetRigidBody(bodyRb: Ammo.btRigidBody, newPosition: Vector3, newRotation: Quaternion = Quaternion._zero): void {
+    public static resetRigidBody(bodyRb: Ammo.btRigidBody, newPosition: Vector3, newRotation: Vector3 | Quaternion = Quaternion._zero): void {
         const transform = Physics.TEMP_TRANSFORM;
         transform.setIdentity();  // 确保变换被重置
 
         // 创建位置和旋转的向量和四元数
         const origin = new Ammo.btVector3(newPosition.x, newPosition.y, newPosition.z);
-        const rotation = new Ammo.btQuaternion(newRotation.x, newRotation.y, newRotation.z, newRotation.w);
+        let rotQuat: Ammo.btQuaternion
+        if (newRotation instanceof Vector3) {
+            Quaternion.HELP_0.fromEulerAngles(newRotation.x, newRotation.y, newRotation.z);
+            rotQuat = new Ammo.btQuaternion(Quaternion.HELP_0.x, Quaternion.HELP_0.y, Quaternion.HELP_0.z, Quaternion.HELP_0.w);
+        } else {
+            rotQuat = new Ammo.btQuaternion(newRotation.x, newRotation.y, newRotation.z, newRotation.w);
+        }
 
         // 设置刚体的新变换
         transform.setOrigin(origin);
-        transform.setRotation(rotation);
+        transform.setRotation(rotQuat);
         bodyRb.setWorldTransform(transform);
 
         // 清除力和速度
@@ -627,16 +692,18 @@ export class RigidBodyUtil {
 
         // 销毁创建的Ammo对象
         Ammo.destroy(origin);
-        Ammo.destroy(rotation);
+        Ammo.destroy(rotQuat);
         Ammo.destroy(zeroVelocity);
     }
-
 
     /**
      * Destroy the rigid body 
      * @param bodyRb Rigid body
      */
     public static destroyRigidBody(bodyRb: Ammo.btRigidBody): void {
+        // 移除映射
+        rigidBodyMapping.removeMappingByPhysics(bodyRb);
+
         Physics.world.removeRigidBody(bodyRb);
         Ammo.destroy(bodyRb.getCollisionShape());
         Ammo.destroy(bodyRb.getMotionState());
