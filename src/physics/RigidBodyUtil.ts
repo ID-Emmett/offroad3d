@@ -1,8 +1,5 @@
 import { Object3D, BoundUtil, Vector3, Quaternion, Object3DUtil, MeshRenderer, VertexAttributeName, PlaneGeometry, type ArrayBufferData } from '@orillusion/core';
-
-import { Ammo, Physics } from '@orillusion/physics';
-
-import { type ChildShapes, ShapeTypes, rigidBodyMapping } from './index';
+import { Physics, Ammo, PhysicsMathUtil, ShapeTypes, type ChildShapes } from '.';
 
 /* 对于图形与物理对象的同步问题，以下有三种解决方案 （ori中应该是第一种）*/
 
@@ -28,6 +25,7 @@ import { type ChildShapes, ShapeTypes, rigidBodyMapping } from './index';
 
 /**
  * 刚体工具
+ * 提供一系列刚体功能，包括创建刚体，创建多种碰撞体，重置刚体，销毁刚体，激活全部动态刚体等功能
  */
 export class RigidBodyUtil {
     /**
@@ -35,23 +33,20 @@ export class RigidBodyUtil {
      */
     public static staticPlaneShapeRigidBody(graphic: Object3D, mass: number, planeNormal: Vector3 = Vector3.UP, planeConstant: number = 0) {
 
-        const normal = new Ammo.btVector3(planeNormal.x, planeNormal.y, planeNormal.z);
-
+        const normal = PhysicsMathUtil.toBtVector3(planeNormal);
         const shape = new Ammo.btStaticPlaneShape(normal, planeConstant);
-
-        Ammo.destroy(normal)
 
         return this.createRigidBody(shape, mass, graphic);
     }
+
     /**
      * 盒型碰撞体，未指定尺寸时默认使用包围盒大小，使用包围盒时需要禁止应用旋转，否则包围盒尺寸数据将无法准确匹配
      */
     public static boxShapeRigidBody(graphic: Object3D, mass: number, size?: Vector3) {
         size ||= BoundUtil.genMeshBounds(graphic).size;
 
-        const halfExtents = new Ammo.btVector3(size.x / 2, size.y / 2, size.z / 2);
+        const halfExtents = PhysicsMathUtil.setBtVector3(size.x / 2, size.y / 2, size.z / 2);
         let shape = new Ammo.btBoxShape(halfExtents);
-        Ammo.destroy(halfExtents)
 
         return this.createRigidBody(shape, mass, graphic)
     }
@@ -103,12 +98,11 @@ export class RigidBodyUtil {
         radius ||= boundSize.x / 2;
         height ||= boundSize.y;
 
-        const halfExtents = new Ammo.btVector3(radius, height / 2, radius);
+        const halfExtents = PhysicsMathUtil.setBtVector3(radius, height / 2, radius);
 
         // graphic.addChild(Object3DUtil.GetSingleCube(radius, height / 2, radius, 1, 1, 1))
 
         let shape = new Ammo.btCylinderShape(halfExtents);
-        Ammo.destroy(halfExtents)
 
         return this.createRigidBody(shape, mass, graphic)
     }
@@ -194,9 +188,8 @@ export class RigidBodyUtil {
         terrainShape.setMargin(0.04); // 碰撞边距
 
         // 设置地形的实际尺寸
-        let localScaling = new Ammo.btVector3(width / segmentW, 1, height / segmentH);
+        let localScaling = PhysicsMathUtil.setBtVector3(width / segmentW, 1, height / segmentH);
         terrainShape.setLocalScaling(localScaling);
-        Ammo.destroy(localScaling);
 
         // 设置位置
         let averageHeight = (minHeight + maxHeight) / 2;
@@ -223,17 +216,18 @@ export class RigidBodyUtil {
      */
     public static convexHullShapeRigidBody(graphic: Object3D, mass: number = 0, modelVertices: Float32Array = null, lowObject: Object3D = null) {
 
-        let vertices = modelVertices || this.getMeshVerticesAndIndices(lowObject || graphic).vertices
+        let vertices = modelVertices || this.getAllMeshVerticesAndIndices(lowObject || graphic).vertices
 
         // console.log(vertices);
 
         let convexHullShape = new Ammo.btConvexHullShape();
-        let point = new Ammo.btVector3();
         for (let i = 0, count = vertices.length / 3; i < count; i++) {
-            point.setValue(vertices[3 * i], vertices[3 * i + 1], vertices[3 * i + 2]);
+            let point = PhysicsMathUtil.setBtVector3(vertices[3 * i], vertices[3 * i + 1], vertices[3 * i + 2])
             convexHullShape.addPoint(point, true);
         }
-        Ammo.destroy(point);
+        // 处理缩放
+        let scaling = PhysicsMathUtil.toBtVector3(graphic.localScale)
+        convexHullShape.setLocalScaling(scaling)
 
         return this.createRigidBody(convexHullShape, mass, graphic)
     }
@@ -251,7 +245,7 @@ export class RigidBodyUtil {
         // orillusion图形引擎中解析的模型顶点与索引值与blender脚本导出的json数据不一致，具体实现有差异，但均能正常工作，前提是vertices与indices必须同一来源。
         const { vertices, indices } = (modelVertices && modelIndices)
             ? { vertices: modelVertices, indices: modelIndices }
-            : this.getMeshVerticesAndIndices(lowObject || graphic);
+            : this.getAllMeshVerticesAndIndices(lowObject || graphic);
 
         // modelVertices && modelIndices && console.log('使用内部数据构建TriangleMeshShape')
         // console.log('vertices', vertices.length);
@@ -260,24 +254,16 @@ export class RigidBodyUtil {
         let triangleMesh = new Ammo.btTriangleMesh();
 
         // 每三个索引形成一个三角形，必须依赖indices数据
-        {
-            let v0 = new Ammo.btVector3();
-            let v1 = new Ammo.btVector3();
-            let v2 = new Ammo.btVector3();
-            for (let i = 0; i < indices.length; i += 3) {
-                const index1 = indices[i] * 3;
-                const index2 = indices[i + 1] * 3;
-                const index3 = indices[i + 2] * 3;
+        for (let i = 0; i < indices.length; i += 3) {
+            const index0 = indices[i] * 3;
+            const index1 = indices[i + 1] * 3;
+            const index2 = indices[i + 2] * 3;
 
-                v0.setValue(vertices[index1], vertices[index1 + 1], vertices[index1 + 2]);
-                v1.setValue(vertices[index2], vertices[index2 + 1], vertices[index2 + 2]);
-                v2.setValue(vertices[index3], vertices[index3 + 1], vertices[index3 + 2]);
+            const v0 = PhysicsMathUtil.setBtVector3(vertices[index0], vertices[index0 + 1], vertices[index0 + 2], PhysicsMathUtil.tmpVecA)
+            const v1 = PhysicsMathUtil.setBtVector3(vertices[index1], vertices[index1 + 1], vertices[index1 + 2], PhysicsMathUtil.tmpVecB)
+            const v2 = PhysicsMathUtil.setBtVector3(vertices[index2], vertices[index2 + 1], vertices[index2 + 2], PhysicsMathUtil.tmpVecC)
 
-                triangleMesh.addTriangle(v0, v1, v2, true);
-            }
-            Ammo.destroy(v0);
-            Ammo.destroy(v1);
-            Ammo.destroy(v2);
+            triangleMesh.addTriangle(v0, v1, v2, true);
         }
 
         // 启用 AABB 树的量化压缩 为 true 可以提高性能，尤其是在处理大型或复杂的网格时可以更快地处理碰撞检测，但精准度可能会有略微影响。
@@ -285,9 +271,8 @@ export class RigidBodyUtil {
         let shape = new Ammo.btBvhTriangleMeshShape(triangleMesh, useQuantizedAabbCompression, true);
 
         // 应用缩放，无法处理建模软件中设定的缩放，仅支持图形引擎应用的缩放，最佳实践中导出模型缩放应默认为 1 ，通过全选crtl+A应用全部变换，缩放变换由图形引擎控制。
-        let scaling = new Ammo.btVector3(graphic.scaleX, graphic.scaleY, graphic.scaleZ)
+        let scaling = PhysicsMathUtil.toBtVector3(graphic.localScale)
         shape.setLocalScaling(scaling)
-        Ammo.destroy(scaling)
 
         let bodyRb = this.createRigidBody(shape, mass, graphic)
 
@@ -304,16 +289,12 @@ export class RigidBodyUtil {
     public static compoundShapeRigidBody(graphic: Object3D, mass: number, childShapes: ChildShapes[]): Ammo.btRigidBody {
         const compoundShape = new Ammo.btCompoundShape();
         const btTransform = Physics.TEMP_TRANSFORM;
-        const position = new Ammo.btVector3()
-        const rotation = new Ammo.btQuaternion(0, 0, 0, 1)
-        const size = new Ammo.btVector3()
 
         childShapes.forEach(rb => {
             let shape: Ammo.btCollisionShape
             switch (rb.shape) {
                 case ShapeTypes.btBoxShape: // 箱形		
-                    size.setValue(rb.size.width, rb.size.height, rb.size.depth);
-                    shape = new Ammo.btBoxShape(size);
+                    shape = new Ammo.btBoxShape(PhysicsMathUtil.setBtVector3(rb.size.width, rb.size.height, rb.size.depth));
 
                     break;
                 case ShapeTypes.btSphereShape: // 球形
@@ -325,28 +306,26 @@ export class RigidBodyUtil {
 
                     break;
                 case ShapeTypes.btCylinderShape: // 圆柱形
-                    size.setValue(rb.size.width, rb.size.height, rb.size.depth);
-                    shape = new Ammo.btCylinderShape(size);
+                    shape = new Ammo.btCylinderShape(PhysicsMathUtil.setBtVector3(rb.size.width, rb.size.height, rb.size.depth));
 
                     break;
                 case ShapeTypes.btConeShape: // 圆锥形
                     shape = new Ammo.btConeShape(rb.size.width, rb.size.height)
 
                     break;
-                default:
+                default:  // 默认 箱形
                     console.warn('复合刚体 错误的子形状类型, 默认应用箱型');
-
-                    size.setValue(rb.size.width, rb.size.height, rb.size.depth);
-                    shape = new Ammo.btBoxShape(size);
+                    shape = new Ammo.btBoxShape(PhysicsMathUtil.setBtVector3(rb.size.width, rb.size.height, rb.size.depth));
             }
 
             btTransform.setIdentity();
 
-            position.setValue(rb.position.x, rb.position.y, rb.position.z)
+            let position = PhysicsMathUtil.setBtVector3(rb.position.x, rb.position.y, rb.position.z)
             btTransform.setOrigin(position);
 
             if (rb.rotation) {
-                rotation.setValue(rb.rotation.x, rb.rotation.y, rb.rotation.z, rb.rotation.w);
+                Quaternion.HELP_0.set(rb.rotation.x, rb.rotation.y, rb.rotation.z, rb.rotation.w)
+                let rotation = PhysicsMathUtil.toBtQuaternion(Quaternion.HELP_0)
                 btTransform.setRotation(rotation);
             }
 
@@ -361,10 +340,6 @@ export class RigidBodyUtil {
             graphic.addChild(visualObject)
 
         })
-
-        Ammo.destroy(position);
-        Ammo.destroy(rotation);
-        Ammo.destroy(size);
 
         let bodyRb = this.createRigidBody(compoundShape, mass, graphic)
 
@@ -381,28 +356,29 @@ export class RigidBodyUtil {
      * @returns 新创建的 Ammo.btRigidBody 对象。
      */
     public static createRigidBody(shape: Ammo.btCollisionShape, mass: number, graphic: Object3D, position?: Vector3, rotation?: Vector3 | Quaternion): Ammo.btRigidBody {
+
+        shape.setMargin(0.05)
+
         position ||= graphic.localPosition;
         rotation ||= graphic.localRotation;
+        
 
         const transform = Physics.TEMP_TRANSFORM;
         transform.setIdentity();
-        const origin = new Ammo.btVector3(position.x, position.y, position.z);
-        transform.setOrigin(origin);
-        Ammo.destroy(origin);
 
-        let rotQuat: Ammo.btQuaternion
-        if (rotation instanceof Vector3) {
-            Quaternion.HELP_0.fromEulerAngles(rotation.x, rotation.y, rotation.z);
-            rotQuat = new Ammo.btQuaternion(Quaternion.HELP_0.x, Quaternion.HELP_0.y, Quaternion.HELP_0.z, Quaternion.HELP_0.w);
-        } else {
-            rotQuat = new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w);
-        }
+        // 设置位置
+        const origin = PhysicsMathUtil.toBtVector3(position);
+        transform.setOrigin(origin);
+
+        // 设置旋转
+        let rotQuat = (rotation instanceof Vector3)
+            ? PhysicsMathUtil.toBtQuaternion(Quaternion.HELP_0.fromEulerAngles(rotation.x, rotation.y, rotation.z)) // 欧拉角转四元数
+            : PhysicsMathUtil.toBtQuaternion(rotation); // 直接应用四元数
 
         transform.setRotation(rotQuat);
-        Ammo.destroy(rotQuat);
 
         const motionState = new Ammo.btDefaultMotionState(transform);
-        const localInertia = new Ammo.btVector3(0, 0, 0);
+        const localInertia = PhysicsMathUtil.setBtVector3(0, 0, 0);
         if (mass !== 0) {
             shape.calculateLocalInertia(mass, localInertia);
         }
@@ -410,10 +386,8 @@ export class RigidBodyUtil {
         const rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
         const bodyRb = new Ammo.btRigidBody(rbInfo);
 
-        Ammo.destroy(localInertia);
-
         // 映射图形与物理对象
-        rigidBodyMapping.addMapping(graphic, bodyRb)
+        Physics.rigidBodyMapping.addMapping(graphic, bodyRb)
 
         // bodyRb.setFriction(1.0);  // 高摩擦系数以防止滑动
         // bodyRb.setRestitution(0.0);  // 低恢复系数以减少弹跳
@@ -425,7 +399,7 @@ export class RigidBodyUtil {
      * @param graphic
      * @returns vertex data and  indices data
      */
-    protected static getMeshVerticesAndIndices(graphic: Object3D): { vertices: Float32Array, indices: Uint16Array } {
+    public static getAllMeshVerticesAndIndices(graphic: Object3D): { vertices: Float32Array, indices: Uint16Array } {
         let mr = graphic.getComponents(MeshRenderer);
 
         if (mr.length === 1) {
@@ -651,7 +625,7 @@ export class RigidBodyUtil {
      * 激活所有动态刚体
      */
     public static activateAllKinematicObject() {
-        rigidBodyMapping.getAllPhysicsObjectMap.forEach((graphic, rigidBody) => {
+        Physics.rigidBodyMapping.getAllPhysicsObjectMap.forEach((graphic, rigidBody) => {
             // 检查是否是动态刚体
             if (!rigidBody.isStaticObject() && !rigidBody.isKinematicObject()) {
                 rigidBody.activate();
@@ -660,40 +634,30 @@ export class RigidBodyUtil {
     }
 
     /**
-     * Reset the rigid body transform
-     * @param bodyRb rigid body
-     * @param newPosition
-     * @param newRotation
+     * 重置刚体位置和旋转
      */
     public static resetRigidBody(bodyRb: Ammo.btRigidBody, newPosition: Vector3, newRotation: Vector3 | Quaternion = Quaternion._zero): void {
         const transform = Physics.TEMP_TRANSFORM;
         transform.setIdentity();  // 确保变换被重置
 
-        // 创建位置和旋转的向量和四元数
-        const origin = new Ammo.btVector3(newPosition.x, newPosition.y, newPosition.z);
-        let rotQuat: Ammo.btQuaternion
-        if (newRotation instanceof Vector3) {
-            Quaternion.HELP_0.fromEulerAngles(newRotation.x, newRotation.y, newRotation.z);
-            rotQuat = new Ammo.btQuaternion(Quaternion.HELP_0.x, Quaternion.HELP_0.y, Quaternion.HELP_0.z, Quaternion.HELP_0.w);
-        } else {
-            rotQuat = new Ammo.btQuaternion(newRotation.x, newRotation.y, newRotation.z, newRotation.w);
-        }
+        // 设置位置
+        const origin = PhysicsMathUtil.toBtVector3(newPosition);
+        transform.setOrigin(origin);
+
+        // 设置旋转
+        let rotQuat = (newRotation instanceof Vector3)
+            ? PhysicsMathUtil.toBtQuaternion(Quaternion.HELP_0.fromEulerAngles(newRotation.x, newRotation.y, newRotation.z)) // 欧拉角转四元数
+            : PhysicsMathUtil.toBtQuaternion(newRotation); // 直接应用四元数
+
+        transform.setRotation(rotQuat);
 
         // 设置刚体的新变换
-        transform.setOrigin(origin);
-        transform.setRotation(rotQuat);
         bodyRb.setWorldTransform(transform);
 
         // 清除力和速度
         bodyRb.clearForces();
-        const zeroVelocity = new Ammo.btVector3(0, 0, 0);
-        bodyRb.setLinearVelocity(zeroVelocity);
-        bodyRb.setAngularVelocity(zeroVelocity);
-
-        // 销毁创建的Ammo对象
-        Ammo.destroy(origin);
-        Ammo.destroy(rotQuat);
-        Ammo.destroy(zeroVelocity);
+        bodyRb.setLinearVelocity(PhysicsMathUtil.setBtVector3(0, 0, 0));
+        bodyRb.setAngularVelocity(PhysicsMathUtil.setBtVector3(0, 0, 0));
     }
 
     /**
@@ -702,7 +666,7 @@ export class RigidBodyUtil {
      */
     public static destroyRigidBody(bodyRb: Ammo.btRigidBody): void {
         // 移除映射
-        rigidBodyMapping.removeMappingByPhysics(bodyRb);
+        Physics.rigidBodyMapping.removeMappingByPhysics(bodyRb);
 
         Physics.world.removeRigidBody(bodyRb);
         Ammo.destroy(bodyRb.getCollisionShape());
@@ -726,5 +690,39 @@ export class RigidBodyUtil {
 
         if (graphic?.data?.bodyRbConstraint) graphic.data.bodyRbConstraint = null
 
+    }
+
+    /**
+     * 添加铰链约束
+     */
+    public static addHingeConstraint(bodyA: Ammo.btRigidBody, bodyB: Ammo.btRigidBody, pivotA: Vector3, pivotB: Vector3, axisA: Vector3, axisB: Vector3): Ammo.btHingeConstraint {
+        const btPivotA = new Ammo.btVector3(pivotA.x, pivotA.y, pivotA.z);
+        const btPivotB = new Ammo.btVector3(pivotB.x, pivotB.y, pivotB.z);
+        const btAxisA = new Ammo.btVector3(axisA.x, axisA.y, axisA.z);
+        const btAxisB = new Ammo.btVector3(axisB.x, axisB.y, axisB.z);
+        const constraint = new Ammo.btHingeConstraint(bodyA, bodyB, btPivotA, btPivotB, btAxisA, btAxisB);
+        Physics.world.addConstraint(constraint, true);
+        Ammo.destroy(btPivotA);
+        Ammo.destroy(btPivotB);
+        Ammo.destroy(btAxisA);
+        Ammo.destroy(btAxisB);
+        return constraint;
+    }
+
+    /**
+     * 碰撞检测
+     */
+    public static checkCollision(bodyA: Ammo.btRigidBody, bodyB: Ammo.btRigidBody): boolean {
+        const dispatcher = Physics.world.getDispatcher();
+        const manifoldCount = dispatcher.getNumManifolds();
+        for (let i = 0; i < manifoldCount; i++) {
+            const manifold = dispatcher.getManifoldByIndexInternal(i);
+            const rbA = Ammo.castObject(manifold.getBody0(), Ammo.btRigidBody);
+            const rbB = Ammo.castObject(manifold.getBody1(), Ammo.btRigidBody);
+            if ((rbA === bodyA && rbB === bodyB) || (rbA === bodyB && rbB === bodyA)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

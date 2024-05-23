@@ -1,13 +1,12 @@
 import { Vector3, BoxColliderShape, CapsuleColliderShape, ColliderComponent, ComponentBase, MeshColliderShape, Quaternion, SphereColliderShape, Vector2, Object3D } from '@orillusion/core'
-import { Ammo, Physics, Rigidbody } from "@orillusion/physics";
-import { CollisionFlags, ActivationState, ShapeTypes, RigidBodyUtil, CollisionGroup, CollisionMask, type ChildShapes } from './index'
+import { CollisionFlags, ActivationState, ShapeTypes, RigidBodyUtil, CollisionGroup, CollisionMask, type ChildShapes, PhysicsMathUtil, Ammo, Physics } from '.'
 
 /**
  * Rigidbody Component
  * 扩展，支持更多碰撞体类型，优化更新管理等
  * @group Components
  */
-export class AmmoRigidBody extends ComponentBase {
+export class RigidBodyComponent extends ComponentBase {
     private _mass: number = 0;
     private _velocity: Vector3 = new Vector3();
     private _angularVelocity: Vector3 = new Vector3();
@@ -18,11 +17,11 @@ export class AmmoRigidBody extends ComponentBase {
     private _isTrigger: boolean = false;
     private _btRigidbody: Ammo.btRigidBody;
     private _btRigidbodyInited: boolean = false;
-    private _friction: number = 0.6;
-    private _rollingFriction: number = 0.1;
-    private _restitution: number = 0.8
+    private _friction: number; // 0.6
+    private _rollingFriction: number; // 0.1
+    private _restitution: number // 0.8
 
-    private _damping: Vector2 = new Vector2(0.1, 0.1);
+    private _damping: Vector2 = null; // new Vector2(0.1, 0.1)
     private _activationState: ActivationState;
     private _collisionFlags: CollisionFlags;
 
@@ -174,12 +173,12 @@ export class AmmoRigidBody extends ComponentBase {
     }
 
     private initRigidbody(): void {
-        if (Number.isNaN(this.transform.worldPosition.x) || Number.isNaN(this.transform.worldPosition.y) || Number.isNaN(this.transform.worldPosition.z)) {
-            console.warn('位置错误');
-            console.log(this.transform.worldPosition);
-        }
+        // if (Number.isNaN(this.transform.worldPosition.x) || Number.isNaN(this.transform.worldPosition.y) || Number.isNaN(this.transform.worldPosition.z)) {
+        //     console.warn('位置错误');
+        //     console.log(this.transform.worldPosition);
+        // }
 
-        this.addAmmoRigidbody();
+        this.addRigidBodyComponent();
 
         for (let i = 0; i < this._initedFunctions.length; i++) {
             let fun = this._initedFunctions[i];
@@ -188,7 +187,7 @@ export class AmmoRigidBody extends ComponentBase {
         this._btRigidbodyInited = true;
     }
 
-    private addAmmoRigidbody(): void {
+    private addRigidBodyComponent(): void {
         switch (this.shape) {
             case ShapeTypes.btStaticPlaneShape: // 平面
                 this._btRigidbody = RigidBodyUtil.staticPlaneShapeRigidBody(this.object3D, this.mass, this.planeNormal, this.planeConstant);
@@ -236,9 +235,9 @@ export class AmmoRigidBody extends ComponentBase {
                 this._btRigidbody = RigidBodyUtil.createRigidBody(shape, this.mass, this.object3D)
         }
 
-        this._btRigidbody.setRestitution(this.restitution);
-        this._btRigidbody.setFriction(this.friction);
-        this._btRigidbody.setRollingFriction(this.rollingFriction);
+        this.restitution && this._btRigidbody.setRestitution(this.restitution);
+        this.friction && this._btRigidbody.setFriction(this.friction);
+        this.rollingFriction && this._btRigidbody.setRollingFriction(this.rollingFriction);
         this.userIndex && this._btRigidbody.setUserIndex(this.userIndex);
         this.damping && this._btRigidbody.setDamping(this.damping.x, this.damping.y);
         this.activationState && this._btRigidbody.setActivationState(this.activationState);
@@ -268,7 +267,7 @@ export class AmmoRigidBody extends ComponentBase {
             let shape: Ammo.btCollisionShape;
 
             if (colliderShape instanceof BoxColliderShape) {
-                shape = new Ammo.btBoxShape(new Ammo.btVector3(colliderShape.halfSize.x, colliderShape.halfSize.y, colliderShape.halfSize.z));
+                shape = new Ammo.btBoxShape(PhysicsMathUtil.toBtVector3(colliderShape.halfSize));
             } else if (colliderShape instanceof CapsuleColliderShape) {
                 shape = new Ammo.btCapsuleShape(colliderShape.radius, colliderShape.height);
             } else if (colliderShape instanceof MeshColliderShape) {
@@ -330,7 +329,7 @@ export class AmmoRigidBody extends ComponentBase {
 
             this.transform.localRotQuat = Quaternion.HELP_0;
 
-            Physics.checkBound(this as unknown as Rigidbody);
+            Physics.checkBound(this);
         }
     }
 
@@ -348,7 +347,7 @@ export class AmmoRigidBody extends ComponentBase {
     }
 
     public destroy(force?: boolean): void {
-        console.log('AmmoRigidBody Component Destroy');
+        console.log('RigidBodyComponent Component Destroy');
 
         RigidBodyUtil.destroyRigidBody(this._btRigidbody)
 
@@ -372,7 +371,7 @@ export class AmmoRigidBody extends ComponentBase {
         if (this._btRigidbody) {
 
             Physics.world.removeRigidBody(this._btRigidbody);
-            this.addAmmoRigidbody();
+            this.addRigidBodyComponent();
             // console.log("setMassProps", "mass: " + value, "flag: " + this._btRigidbody.getCollisionFlags());
             // this._btRigidbody.setMassProps(value, new Ammo.btVector3(0, 0, 0));
             // this._btRigidbody.setCollisionFlags(this._btRigidbody.getCollisionFlags());
@@ -395,7 +394,7 @@ export class AmmoRigidBody extends ComponentBase {
     public set velocity(value: Vector3) {
         this._velocity = value.clone();
         if (this._btRigidbody) {
-            this._btRigidbody.applyForce(new Ammo.btVector3(value.x, value.y, value.z), new Ammo.btVector3(0, 0, 0));
+            this._btRigidbody.applyForce(PhysicsMathUtil.toBtVector3(value), PhysicsMathUtil.setBtVector3(0, 0, 0));
         }
     }
     /**

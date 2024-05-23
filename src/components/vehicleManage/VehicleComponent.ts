@@ -1,9 +1,10 @@
-import { ComponentBase, Engine3D, Object3D, Vector2, Vector3 } from '@orillusion/core'
-import { AmmoRigidBody, CollisionFlags, ActivationState, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil } from "@/physics";
-import { VehicleControl, VehicleType } from './index'
+import { ComponentBase, Engine3D, Object3D, Vector2, Vector3, View3D } from '@orillusion/core'
+import { RigidBodyComponent, CollisionFlags, ActivationState, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil, Physics, Ammo, PhysicsMathUtil } from "@/physics";
+import { VehicleControl, VehicleType } from '.'
 import { GUIUtil } from '@/utils/GUIUtil'
 import { HoverCameraController } from '../cameraController';
 
+import { VehicleCollisionHandler, vehicleRigidBodies } from './VehicleCollisionHandler';
 /**
  * 载具组件
  */
@@ -50,12 +51,185 @@ export class VehicleComponent extends ComponentBase {
 
     async start() {
         await this.initVehicle()
+        // 碰撞事件
+        this.registerCollisionHandling()
 
         for (let i = 0; i < this._initedFunctions.length; i++) {
             let fun = this._initedFunctions[i];
             fun.fun.call(fun.thisObj, this.vehicle);
         }
+
+        this.debug()
     }
+
+    private registerCollisionHandling() {
+        const contactProcessedCallback = function (cpPtr: number, colObj0WrapPtr: number, colObj1WrapPtr: number) {
+            // 打印原始指针值
+            // console.log('Raw pointers:', cpPtr, colObj0WrapPtr, colObj1WrapPtr);
+
+            // 直接将指针转换为btRigidBody对象
+            // const bodyA = Ammo.castObject(Ammo.wrapPointer(colObj0WrapPtr, Ammo.btRigidBody), Ammo.btRigidBody);
+            // const bodyB = Ammo.castObject(Ammo.wrapPointer(colObj1WrapPtr, Ammo.btRigidBody), Ammo.btRigidBody);
+            const bodyA = Ammo.wrapPointer(colObj0WrapPtr, Ammo.btRigidBody);
+            const bodyB = Ammo.wrapPointer(colObj1WrapPtr, Ammo.btRigidBody);
+
+            // console.log('Converted bodies:', bodyA, bodyB);
+
+            if (bodyA && bodyB) {
+
+                if (vehicleRigidBodies.has(bodyA) || vehicleRigidBodies.has(bodyB)) {
+                    const vehicle = vehicleRigidBodies.has(bodyA) ? bodyA : bodyB;
+                    const otherBody = vehicleRigidBodies.has(bodyA) ? bodyB : bodyA;
+
+                    const cp = Ammo.wrapPointer(cpPtr, Ammo.btManifoldPoint);
+
+                    // 获取碰撞点的冲量
+                    // const appliedImpulse = cp.getAppliedImpulse();
+                    // appliedImpulse && console.log('Applied impulse:', appliedImpulse);
+                    // const damage = appliedImpulse * 0.0001;  // 动态调整车辆血量
+                    // VehicleCollisionHandler.handleCollision(vehicle, otherBody, damage);
+
+
+                    /*  // 获取碰撞点的法向力
+                     const normalForce = cp.getAppliedImpulse();
+                     // 获取碰撞点法线
+                     const normal = cp.get_m_normalWorldOnB();
+ 
+                     // 获取速度差异
+                     const velocityA = bodyA.getLinearVelocity();
+                     const velocityB = bodyB.getLinearVelocity();
+                     const relativeVelocity = new Ammo.btVector3(
+                         velocityA.x() - velocityB.x(),
+                         velocityA.y() - velocityB.y(),
+                         velocityA.z() - velocityB.z()
+                     );
+ 
+                     // 计算相对速度在碰撞法线方向上的分量
+                     const impactSpeed = relativeVelocity.dot(normal);
+ 
+                     // 计算碰撞强度
+                     const impactStrength = normalForce * Math.abs(impactSpeed);
+ 
+                     // impactStrength && console.log('Impact strength:', impactStrength);
+ 
+                     // 动态调整车辆血量
+                     const damage = impactStrength * 0.0001; // 根据需求调整比例
+                     VehicleCollisionHandler.handleCollision(vehicle, otherBody, damage);
+ 
+                     // 释放临时创建的 Ammo 对象
+                     Ammo.destroy(relativeVelocity); */
+
+
+                    /*                     // 获取碰撞点的法向力
+                                        const normalForce = cp.getAppliedImpulse();
+                                        // 获取碰撞点法线
+                                        const normal = cp.get_m_normalWorldOnB();
+                    
+                                        // 获取速度差异
+                                        const velocityA = bodyA.getLinearVelocity();
+                                        const velocityB = bodyB.getLinearVelocity();
+                                        const relativeVelocity = new Ammo.btVector3(
+                                            velocityA.x() - velocityB.x(),
+                                            velocityA.y() - velocityB.y(),
+                                            velocityA.z() - velocityB.z()
+                                        );
+                    
+                                        // 计算相对速度在碰撞法线方向上的分量
+                                        const impactSpeed = relativeVelocity.dot(normal);
+                    
+                                        // 释放临时创建的 Ammo 对象
+                                        Ammo.destroy(relativeVelocity);
+                    
+                                        // 速度和法向力的阈值
+                                        const velocityThreshold = 1.0;
+                                        const forceThreshold = 0.5;
+                    
+                                        if (Math.abs(impactSpeed) > velocityThreshold && normalForce > forceThreshold) {
+                                            // 计算碰撞强度
+                                            const impactStrength = normalForce * Math.abs(impactSpeed);
+                    
+                                            console.log('Impact strength:', impactStrength);
+                    
+                                            // 动态调整车辆血量
+                                            const damage = impactStrength * 0.0001; // 根据需求调整比例
+                                            if (vehicleRigidBodies.has(bodyA) || vehicleRigidBodies.has(bodyB)) {
+                                                const vehicle = vehicleRigidBodies.has(bodyA) ? bodyA : bodyB;
+                                                const otherBody = vehicleRigidBodies.has(bodyA) ? bodyB : bodyA;
+                                                VehicleCollisionHandler.handleCollision(vehicle, otherBody, damage);
+                                            }
+                                        } */
+
+
+                    const velA = bodyA.getLinearVelocity();
+                    const velB = bodyB.getLinearVelocity();
+
+                    const relativeVelocity = new Ammo.btVector3(
+                        velB.x() - velA.x(),
+                        velB.y() - velA.y(),
+                        velB.z() - velA.z()
+                    );
+
+                    const speed = relativeVelocity.length();
+                    Ammo.destroy(relativeVelocity);
+
+                    // Define thresholds
+                    const velocityThreshold = 1.0; // Adjust based on your game needs
+                    const forceThreshold = 0.5;    // Adjust based on your game needs
+
+                    // Calculate the component of the relative velocity along the collision normal
+                    const normalForce = cp.getAppliedImpulse();
+                    const impactStrength = normalForce * speed;
+
+                    console.log('Impact strength:', impactStrength);
+
+                    // Apply damage based on impact strength
+                    const damage = impactStrength * 0.00001; // Adjust the multiplier as needed
+                    if (vehicleRigidBodies.has(bodyA) || vehicleRigidBodies.has(bodyB)) {
+                        const vehicle = vehicleRigidBodies.has(bodyA) ? bodyA : bodyB;
+                        const otherBody = vehicleRigidBodies.has(bodyA) ? bodyB : bodyA;
+                        VehicleCollisionHandler.handleCollision(vehicle, otherBody, damage);
+                    }
+
+
+                }
+            } else {
+                console.error('One or both bodies are invalid:', bodyA, bodyB);
+            }
+
+            return 0; // 确保返回0
+        };
+
+
+        // 设置全局碰撞回调
+        // Physics.world.setContactProcessedCallback(Ammo.addFunction(contactProcessedCallback));
+
+        // 注册碰撞处理回调
+        Physics.contactProcessedUtil.registerCollisionHandlingCallback('VehicleCollision', (cp, bodyA, bodyB) => {
+            if (vehicleRigidBodies.has(bodyA) || vehicleRigidBodies.has(bodyB)) {
+                const vehicle = vehicleRigidBodies.has(bodyA) ? bodyA : bodyB;
+                const otherBody = vehicleRigidBodies.has(bodyA) ? bodyB : bodyA;
+
+                // 计算相对速度
+                const velA = bodyA.getLinearVelocity();
+                const velB = bodyB.getLinearVelocity();
+                const speed = PhysicsMathUtil.setBtVector3(velB.x() - velA.x(), velB.y() - velA.y(), velB.z() - velA.z()).length()
+
+                // 获取碰撞冲击力
+                const normalForce = cp.getAppliedImpulse();
+                const impactStrength = normalForce * speed;
+                const damage = impactStrength * 0.0001; // 调整系数以适应需求
+
+                VehicleCollisionHandler.handleCollision(vehicle, otherBody, damage);
+            }
+        });
+        // 设置碰撞回调
+        Physics.world.setContactProcessedCallback(Ammo.addFunction(Physics.contactProcessedUtil.contactProcessedCallback));
+        console.warn('Registered global collision event callback');
+
+        // 车辆刚体集合
+        console.warn('Registered vehicle rigid bodies:', Array.from(vehicleRigidBodies));
+    }
+
 
     /**
      * Add init callback
@@ -216,6 +390,7 @@ export class VehicleComponent extends ComponentBase {
                 vehicle = await Engine3D.res.loadGltf('models/vehicles/large_pickup_chassis.glb');
                 vehicle.localPosition = this.position
                 vehicle.name = 'vehicle'
+                vehicle.scaleX = vehicle.scaleY = vehicle.scaleZ = 0.5
 
                 this.object3D.addChild(vehicle);
 
@@ -225,32 +400,63 @@ export class VehicleComponent extends ComponentBase {
                 const vertices = new Float32Array(data.vertices);
 
                 // 创建刚体
-                let rigidBodyComponent = this.initRigidBody(vehicle, 2000)
+                let rigidBodyComponent = this.initRigidBody(vehicle, 800)
                 rigidBodyComponent.modelVertices = vertices
 
                 // 载具控制器依赖载具刚体，需要先为载具添加刚体再添加控制器
                 let controller = vehicle.addComponent(VehicleControl);
                 controller.mVehicleArgs = {
-                    wheelSize: 1.0,
+                    wheelSize: 0.5,
+                    // friction: 1000, // 摩擦力 1000 值越大越滑
+                    // suspensionStiffness: 8.0, // 悬架刚度 20.0
+                    // suspensionDamping: 0.4, // 悬架阻尼 2.3
+                    // suspensionCompression: 0.4, // 悬架压缩 4.4
+                    // suspensionRestLength: 0.5, // 悬架未受压时的长度 0.6  
+                    // rollInfluence: 0.5, // 离心力 影响力 0.2
+                    // steeringIncrement: 0.003,  // 转向增量 0.04
+                    // steeringClamp: 0.35, // 转向钳 0.5
+                    // maxEngineForce: 2500, // 最大发动机力 1500
+                    // maxBreakingForce: 50, // 最大断裂力 500
+                    // maxSuspensionTravelCm: 135 // 最大悬架行程
                     friction: 1000, // 摩擦力 1000 值越大越滑
-                    suspensionStiffness: 8.0, // 悬架刚度 20.0
-                    suspensionDamping: 0.4, // 悬架阻尼 2.3
-                    suspensionCompression: 0.4, // 悬架压缩 4.4
-                    suspensionRestLength: 0.5, // 悬架未受压时的长度 0.6  
-                    rollInfluence: 0.5, // 离心力 影响力 0.2
-                    steeringIncrement: 0.003,  // 转向增量 0.04
+                    suspensionStiffness: 18, // 悬架刚度 20.0
+                    suspensionDamping: 1, // 悬架阻尼 2.3
+                    suspensionCompression: 1, // 悬架压缩 4.4
+                    suspensionRestLength: 0.2, // 悬架未受压时的长度 0.6  
+                    rollInfluence: 0.8, // 离心力 影响力 0.2
+                    steeringIncrement: .003,  // 转向增量 0.04
                     steeringClamp: 0.35, // 转向钳 0.5
-                    maxEngineForce: 2500, // 最大发动机力 1500
+                    maxEngineForce: 1000, // 最大发动机力 1500
                     maxBreakingForce: 50, // 最大断裂力 500
                     maxSuspensionTravelCm: 135 // 最大悬架行程
+                    // friction: 1000, // 摩擦力 1000 值越大越滑
+                    // suspensionStiffness: 20, // 悬架刚度 20.0
+                    // suspensionDamping: 2.3, // 悬架阻尼 2.3
+                    // suspensionCompression: 4.4, // 悬架压缩 4.4
+                    // suspensionRestLength: 0.2, // 悬架未受压时的长度 0.6  
+                    // rollInfluence: 0.2, // 离心力 影响力 0.2
+                    // steeringIncrement: .003,  // 转向增量 0.04
+                    // steeringClamp: 0.35, // 转向钳 0.5
+                    // maxEngineForce: 1000, // 最大发动机力 1500
+                    // maxBreakingForce: 100, // 最大断裂力 500
+                    // maxSuspensionTravelCm: 135 // 最大悬架行程
                 }
                 controller.wheelObject = wheel
+                // controller.wheelPosOffset = [
+                //     { x: 1.2, z: 1.25 },
+                //     { x: -1.2, z: 1.25 },
+                //     { x: 1.2, z: -1.25 },
+                //     { x: -1.2, z: -1.25 },
+                // ]
                 controller.wheelPosOffset = [
-                    { x: 1.2, z: 1.25 },
-                    { x: -1.2, z: 1.25 },
-                    { x: 1.2, z: -1.25 },
-                    { x: -1.2, z: -1.25 },
+                    { x: 1.2 / 2, z: 1.25 / 2 },
+                    { x: -1.2 / 2, z: 1.25 / 2 },
+                    { x: 1.2 / 2, z: -1.25 / 2 },
+                    { x: -1.2 / 2, z: -1.25 / 2 },
                 ]
+
+                // 轮胎大小标准	wheelRadiusFront = .35; wheelWidthFront = .2;
+                // 底部大小标准 chassisWidth = 1.8;  chassisHeight = .6; chassisLength = 4;  massVehicle = 800;
             }
                 break;
             default:
@@ -258,12 +464,11 @@ export class VehicleComponent extends ComponentBase {
         }
 
         this.vehicle = vehicle;
-        // this.debug()
 
     }
 
-    private initRigidBody(vehicle: Object3D, mass: number, damping?: Vector2): AmmoRigidBody {
-        const rigidBodyComponent = vehicle.addComponent(AmmoRigidBody)
+    private initRigidBody(vehicle: Object3D, mass: number, damping?: Vector2): RigidBodyComponent {
+        const rigidBodyComponent = vehicle.addComponent(RigidBodyComponent)
         rigidBodyComponent.mass = mass;
         rigidBodyComponent.damping = damping || new Vector2(0.2, 0);
         rigidBodyComponent.restitution = 0;
@@ -274,15 +479,22 @@ export class VehicleComponent extends ComponentBase {
         rigidBodyComponent.mask = CollisionMask.DEFAULT_MASK
         rigidBodyComponent.activationState = ActivationState.DISABLE_DEACTIVATION
         rigidBodyComponent.enable = false; // 由于载具为复杂刚体类，此处刚体组件只进行刚体构建，不需要内部进行更新
+        rigidBodyComponent.userIndex = 99
+
+        rigidBodyComponent.addInitedFunction(() => {
+            VehicleCollisionHandler.registerVehicle(rigidBodyComponent.btRigidbody);
+        }, this)
         return rigidBodyComponent
     }
 
     private debug() {
-        
+
         let gui = GUIUtil.GUI
         gui.removeFolder('vehicle')
         let f = gui.addFolder('vehicle')
-
+        f.add(this.vehicleHP, 'HP', 0, 100, 0.1).listen()
+        f.open()
+        return
         // 提取枚举键值对
         const vehicleTypeObject = Object.keys(VehicleType)
             .filter(key => isNaN(Number(key))) // 过滤出非数值键
@@ -303,6 +515,16 @@ export class VehicleComponent extends ComponentBase {
             });
 
         // f.open()
+
+    }
+    public vehicleHP = {
+        HP: 100
+    };
+
+    // 暂时只获取第一辆车的生命值
+    public onUpdate(view?: View3D) {
+
+       this.vehicleHP.HP = Array.from(VehicleCollisionHandler.healthMap.values())[0] || 100;
 
     }
     /**

@@ -1,8 +1,8 @@
 import { ComponentBase, Engine3D, LitMaterial, MeshRenderer, Object3D, PlaneGeometry, Scene3D, Vector3, GPUAddressMode, Vector4, VertexAttributeName, BitmapTexture2D, CEvent, ColliderComponent, BoxColliderShape } from '@orillusion/core'
-import { Ammo, Physics, Rigidbody } from '@orillusion/physics'
+// import { Ammo, Physics, Rigidbody } from '@orillusion/physics'
 import { perlinNoise, createNoiseSeed } from '@/utils/perlin.js';
 import { TerrainGeometry } from '@orillusion/effect';
-import { AmmoRigidBody, CollisionFlags, ActivationState, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil } from "@/physics";
+import { RigidBodyComponent, CollisionFlags, ActivationState, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil } from "@/physics";
 import { TerrainUtil } from "@/utils/TerrainUtil";
 
 
@@ -63,7 +63,7 @@ export class TreesComponent extends ComponentBase {
             newModel.x = points[i * 3 + 0]
             newModel.y = points[i * 3 + 1]
             newModel.z = points[i * 3 + 2]
-            // newModel.addComponent(AmmoRigidBody).shape = ShapeTypes.btBvhTriangleMeshShape
+            // newModel.addComponent(RigidBodyComponent).shape = ShapeTypes.btBvhTriangleMeshShape
             this.terrain.addChild(newModel)
         }
 
@@ -106,7 +106,7 @@ export class TreesComponent extends ComponentBase {
                 newModel.rotationY = Math.floor(Math.random() * 360) - 180
                 newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 1.7) + Math.round(Math.random() * (newModel.scaleX * 1.3))
 
-                // let rigidbody = newModel.addComponent(AmmoRigidBody)
+                // let rigidbody = newModel.addComponent(RigidBodyComponent)
                 // rigidbody.mass = 0;
                 // rigidbody.shape = ShapeTypes.btBoxShape
                 // rigidbody.size = new Vector3(3, 30, 3)
@@ -114,7 +114,7 @@ export class TreesComponent extends ComponentBase {
                 // let collider = newModel.addComponent(ColliderComponent)
                 // collider.shape = new BoxColliderShape()
                 // collider.shape.size = new Vector3(3, 30, 3)
-                newModel.addComponent(AmmoRigidBody).shape = ShapeTypes.btBvhTriangleMeshShape
+                newModel.addComponent(RigidBodyComponent).shape = ShapeTypes.btBvhTriangleMeshShape
                 this.terrain.addChild(newModel);
             }
         }
@@ -133,7 +133,7 @@ export class TreesComponent extends ComponentBase {
                 // newModel.scaleX = newModel.scaleY = newModel.scaleZ = (Math.random() * 0.75) - 0.25
                 // newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7) + Math.round(Math.random() * (newModel.scaleX * 0.3))
 
-                let rigidbody = newModel.addComponent(AmmoRigidBody)
+                let rigidbody = newModel.addComponent(RigidBodyComponent)
                 rigidbody.mass = 0;
                 rigidbody.shape = ShapeTypes.btCylinderShape
                 rigidbody.radius = 0.5;

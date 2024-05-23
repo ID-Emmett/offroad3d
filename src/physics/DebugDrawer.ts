@@ -1,4 +1,4 @@
-import { Ammo, Physics } from '@orillusion/physics';
+import { Ammo, Physics } from '.';
 import { Object3D, BoundUtil, Vector3, Quaternion, Object3DUtil, MeshRenderer, VertexAttributeName, PlaneGeometry } from '@orillusion/core';
 
 // 1: DBG_NoDebug

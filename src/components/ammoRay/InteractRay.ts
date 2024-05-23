@@ -1,6 +1,7 @@
 import { Engine3D, Camera3D, View3D, Object3D, PointerEvent3D, clamp, Quaternion, Vector3, BoundUtil, Time, Vector3Ex, ComponentBase, lerp, lerpVector3, MathUtil, DEGREES_TO_RADIANS, RADIANS_TO_DEGREES, KeyEvent, KeyCode, Color, kPI, MeshRenderer, SphereGeometry, LitMaterial, ColliderComponent, SphereColliderShape, BoxGeometry, CylinderGeometry, Ray } from "@orillusion/core";
-import { Ammo, Physics, Rigidbody } from "@orillusion/physics";
-import { AmmoRigidBody, ShapeTypes, CollisionFlags, ActivationState, CollisionGroup, CollisionMask } from "@/physics";
+// import { Ammo, Physics, Rigidbody } from "@orillusion/physics";
+import { RigidBodyComponent, ShapeTypes, CollisionFlags, ActivationState, CollisionGroup, CollisionMask, RigidBodyUtil, PhysicsMathUtil, Physics, Ammo } from "@/physics";
+
 
 
 /**
@@ -124,10 +125,10 @@ export class InteractRay extends ComponentBase {
                 this.btOffset.setValue(0, 0, 0)
                 this.bodyRb.setCollisionFlags(this.bodyRb.getCollisionFlags() & ~CollisionFlags.KINEMATIC_OBJECT);  // 清除Kinematic标志
                 if ((this.bodyRb.getCollisionFlags() & CollisionFlags.STATIC_OBJECT) !== 0) {
-                    console.log('静态刚体');
+                    // console.log('静态刚体');
                     this.bodyRb.forceActivationState(ActivationState.ISLAND_SLEEPING)
                 } else {
-                    console.log('动态刚体');
+                    // console.log('动态刚体');
                     this.bodyRb.activate(); // 确保释放鼠标时刚体是激活的
                 }
                 this.bodyRb = null;
@@ -235,9 +236,6 @@ export class InteractRay extends ComponentBase {
 
     private lineStartPos: Vector3 = new Vector3()
 
-    private btVecConvert(vec3: Ammo.btVector3): Vector3 {
-        return new Vector3(vec3.x(), vec3.y(), vec3.z())
-    }
     // 相机视线射线检测
     private castCameraSightRay(cameraPos: Vector3, targetPos: Vector3, ray: Ray) {
 
@@ -265,7 +263,7 @@ export class InteractRay extends ComponentBase {
             if (this._mouseLeftDown && this.cameraRay.get_m_collisionObject().getUserIndex() !== 2) {
 
                 this.cameraRay.set_m_collisionFilterMask(CollisionGroup.TERRAIN); // 定义射线或物体可以与哪些碰撞组相碰撞
-                console.log('选中物体');
+                // console.log('选中物体');
 
                 this.bodyRb = Ammo.castObject(this.cameraRay.get_m_collisionObject(), Ammo.btRigidBody);
 
@@ -276,7 +274,7 @@ export class InteractRay extends ComponentBase {
 
                 // 碰撞体与地形的交点的偏移量
                 this.btOffset = hitPoint.op_sub(originPos)
-                this.offset.set(this.btOffset.x(), this.btOffset.y(), this.btOffset.z())
+                PhysicsMathUtil.fromBtVector3(this.btOffset, this.offset)
 
                 this.hitDistance = Vector3.distance(ray.origin, hitPointWorld) / 1000;
 
@@ -284,7 +282,7 @@ export class InteractRay extends ComponentBase {
 
                 // 测试计算偏移方向
                 // 相机到基座点的方向
-                let basePos = this.btVecConvert(originPos)
+                let basePos = PhysicsMathUtil.fromBtVector3(originPos)
                 let cameraTobassDir = Vector3.sub(basePos, cameraPos).normalize() // 计算射线从相机起点到基座点的方向
                 this.offsetDirection = Vector3.sub(ray.direction.normalize(), cameraTobassDir) // 原方向与基座点方向的差，表示偏移量，在之后的射线中，需要应用此偏移量
 
@@ -363,10 +361,12 @@ export class InteractRay extends ComponentBase {
     }
 
     private _addBox(pos: Vector3): void {
+        console.log(pos);
+        
         const obj = new Object3D()
         let mr = obj.addComponent(MeshRenderer)
-        mr.geometry = new SphereGeometry(5, 32, 32); // 球
-        // mr.geometry = new BoxGeometry(5, 5, 5) // 盒子
+        // mr.geometry = new SphereGeometry(5, 32, 32); // 球
+        mr.geometry = new BoxGeometry(5, 5, 5) // 盒子
         // mr.geometry = new CylinderGeometry(15, 15, 20, 32, 32); // 圆柱
         let mat = new LitMaterial()
         mat.baseColor = new Color(Math.random(), Math.random(), Math.random(), 1.0)
@@ -375,13 +375,14 @@ export class InteractRay extends ComponentBase {
         obj.x = pos.x
         obj.y = pos.y + 5
         obj.z = pos.z
-        let rigidbody = obj.addComponent(AmmoRigidBody)
-        rigidbody.shape = ShapeTypes.btSphereShape
-        rigidbody.mass = 1
+        let rigidbody = obj.addComponent(RigidBodyComponent)
+        // rigidbody.shape = ShapeTypes.btSphereShape
+        rigidbody.shape = ShapeTypes.btBoxShape
+        rigidbody.mass = 0.7
         // rigidbody.restitution = 1
-        rigidbody.addInitedFunction(() => {
-            rigidbody.btRigidbody.setUserIndex(1000)
-        }, this)
+        // rigidbody.addInitedFunction(() => {
+        //     rigidbody.btRigidbody.setUserIndex(1000)
+        // }, this)
 
         // rigidbody.size = new Vector3(5, 5, 5);
         rigidbody.radius = 5

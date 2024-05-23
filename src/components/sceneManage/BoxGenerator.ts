@@ -1,5 +1,5 @@
 import { Color, ComponentBase, LitMaterial, MeshRenderer, Object3D, Vector3, SphereGeometry, BoxGeometry, CylinderGeometry, BoundUtil } from '@orillusion/core'
-import { AmmoRigidBody, ShapeTypes } from "@/physics";
+import { RigidBodyComponent, ShapeTypes } from "@/physics";
 import { GUIUtil } from '@/utils/GUIUtil'
 
 enum GeometryShape {
@@ -67,7 +67,7 @@ export class BoxGenerator extends ComponentBase {
         // obj.localRotation = new Vector3(Math.random() * 360, Math.random() * 360, Math.random() * 360)
 
         // add a rigidbody
-        let rigidbody = obj.addComponent(AmmoRigidBody)
+        let rigidbody = obj.addComponent(RigidBodyComponent)
         rigidbody.mass = this.mass
         rigidbody.shape = this.geometryShape === GeometryShape.Sphere ? ShapeTypes.btSphereShape : ShapeTypes.btBoxShape
 

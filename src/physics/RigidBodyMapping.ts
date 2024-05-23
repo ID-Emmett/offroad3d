@@ -1,16 +1,16 @@
-import { Object3D } from '@orillusion/core';
-import { Ammo } from "@orillusion/physics";
+import { Object3D, BiMap } from '@orillusion/core';
+import { Ammo } from ".";
 
-class RigidBodyMapping {
-    private graphicToPhysicsMap: Map<Object3D, Ammo.btRigidBody> = new Map();
-    private physicsToGraphicMap: Map<Ammo.btRigidBody, Object3D> = new Map();
+export class RigidBodyMapping {
+    // BiMap 双向映射
+    private mapping: BiMap<Object3D, Ammo.btRigidBody> = new BiMap();
 
     /**
      * 获取管理的全部刚体对象映射组
      * @returns 刚体映射组
      */
     public get getAllPhysicsObjectMap(): Map<Ammo.btRigidBody, Object3D> {
-        return this.physicsToGraphicMap
+        return this.mapping["negtive"];
     }
 
     /**
@@ -18,16 +18,16 @@ class RigidBodyMapping {
      * @returns 图形映射组
      */
     public get getAllGraphicObjectMap(): Map<Object3D, Ammo.btRigidBody> {
-        return this.graphicToPhysicsMap
+        return this.mapping;
     }
+
     /**
      * 添加图形对象和刚体对象的映射
      * @param graphic 图形对象
      * @param physics 刚体对象
      */
     public addMapping(graphic: Object3D, physics: Ammo.btRigidBody) {
-        this.graphicToPhysicsMap.set(graphic, physics);
-        this.physicsToGraphicMap.set(physics, graphic);
+        this.mapping.set(graphic, physics);
     }
 
     /**
@@ -36,7 +36,7 @@ class RigidBodyMapping {
      * @returns 刚体对象或undefined
      */
     public getPhysicsObject(graphic: Object3D): Ammo.btRigidBody | undefined {
-        return this.graphicToPhysicsMap.get(graphic);
+        return this.mapping.get(graphic);
     }
 
     /**
@@ -45,7 +45,7 @@ class RigidBodyMapping {
      * @returns 图形对象或undefined
      */
     public getGraphicObject(physics: Ammo.btRigidBody): Object3D | undefined {
-        return this.physicsToGraphicMap.get(physics);
+        return this.mapping.getKey(physics);
     }
 
     /**
@@ -53,11 +53,7 @@ class RigidBodyMapping {
      * @param graphic 图形对象
      */
     public removeMappingByGraphic(graphic: Object3D) {
-        const physics = this.graphicToPhysicsMap.get(graphic);
-        if (physics) {
-            this.physicsToGraphicMap.delete(physics);
-        }
-        this.graphicToPhysicsMap.delete(graphic);
+        this.mapping.delete(graphic);
     }
 
     /**
@@ -65,14 +61,6 @@ class RigidBodyMapping {
      * @param physics 刚体对象
      */
     public removeMappingByPhysics(physics: Ammo.btRigidBody) {
-        const graphic = this.physicsToGraphicMap.get(physics);
-        if (graphic) {
-            this.graphicToPhysicsMap.delete(graphic);
-        }
-        this.physicsToGraphicMap.delete(physics);
+        this.mapping.deleteValue(physics);
     }
 }
-/**
- * 物理刚体与图形对象映射实例
- */
-export const rigidBodyMapping = new RigidBodyMapping();
