@@ -1,5 +1,4 @@
-import { Engine3D, Scene3D, Camera3D, View3D, Object3D, Color, DirectLight, AtmosphericComponent, SkyRenderer, Vector3, AxisObject } from '@orillusion/core'
-import { Physics } from '@orillusion/physics'
+import { Engine3D, Scene3D, Camera3D, View3D, Object3D, Color, DirectLight, AtmosphericComponent, SkyRenderer, Vector3, AxisObject, Time, clamp } from '@orillusion/core'
 import { Stats } from "@orillusion/stats"
 import { HoverCameraController } from '@/components/cameraController'
 import { InteractRay } from '@/components/ammoRay/InteractRay';
@@ -11,14 +10,14 @@ import { PostProcessingSetup } from '@/effects/Postprocessing';
 import { GUIHelp } from "@/utils/debug/GUIHelp";
 import { GUIUtil } from '@/utils/GUIUtil'
 
-// import { SimpleDebugDrawer } from '@/physics/DebugDrawer'
+import { RigidBodyUtil, PhysicsMathUtil, Physics, Ammo } from '@/physics';
 
 /**
  * 什么游戏
  * @export
  * @class 
  */
-class Sample_game {
+class Offroad3D {
 
     async run() {
 
@@ -29,16 +28,23 @@ class Sample_game {
         Engine3D.setting.shadow.updateFrameRate = 1 // 阴影更新
         // Engine3D.setting.shadow.type = 'PCF'; // 默认 PCF HARD SOFT
 
-
-        Engine3D.frameRate = 60
+        // Engine3D.frameRate = 361
+        // Engine3D.frameRate = 63.158
+        if (import.meta.env.PROD) {
+            Engine3D.frameRate = 60
+        } else {
+            Engine3D.frameRate = 170
+        }
 
         // Init physics engine
-        await Physics.init()
+        await Physics.init(true)
 
         // Init Engine3D
         await Engine3D.init({
-            canvasConfig: { devicePixelRatio: 1 },
-            renderLoop: () => this.loop()
+            // canvasConfig: { devicePixelRatio: 1 },
+            // renderLoop: () => this.loop()
+            beforeRender: () => this.loop()
+            // lateRender: () => this.loop()
         })
 
         let scene = new Scene3D()
@@ -65,12 +71,13 @@ class Sample_game {
         let mainCamera = cameraObj.addComponent(Camera3D)
         // mainCamera.object3D.transform.localScale = new Vector3(0.5,0.1,0.5)
         // mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0))
-        mainCamera.perspective(45, Engine3D.aspect, 0.1, 2000.0)
+        mainCamera.perspective(55, Engine3D.aspect, 0.2, 2000.0)
         mainCamera.enableCSM = true;
 
         let cameraCtrl = mainCamera.object3D.addComponent(HoverCameraController)
         cameraCtrl.setCamera(160, -15, 10)
         cameraCtrl.smooth = false
+        // cameraCtrl.dragSmooth = 10
         cameraCtrl.maxDistance = 1000
         cameraCtrl.rollSmooth = 8
         scene.addChild(cameraObj)
@@ -94,6 +101,8 @@ class Sample_game {
         GUIHelp.init();
         GUIHelp.addButton('Reload', () => location.reload())
         GUIHelp.add({ 'Tips': 'Look at the console' }, 'Tips');
+        GUIHelp.add(Engine3D, 'frameRate', 10, 170, 10)
+
         this.initGameComponents(scene, cameraCtrl)
 
 
@@ -127,22 +136,22 @@ class Sample_game {
 
         scene.addComponent(Grass).enable = false; // gui control
 
-        scene.addComponent(MainModelComponent)
-
         scene.addComponent(BoxGenerator).enable = false; // gui control
 
         cameraCtrl.object3D.addComponent(InteractRay);
-
 
         const onTerrainReady = () => {
             let vehicle = scene.addComponent(VehicleComponent);
             vehicle.vehicleType = VehicleType.LargePickup;
             vehicle.addInitedFunction((vehicle: Object3D) => {
-                cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
+                // cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
+                cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 1, 0));
             }, this);
         }
 
         Engine3D.inputSystem.addEventListener("TerrainInited", onTerrainReady, this);
+
+        scene.addComponent(MainModelComponent)
 
         if (import.meta.env.PROD) {
             this.printing()
@@ -196,11 +205,34 @@ class Sample_game {
 
     loop() {
         // Physics.update()
-        let timeStep = 1 / (Engine3D.frameRate / 2.5);
+        let timeStep = 1 / (Engine3D.frameRate / 1.6);
+        // console.log(timeStep);
+
         Physics.world.stepSimulation(timeStep, 1, timeStep);
+
+        // Physics.world.stepSimulation(timeStep, 1, 1/60);
+        // Physics.world.stepSimulation(1 / 60, 10, 1 / 60);
+        // Physics.world.stepSimulation(Time.delta * 0.002, 10, 1 / 170);
+        // Physics.world.stepSimulation(Time.delta/1000, 10, 1/60);
+        // Physics.world.stepSimulation(Time.delta / 1000, 10, 1 / Engine3D.frameRate);
+        // Physics.world.stepSimulation(0.0166, 10, 1/60);
+
+        // Physics.world.stepSimulation(Time.delta / 1000, 1, Time.delta / 1000);
+        // Physics.world.stepSimulation(Time.delta / 1000, 1, 1 / Engine3D.frameRate);
+        // Physics.world.stepSimulation(Time.delta / 1000, 1);
+        // Physics.world.stepSimulation(Time.delta, 1);
+
+        // Physics.world.stepSimulation(Time.delta/1000, 10,1/60);
+        // Physics.world.stepSimulation(0.1);
+
+
+        // Physics.world.stepSimulation(Time.delta * 0.001, 10);
+        // Physics.world.stepSimulation(Time.delta / 1000, 1);
+
     }
+
 }
 
 
 
-new Sample_game().run()
+new Offroad3D().run()

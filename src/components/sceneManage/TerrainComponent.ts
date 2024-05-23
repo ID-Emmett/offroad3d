@@ -1,12 +1,10 @@
 import { ComponentBase, Engine3D, LitMaterial, MeshRenderer, Object3D, Scene3D, GPUAddressMode, Vector4, BitmapTexture2D, PlaneGeometry, Vector3, VertexAttributeName, CEvent, Color } from '@orillusion/core'
 import { GrassComponent, TerrainGeometry } from '@orillusion/effect';
-import { AmmoRigidBody, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil } from "@/physics";
-import { Physics } from '@orillusion/physics';
+import { RigidBodyComponent, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil, Physics } from "@/physics";
+// import { Physics } from '@orillusion/physics';
 import { perlinNoise, createNoiseSeed } from '@/utils/perlin.js';
 import { GUIUtil } from '@/utils/GUIUtil'
-import { GUIHelp } from '@/utils/debug/GUIHelp'
-import dat from 'dat.gui'
-import { FrameTaskQueue } from '../systems/FrameTaskQueue';
+import { FrameTaskQueue } from '@/components/systems/FrameTaskQueue';
 import { TerrainUtil } from "@/utils/TerrainUtil";
 
 
@@ -16,11 +14,11 @@ import { TerrainUtil } from "@/utils/TerrainUtil";
 export class TerrainComponent extends ComponentBase {
 
     public terrainName: string = 'mainTerrain'
-    public width: number = 1000
-    public height: number = 1000
+    public width: number = 1000/2
+    public height: number = 1000/2
     public segmentW: number = 199
     public segmentH: number = 199
-    public terrainMaxHeight: number = -250
+    public terrainMaxHeight: number = -150
 
     private _terrainGeometry: TerrainGeometry
 
@@ -114,7 +112,7 @@ export class TerrainComponent extends ComponentBase {
         mat.roughness = 2
         // mat.acceptShadow = true
 
-        texture.addressModeU = GPUAddressMode.repeat;     // 水平方向与竖直方向
+        texture.addressModeU = GPUAddressMode.repeat; // 水平方向与竖直方向
         texture.addressModeV = GPUAddressMode.repeat;
 
         mr.material = mat;
@@ -125,7 +123,7 @@ export class TerrainComponent extends ComponentBase {
     }
 
     private initRigidBody(terrain: Object3D) {
-        const rigidbody = terrain.addComponent(AmmoRigidBody)
+        const rigidbody = terrain.addComponent(RigidBodyComponent)
         rigidbody.mass = 0;
         rigidbody.shape = ShapeTypes.btHeightfieldTerrainShape
         rigidbody.group = CollisionGroup.TERRAIN;
@@ -261,16 +259,18 @@ export class TerrainComponent extends ComponentBase {
 
         // 重置刚体
         const resetRigidBody = () => {
-            terrain.removeComponent(AmmoRigidBody)
+            terrain.removeComponent(RigidBodyComponent)
             this.initRigidBody(terrain)
 
             // 树木刚体
             terrain.entityChildren.forEach(entity => {
                 let child = entity as Object3D;
                 taskQueue.enqueue(() => {
-                    child.getComponent(AmmoRigidBody)?.resetRigidBody()
+                    child.getComponent(RigidBodyComponent)?.resetRigidBody()
                 })
             })
+
+            RigidBodyUtil.activateAllKinematicObject()
         }
 
         GUIUtil.renderLitMaterial((terrain.getComponent(MeshRenderer).material as LitMaterial), false, 'terrainMaterial')

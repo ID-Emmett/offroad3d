@@ -1,8 +1,7 @@
 import { Engine3D, Camera3D, View3D, Object3D, PointerEvent3D, clamp, Quaternion, Vector3, BoundUtil, Time, Vector3Ex, ComponentBase, lerp, lerpVector3, MathUtil, DEGREES_TO_RADIANS, RADIANS_TO_DEGREES, KeyEvent, KeyCode, Color, kPI } from "@orillusion/core";
 import { easeInOutCubic, easeOutCubic, easeOutQuad } from '@/utils/TransitionUtil'
 import { perlinNoise, createNoiseSeed } from '@/utils/perlin.js';
-import { Ammo, Physics } from "@orillusion/physics";
-import { CollisionGroup, CollisionMask } from "@/physics";
+import { CollisionGroup, CollisionMask, Ammo, Physics } from "@/physics";
 import { InteractRay } from '@/components/ammoRay/InteractRay';
 
 import { GUIUtil } from '@/utils/GUIUtil'
@@ -550,6 +549,8 @@ export class HoverCameraController extends ComponentBase {
     }
 
     public onBeforeUpdate(view?: View3D) {
+    // public onLateUpdate(view?: View3D) {
+    // public onUpdate(view?: View3D) {
 
         if (!this.enable) return;
         if (this._flowTarget) {
@@ -662,7 +663,7 @@ export class HoverCameraController extends ComponentBase {
     }
 
     // 相机视线射线检测
-    private castCameraSightRay(cameraPos: Vector3, targetPos: Vector3, targetOffsetY: number = 2, cameraOffsetY: number = 2) {
+    private castCameraSightRay(cameraPos: Vector3, targetPos: Vector3, targetOffsetY: number = 1, cameraOffsetY: number = 1) {
         this.rayFrom.setValue(targetPos.x, targetPos.y + targetOffsetY, targetPos.z);
         this.rayTo.setValue(cameraPos.x, cameraPos.y - cameraOffsetY, cameraPos.z);
 
