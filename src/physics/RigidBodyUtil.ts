@@ -668,6 +668,7 @@ export class RigidBodyUtil {
         // 移除映射
         Physics.rigidBodyMapping.removeMappingByPhysics(bodyRb);
 
+        if (!bodyRb) return
         Physics.world.removeRigidBody(bodyRb);
         Ammo.destroy(bodyRb.getCollisionShape());
         Ammo.destroy(bodyRb.getMotionState());

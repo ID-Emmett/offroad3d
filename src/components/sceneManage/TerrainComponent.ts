@@ -138,6 +138,7 @@ export class TerrainComponent extends ComponentBase {
         let f = gui.addFolder(this.terrainName)
 
         f.add(this, 'terrainMaxHeight', -1000, 1000, 1).onChange(v => setTerrainSize(v, 'terrainMaxHeight')).onFinishChange(v => resetRigidBody())
+        f.add(terrain.transform, 'enable')
         f.add(this, 'width', 100, 5000, 10).onChange(v => setTerrainSize(v, 'width')).onFinishChange(v => resetRigidBody())
         f.add(this, 'height', 100, 5000, 10).onChange(v => setTerrainSize(v, 'height')).onFinishChange(v => resetRigidBody())
         f.add(this, 'segmentW', 1, 1000, 1).onFinishChange(v => setTerrainSegment())

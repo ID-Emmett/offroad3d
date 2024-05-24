@@ -12,7 +12,7 @@ export class VolumeSoftBodyComponent extends SoftBodyComponentBase {
     public indices: Uint16Array | Uint32Array
 
     protected initSoftBody(): void {
-        if (this._softBodyInited) return;
+        if (this._btBodyInited) return;
 
         this._geometry ||= this.object3D.getComponent(MeshRenderer).geometry;
 
@@ -103,15 +103,6 @@ export class VolumeSoftBodyComponent extends SoftBodyComponentBase {
             }
         }
 
-
-        const position = this.transform.localPosition;
-        const rotation = this.transform.localRotation;
-        this._btSoftBody.translate(PhysicsMathUtil.toBtVector3(position));
-        this._btSoftBody.rotate(PhysicsMathUtil.toBtQuaternion(Quaternion.HELP_0.fromEulerAngles(rotation.x, rotation.y, rotation.z)));
-        this.transform.localPosition = Vector3.ZERO;
-        this.transform.localRotation = Vector3.ZERO;
-
-
         // Config soft body
 
         var sbConfig = volumeSoftBody.get_m_cfg();
@@ -144,7 +135,7 @@ export class VolumeSoftBodyComponent extends SoftBodyComponentBase {
         // Disable deactivation
         volumeSoftBody.setActivationState(4);
 
-        this._softBodyInited = true;
+        this._btBodyInited = true;
     }
 
 

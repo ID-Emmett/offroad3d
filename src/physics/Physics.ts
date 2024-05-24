@@ -1,6 +1,6 @@
 import { Vector3, Time, BoundingBox } from '@orillusion/core';
 import { Ammo } from '@orillusion/physics';
-import { RigidBodyComponent, PhysicsMathUtil, ContactProcessedUtil } from '.';
+import { RigidBodyComponent, PhysicsMathUtil, ContactProcessedUtil, ClothSoftBodyComponent } from '.';
 import { RigidBodyMapping } from './RigidBodyMapping';
 
 class _Physics {
@@ -88,6 +88,15 @@ class _Physics {
             this.world.addSoftBody(softBody, collisionFilterGroup, collisionFilterMask);
         } else {
             console.warn('Soft bodies cannot be added to a rigid body world.');
+        }
+    }
+
+    public removeSoftBody(softBody: Ammo.btSoftBody) {
+        if (this.world instanceof Ammo.btSoftRigidDynamicsWorld) {
+            this.world.removeSoftBody(softBody);
+            Ammo.destroy(softBody);
+        }else{
+            console.warn('rigid body world can not be destroyed Soft bodies.');
         }
     }
 

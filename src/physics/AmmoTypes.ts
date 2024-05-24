@@ -232,3 +232,9 @@ export type ChildShapes = {
     rotation?: { x: number; y: number; z: number, w: number };
     size: { width: number; height: number; depth: number };
 };
+
+/**
+ * Ammo 平面的各个角
+ */
+export type CornerType = 'leftTop' | 'rightTop' | 'leftBottom' | 'rightBottom' | 'left' | 'right' | 'top' | 'bottom' | 'center';
+

@@ -16,7 +16,7 @@ export class RigidBodyComponent extends ComponentBase {
     private _isStatic: boolean = false;
     private _isTrigger: boolean = false;
     private _btRigidbody: Ammo.btRigidBody;
-    private _btRigidbodyInited: boolean = false;
+    private _btBodyInited: boolean = false;
     private _friction: number; // 0.6
     private _rollingFriction: number; // 0.1
     private _restitution: number // 0.8
@@ -159,8 +159,8 @@ export class RigidBodyComponent extends ComponentBase {
     /**
      * Check if rigidbody inited
      */
-    public get btRigidbodyInited(): boolean {
-        return this._btRigidbodyInited;
+    public get btBodyInited(): boolean {
+        return this._btBodyInited;
     }
 
     init(): void {
@@ -184,7 +184,7 @@ export class RigidBodyComponent extends ComponentBase {
             let fun = this._initedFunctions[i];
             fun.fun.call(fun.thisObj);
         }
-        this._btRigidbodyInited = true;
+        this._btBodyInited = true;
     }
 
     private addRigidBodyComponent(): void {

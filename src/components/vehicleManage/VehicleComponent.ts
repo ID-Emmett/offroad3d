@@ -224,10 +224,10 @@ export class VehicleComponent extends ComponentBase {
         });
         // 设置碰撞回调
         Physics.world.setContactProcessedCallback(Ammo.addFunction(Physics.contactProcessedUtil.contactProcessedCallback));
-        console.warn('Registered global collision event callback');
+        // console.warn('Registered global collision event callback');
 
         // 车辆刚体集合
-        console.warn('Registered vehicle rigid bodies:', Array.from(vehicleRigidBodies));
+        // console.warn('Registered vehicle rigid bodies:', Array.from(vehicleRigidBodies));
     }
 
 

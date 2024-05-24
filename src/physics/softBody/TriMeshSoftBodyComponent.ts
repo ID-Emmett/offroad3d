@@ -71,7 +71,7 @@ export class TriMeshSoftBodyComponent extends SoftBodyComponentBase {
     }
 
     protected initSoftBody(): void {
-        if (this._softBodyInited) return;
+        if (this._btBodyInited) return;
 
         const softBodyHelpers = new Ammo.btSoftBodyHelpers();
         const softBodyWorldInfo = Physics.worldInfo;
@@ -102,15 +102,6 @@ export class TriMeshSoftBodyComponent extends SoftBodyComponentBase {
             ntriangles,
             true // 是否随机化约束
         );        
-
-        const position = this.transform.localPosition;
-        const rotation = this.transform.localRotation;
-        this._btSoftBody.translate(PhysicsMathUtil.toBtVector3(position));
-        this._btSoftBody.rotate(PhysicsMathUtil.toBtQuaternion(Quaternion.HELP_0.fromEulerAngles(rotation.x, rotation.y, rotation.z)));
-        this.transform.localPosition = Vector3.ZERO;
-        this.transform.localRotation = Vector3.ZERO;
-
-
 
         let sbConfig = this._btSoftBody.get_m_cfg();
         sbConfig.set_viterations(10);
@@ -150,7 +141,7 @@ export class TriMeshSoftBodyComponent extends SoftBodyComponentBase {
         this._btSoftBody.setTotalMass(this.mass, false);
 
         Physics.addSoftBody(this._btSoftBody);
-        this._softBodyInited = true;
+        this._btBodyInited = true;
     }
 
     private processGeometry(geometry: GeometryBase): { vertices: Float32Array, indices: Uint32Array, ammoIndexAssociation: number[][] } {
