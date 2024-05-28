@@ -102,6 +102,8 @@ export class AnchorConstraint extends ComponentBase {
      * 移除锚点
      */
     public destroy(force?: boolean): void {
+        console.log('destroy anchor');
+        
         let anchors = this._btSoftBody.get_m_anchors();
         anchors.clear();
         this._btSoftBody.set_m_anchors(anchors);

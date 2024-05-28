@@ -217,13 +217,12 @@ export class VehicleComponent extends ComponentBase {
                 // 获取碰撞冲击力
                 const normalForce = cp.getAppliedImpulse();
                 const impactStrength = normalForce * speed;
-                const damage = impactStrength * 0.0001; // 调整系数以适应需求
+                const damage = impactStrength * 0.001; // 调整系数以适应需求
 
                 VehicleCollisionHandler.handleCollision(vehicle, otherBody, damage);
             }
         });
         // 设置碰撞回调
-        Physics.world.setContactProcessedCallback(Ammo.addFunction(Physics.contactProcessedUtil.contactProcessedCallback));
         // console.warn('Registered global collision event callback');
 
         // 车辆刚体集合
@@ -386,11 +385,13 @@ export class VehicleComponent extends ComponentBase {
                 ]
             }
             case VehicleType.LargePickup: {
+
+                const SCALE = 0.3
                 let wheel = await Engine3D.res.loadGltf('models/vehicles/large_wheel.glb')
                 vehicle = await Engine3D.res.loadGltf('models/vehicles/large_pickup_chassis.glb');
                 vehicle.localPosition = this.position
                 vehicle.name = 'vehicle'
-                vehicle.scaleX = vehicle.scaleY = vehicle.scaleZ = 0.5
+                vehicle.scaleX = vehicle.scaleY = vehicle.scaleZ = SCALE
 
                 this.object3D.addChild(vehicle);
 
@@ -400,13 +401,14 @@ export class VehicleComponent extends ComponentBase {
                 const vertices = new Float32Array(data.vertices);
 
                 // 创建刚体
-                let rigidBodyComponent = this.initRigidBody(vehicle, 800)
+                let rigidBodyComponent = this.initRigidBody(vehicle, 400)
                 rigidBodyComponent.modelVertices = vertices
 
                 // 载具控制器依赖载具刚体，需要先为载具添加刚体再添加控制器
                 let controller = vehicle.addComponent(VehicleControl);
+                // controller.enable = false
                 controller.mVehicleArgs = {
-                    wheelSize: 0.5,
+                    wheelSize: SCALE,
                     // friction: 1000, // 摩擦力 1000 值越大越滑
                     // suspensionStiffness: 8.0, // 悬架刚度 20.0
                     // suspensionDamping: 0.4, // 悬架阻尼 2.3
@@ -418,23 +420,23 @@ export class VehicleComponent extends ComponentBase {
                     // maxEngineForce: 2500, // 最大发动机力 1500
                     // maxBreakingForce: 50, // 最大断裂力 500
                     // maxSuspensionTravelCm: 135 // 最大悬架行程
-                    friction: 1000, // 摩擦力 1000 值越大越滑
-                    suspensionStiffness: 18, // 悬架刚度 20.0
-                    suspensionDamping: 1, // 悬架阻尼 2.3
+                    friction: 100, // 摩擦力 1000 值越大越滑
+                    suspensionStiffness: 20, // 悬架刚度 20.0
+                    suspensionDamping: 0.3, // 悬架阻尼 2.3
                     suspensionCompression: 1, // 悬架压缩 4.4
-                    suspensionRestLength: 0.2, // 悬架未受压时的长度 0.6  
-                    rollInfluence: 0.8, // 离心力 影响力 0.2
-                    steeringIncrement: .003,  // 转向增量 0.04
+                    suspensionRestLength: 0.08, // 悬架未受压时的长度 0.6  
+                    rollInfluence: 0.2, // 离心力 影响力 0.2
+                    steeringIncrement: .004,  // 转向增量 0.04
                     steeringClamp: 0.35, // 转向钳 0.5
-                    maxEngineForce: 1000, // 最大发动机力 1500
-                    maxBreakingForce: 50, // 最大断裂力 500
-                    maxSuspensionTravelCm: 135 // 最大悬架行程
-                    // friction: 1000, // 摩擦力 1000 值越大越滑
+                    maxEngineForce: 400, // 最大发动机力 1500
+                    maxBreakingForce: 10, // 最大断裂力 500
+                    maxSuspensionTravelCm: 135 // 最大悬架行程 
+                    // friction: 1.2, // 摩擦力 1000 值越大越滑
                     // suspensionStiffness: 20, // 悬架刚度 20.0
                     // suspensionDamping: 2.3, // 悬架阻尼 2.3
                     // suspensionCompression: 4.4, // 悬架压缩 4.4
                     // suspensionRestLength: 0.2, // 悬架未受压时的长度 0.6  
-                    // rollInfluence: 0.2, // 离心力 影响力 0.2
+                    // rollInfluence: 0.1, // 离心力 影响力 0.2
                     // steeringIncrement: .003,  // 转向增量 0.04
                     // steeringClamp: 0.35, // 转向钳 0.5
                     // maxEngineForce: 1000, // 最大发动机力 1500
@@ -449,10 +451,10 @@ export class VehicleComponent extends ComponentBase {
                 //     { x: -1.2, z: -1.25 },
                 // ]
                 controller.wheelPosOffset = [
-                    { x: 1.2 / 2, z: 1.25 / 2 },
-                    { x: -1.2 / 2, z: 1.25 / 2 },
-                    { x: 1.2 / 2, z: -1.25 / 2 },
-                    { x: -1.2 / 2, z: -1.25 / 2 },
+                    { x: 1.2 * SCALE, z: 1.25 * SCALE },
+                    { x: -1.2 * SCALE, z: 1.25 * SCALE },
+                    { x: 1.2 * SCALE, z: -1.25 * SCALE },
+                    { x: -1.2 * SCALE, z: -1.25 * SCALE },
                 ]
 
                 // 轮胎大小标准	wheelRadiusFront = .35; wheelWidthFront = .2;
@@ -470,12 +472,12 @@ export class VehicleComponent extends ComponentBase {
     private initRigidBody(vehicle: Object3D, mass: number, damping?: Vector2): RigidBodyComponent {
         const rigidBodyComponent = vehicle.addComponent(RigidBodyComponent)
         rigidBodyComponent.mass = mass;
-        rigidBodyComponent.damping = damping || new Vector2(0.2, 0);
-        rigidBodyComponent.restitution = 0;
-        // rigidBodyComponent.friction = 1;
+        rigidBodyComponent.damping = damping || new Vector2(0.1, 0.1);
+        // rigidBodyComponent.restitution = 0;
+        // rigidBodyComponent.friction = 0;
         // rigidBodyComponent.rollingFriction = 1;
         rigidBodyComponent.shape = ShapeTypes.btConvexHullShape;
-        rigidBodyComponent.group = CollisionGroup.VEHICLE
+        rigidBodyComponent.group = CollisionGroup.VEHICLE;
         rigidBodyComponent.mask = CollisionMask.DEFAULT_MASK
         rigidBodyComponent.activationState = ActivationState.DISABLE_DEACTIVATION
         rigidBodyComponent.enable = false; // 由于载具为复杂刚体类，此处刚体组件只进行刚体构建，不需要内部进行更新
@@ -492,7 +494,8 @@ export class VehicleComponent extends ComponentBase {
         let gui = GUIUtil.GUI
         gui.removeFolder('vehicle')
         let f = gui.addFolder('vehicle')
-        f.add(this.vehicleHP, 'HP', 0, 100, 0.1).listen()
+        f.add(this.vehicleGUI, 'HP', 0, 100, 0.1).listen()
+        f.add(this.vehicleGUI, 'SPEED').listen();
         f.open()
         return
         // 提取枚举键值对
@@ -517,15 +520,17 @@ export class VehicleComponent extends ComponentBase {
         // f.open()
 
     }
-    public vehicleHP = {
-        HP: 100
+    public vehicleGUI = {
+        HP: 100,
+        SPEED: 0,
     };
 
-    // 暂时只获取第一辆车的生命值
+    // 暂时只获取第一辆车的值
     public onUpdate(view?: View3D) {
 
-       this.vehicleHP.HP = Array.from(VehicleCollisionHandler.healthMap.values())[0] || 100;
-
+        this.vehicleGUI.HP = Array.from(VehicleCollisionHandler.healthMap.values())[0] || 100;
+        this.vehicleGUI.SPEED = this.vehicle?.getComponent(VehicleControl)?.vehicleSpeed || 0
+        
     }
     /**
       * @internal

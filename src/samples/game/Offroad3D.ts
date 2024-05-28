@@ -30,11 +30,11 @@ class Offroad3D {
 
         // Engine3D.frameRate = 361
         // Engine3D.frameRate = 63.158
-        if (import.meta.env.PROD) {
-            Engine3D.frameRate = 60
-        } else {
-            Engine3D.frameRate = 170
-        }
+        // if (import.meta.env.PROD) {
+        //     Engine3D.frameRate = 60
+        // } else {
+        //     Engine3D.frameRate = 170
+        // }
 
         // Init physics engine
         await Physics.init(true)
@@ -42,9 +42,9 @@ class Offroad3D {
         // Init Engine3D
         await Engine3D.init({
             // canvasConfig: { devicePixelRatio: 1 },
-            // renderLoop: () => this.loop()
-            beforeRender: () => this.loop()
-            // lateRender: () => this.loop()
+            renderLoop: () => Physics.update()
+            // beforeRender: () => Physics.update()
+            // lateRender: () => Physics.update()
         })
 
         let scene = new Scene3D()
@@ -77,7 +77,7 @@ class Offroad3D {
         let cameraCtrl = mainCamera.object3D.addComponent(HoverCameraController)
         cameraCtrl.setCamera(160, -15, 10)
         cameraCtrl.smooth = false
-        // cameraCtrl.dragSmooth = 10
+        cameraCtrl.dragSmooth = 10 // 50
         cameraCtrl.maxDistance = 1000
         cameraCtrl.rollSmooth = 8
         scene.addChild(cameraObj)
@@ -145,13 +145,14 @@ class Offroad3D {
             vehicle.vehicleType = VehicleType.LargePickup;
             vehicle.addInitedFunction((vehicle: Object3D) => {
                 // cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
-                cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 1, 0));
+                cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 0.5, 0));
+                scene.addComponent(MainModelComponent)
+
             }, this);
         }
 
         Engine3D.inputSystem.addEventListener("TerrainInited", onTerrainReady, this);
 
-        scene.addComponent(MainModelComponent)
 
         if (import.meta.env.PROD) {
             this.printing()
@@ -177,7 +178,7 @@ class Offroad3D {
             "%c⌨️H: %coff/on 显示或隐藏调试器\n" +
             "%c⌨️B: %c长按 相机拍摄目标前方\n" +
             "%c⌨️P: %c重置车辆方向与高度，xz位置不变\n" +
-            "%c⌨️U: %c开启170FPS或60FPS，如果渲染帧率不匹配会直接影响到物理步进模拟速率\n" +
+            "%c⌨️U: %coff/on 锁定60hz\n" +
             "%c⌨️7: %c+fov 视野缩放\n" +
             "%c⌨️8: %c-fov 视野缩放\n",
 
@@ -201,36 +202,6 @@ class Offroad3D {
         );
 
     }
-
-
-    loop() {
-        // Physics.update()
-        let timeStep = 1 / (Engine3D.frameRate / 1.6);
-        // console.log(timeStep);
-
-        Physics.world.stepSimulation(timeStep, 1, timeStep);
-
-        // Physics.world.stepSimulation(timeStep, 1, 1/60);
-        // Physics.world.stepSimulation(1 / 60, 10, 1 / 60);
-        // Physics.world.stepSimulation(Time.delta * 0.002, 10, 1 / 170);
-        // Physics.world.stepSimulation(Time.delta/1000, 10, 1/60);
-        // Physics.world.stepSimulation(Time.delta / 1000, 10, 1 / Engine3D.frameRate);
-        // Physics.world.stepSimulation(0.0166, 10, 1/60);
-
-        // Physics.world.stepSimulation(Time.delta / 1000, 1, Time.delta / 1000);
-        // Physics.world.stepSimulation(Time.delta / 1000, 1, 1 / Engine3D.frameRate);
-        // Physics.world.stepSimulation(Time.delta / 1000, 1);
-        // Physics.world.stepSimulation(Time.delta, 1);
-
-        // Physics.world.stepSimulation(Time.delta/1000, 10,1/60);
-        // Physics.world.stepSimulation(0.1);
-
-
-        // Physics.world.stepSimulation(Time.delta * 0.001, 10);
-        // Physics.world.stepSimulation(Time.delta / 1000, 1);
-
-    }
-
 }
 
 

@@ -2,7 +2,7 @@ import { Scene3D, Object3D, Engine3D, ColliderComponent, BoxColliderShape, Vecto
 // import { Ammo, Physics, Rigidbody } from '@orillusion/physics';
 
 import { eventBus } from '@/modules/store/index'
-import { RigidBodyComponent, RigidBodyUtil, Ammo, Physics } from '@/physics';
+import { RigidBodyComponent, RigidBodyUtil, Ammo, Physics, CollisionFlags, CollisionMask, CollisionGroup, ShapeTypes, PhysicsMathUtil } from '@/physics';
 
 enum VehicleControlType {
     acceleration,
@@ -102,6 +102,13 @@ export class VehicleControl extends ComponentBase {
 
         //raycast Vehicle 光线投射车辆
         let tuning = new Ammo.btVehicleTuning(); // 车辆调校
+        // tuning.set_m_suspensionStiffness(20.0);
+        // tuning.set_m_suspensionDamping(2.3);
+        // tuning.set_m_suspensionCompression(4.4);
+        // tuning.set_m_maxSuspensionTravelCm(500.0);
+        // tuning.set_m_frictionSlip(10.5);
+        // tuning.set_m_maxSuspensionForce(6000.0);
+
         let rayCaster = new Ammo.btDefaultVehicleRaycaster(Physics.world); // 光线投射 默认车辆光线投射器
         let vehicle = new Ammo.btRaycastVehicle(tuning, this.rigidbody, rayCaster); // 车辆光线投射
         vehicle.setCoordinateSystem(0, 1, 2); // 设置坐标系统
@@ -113,7 +120,8 @@ export class VehicleControl extends ComponentBase {
         // vehicleBody.setCcdSweptSphereRadius(0.05); // 设置CCD使用的扫描半径，应适当大于物体的最小尺寸
 
         this.mAmmoVehicle = vehicle;
-        Physics.world.addAction(vehicle); // 增加动作
+
+        Physics.world.addAction(vehicle);
 
         let wheelDirectCS0 = new Ammo.btVector3(0, -1, 0);
         let wheelAxleCS = new Ammo.btVector3(-1, 0, 0);  // 轴
@@ -125,7 +133,7 @@ export class VehicleControl extends ComponentBase {
             wheelInfo.set_m_wheelsDampingCompression(this.mVehicleArgs.suspensionCompression); // 设置车轮阻尼压缩
             wheelInfo.set_m_frictionSlip(this.mVehicleArgs.friction); // 设置摩擦滑动
             wheelInfo.set_m_rollInfluence(this.mVehicleArgs.rollInfluence); // 设置滚动影响
-            wheelInfo.set_m_maxSuspensionTravelCm(this.mVehicleArgs.maxSuspensionTravelCm); // 设置悬架行程
+            // wheelInfo.set_m_maxSuspensionTravelCm(this.mVehicleArgs.maxSuspensionTravelCm); // 设置悬架行程
 
             // wheelInfo.set_m_suspensionRestLength1(0.2); 
             wheelInfo.set_m_chassisConnectionPointCS(new Ammo.btVector3(x, y - 0.1, z));
@@ -156,21 +164,22 @@ export class VehicleControl extends ComponentBase {
         for (let index = 0; index < this.wheelPosOffset.length - 4; index++) {
             addWheel(false, (-x + this.wheelPosOffset[4 + index].x), -y, (-z + this.wheelPosOffset[4 + index].z), r);
         }
+
     }
 
-
-    // onUpdate() {
-    onLateUpdate() {
-    // onBeforeUpdate() {
+    onUpdate() {  // 标准更新 载具跳动 场景平滑 渲染58hz （set 80 frameRate）
+        // onLateUpdate() { // 物理步进在更新时或更新前 此处后 载具可以平滑 但场景跳动
+        // onBeforeUpdate() { // 还未测试
 
         if (!this.mAmmoVehicle) return;
 
         const vehicle = this.mAmmoVehicle;
         const n = vehicle.getNumWheels()
 
+
         // 仅受控时处理相关操作
         if (this._enableKeyEvent) {
-            const delta = Time.delta * 0.16
+            const delta = Time.delta * 0.16 // 0.16
             const speed = this.speed = vehicle.getCurrentSpeedKmHour();
 
             this.mBreakingForce = 0;
@@ -207,11 +216,11 @@ export class VehicleControl extends ComponentBase {
             const BACK_LEFT = 2;
             const BACK_RIGHT = 3;
 
+            vehicle.setSteeringValue(this.mVehicleSteering, FRONT_LEFT); // 转向
+            vehicle.setSteeringValue(this.mVehicleSteering, FRONT_RIGHT); // 转向  
 
-            vehicle.applyEngineForce(this.mEngineForce, BACK_LEFT); // 动力输出
-            vehicle.applyEngineForce(this.mEngineForce, BACK_RIGHT); // 动力输出
-            vehicle.applyEngineForce(this.mEngineForce, FRONT_LEFT); // 动力输出
-            vehicle.applyEngineForce(this.mEngineForce, FRONT_RIGHT); // 动力输出
+
+
             vehicle.setBrake(this.mBreakingForce / 2, FRONT_LEFT);
             vehicle.setBrake(this.mBreakingForce / 2, FRONT_RIGHT);
             vehicle.setBrake(this.mBreakingForce, BACK_LEFT);
@@ -219,15 +228,23 @@ export class VehicleControl extends ComponentBase {
 
 
             // 手刹
-            // if (this.mVehicleControlState[VehicleControlType.handbrake]) {
-            //   vehicle.setBrake(500, BACK_LEFT);
-            //   vehicle.setBrake(500, BACK_RIGHT);
-            // }
+            if (this.mVehicleControlState[VehicleControlType.handbrake]) {
+                vehicle.applyEngineForce(0, BACK_LEFT); // 动力输出
+                vehicle.applyEngineForce(0, BACK_RIGHT); // 动力输出
+                vehicle.applyEngineForce(0, FRONT_LEFT); // 动力输出
+                vehicle.applyEngineForce(0, FRONT_RIGHT); // 动力输出
+                vehicle.setBrake(50, BACK_LEFT);
+                vehicle.setBrake(50, BACK_RIGHT);
+            } else {
+                vehicle.applyEngineForce(this.mEngineForce, BACK_LEFT); // 动力输出
+                vehicle.applyEngineForce(this.mEngineForce, BACK_RIGHT); // 动力输出
+                vehicle.applyEngineForce(this.mEngineForce, FRONT_LEFT); // 动力输出
+                vehicle.applyEngineForce(this.mEngineForce, FRONT_RIGHT); // 动力输出
+            }
 
-            vehicle.setSteeringValue(this.mVehicleSteering, FRONT_LEFT); // 转向
-            vehicle.setSteeringValue(this.mVehicleSteering, FRONT_RIGHT); // 转向  
 
             if (n === 10) {
+
                 vehicle.setSteeringValue(this.mVehicleSteering / 2, 2);
                 vehicle.setSteeringValue(this.mVehicleSteering / 2, 3);
                 vehicle.setSteeringValue(this.mVehicleSteering / 4, 4);
@@ -243,35 +260,57 @@ export class VehicleControl extends ComponentBase {
         }
 
         // update body position
-        let tm,
-            p,
-            q,
-            qua = Quaternion.HELP_0;
+        let tm: Ammo.btTransform,
+            p: Ammo.btVector3,
+            q: Ammo.btQuaternion,
+            qua: Quaternion = Quaternion.HELP_0;
+        // Physics.world.stepSimulation(1/40, 1, 1 / 40);
+
+        // const deltaTime = Time.delta / 1000
+        // Physics.world.stepSimulation(deltaTime, 10);
+        // Physics.update();
+
+        // Physics.world.stepSimulation(deltaTime, 10, 1/170);
+
+        // Physics.world.stepSimulation(1/60, 1,1/60);
+
+        // let timeStep = 1 / (Engine3D.frameRate / 1.6);
+        // Physics.world.stepSimulation(timeStep, 1, timeStep);
+
+        // vehicle.updateAction(Physics.world, deltaTime);
+        // vehicle.updateVehicle(deltaTime);
+        // vehicle.updateSuspension(deltaTime)
+        // vehicle.updateFriction(deltaTime)
 
         for (let i = 0; i < n; i++) {
+            // this.mVehicleControlState[VehicleControlType.handbrake] || vehicle.updateWheelTransformsWS(this.wheelInfos[i], true);
+            this.mVehicleControlState[VehicleControlType.handbrake] || vehicle.updateWheelTransform(i, true);
             tm = vehicle.getWheelTransformWS(i);
-            p = tm.getOrigin();
-            q = tm.getRotation();
+            // p = tm.getOrigin();
+            // q = tm.getRotation();
+            // this.mWheels[i].transform.localPosition = Vector3.HELP_0.set(p.x(), p.y(), p.z());
+            // qua.set(q.x(), q.y(), q.z(), q.w());
+            // this.mWheels[i].transform.localRotQuat = qua;
 
-            // this.mWheels[i].x = p.x()
-            // this.mWheels[i].y = p.y()
-            // this.mWheels[i].z = p.z()
-
-            this.mWheels[i].transform.localPosition = Vector3.HELP_0.set(p.x(), p.y(), p.z());
-
-            qua.set(q.x(), q.y(), q.z(), q.w());
-            this.mWheels[i].transform.localRotQuat = qua;
+            Physics.syncGraphic(this.mWheels[i], tm)
         }
 
-        tm = vehicle.getChassisWorldTransform(); // 获取底盘世界变换
-        p = tm.getOrigin();
-        // this.object3D.x = p.x();
-        // this.object3D.y = p.y();
-        // this.object3D.z = p.z();
-        this.transform.localPosition = Vector3.HELP_0.set(p.x(), p.y(), p.z());
-        q = tm.getRotation();
-        qua.set(q.x(), q.y(), q.z(), q.w());
-        this.transform.localRotQuat = qua; // 车身旋转角度
+
+        this.rigidbody.getMotionState().getWorldTransform(Physics.TEMP_TRANSFORM)
+        tm = Physics.TEMP_TRANSFORM
+        // tm = vehicle.getChassisWorldTransform(); // 获取底盘世界变换
+        // let tm2 = vehicle.getChassisWorldTransform(); // 获取底盘世界变换
+        // console.log('底盘',PhysicsMathUtil.fromBtVector3(tm2.getOrigin()).toArray()); // 底盘数据并不是每一帧更新的
+        // console.log('插值', PhysicsMathUtil.fromBtVector3(tm.getOrigin()).toArray());
+
+        // p = tm.getOrigin();
+        // q = tm.getRotation();
+        // this.transform.localPosition = Vector3.HELP_0.set(p.x(), p.y(), p.z());
+        // qua.set(q.x(), q.y(), q.z(), q.w());
+        // this.transform.localRotQuat = qua;
+        
+        Physics.syncGraphic(this.object3D, tm)
+
     }
 
     private checkCollisions(carUserIndex: number) {

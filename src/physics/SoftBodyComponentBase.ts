@@ -67,7 +67,7 @@ export abstract class SoftBodyComponentBase extends ComponentBase {
             Vector3.add(this._softBodyRotate, rotation, this._softBodyRotate)
         }
 
-        /* 先旋转再平移，矩阵变换不满足交换律，先后顺序不能改，rotate 与 translate 是相对定位 */
+        /* 先旋转再平移，矩阵变换不满足交换律，先后顺序不能替换，注意 rotate 与 translate 是相对定位 */
         this._btSoftBody.rotate(PhysicsMathUtil.toBtQuaternion(Quaternion.HELP_0.fromEulerAngles(rotation.x, rotation.y, rotation.z)));
         this._btSoftBody.translate(PhysicsMathUtil.toBtVector3(position));
     }
@@ -110,6 +110,8 @@ export abstract class SoftBodyComponentBase extends ComponentBase {
     }
 
     onUpdate(): void {
+    // onBeforeUpdate(): void {
+    // onLateUpdate(): void {
         if (this._btBodyInited) {
             // 更新软体物体的位置
             const nodes = this._btSoftBody.get_m_nodes();
@@ -140,7 +142,7 @@ export abstract class SoftBodyComponentBase extends ComponentBase {
 
     public destroy(force?: boolean): void {
         if (this._btBodyInited) {
-            Physics.removeSoftBody(this._btSoftBody)
+            Physics.removeSoftBody(this)
             this._btSoftBody = null
             this._btBodyInited = false;
         }

@@ -195,6 +195,11 @@ export enum CollisionGroup {
      * 相机射线
      */
     CAMERA = 1 << 8,
+
+    /**
+     * 零
+     */
+    ZERO = 0
 }
 
 
@@ -221,6 +226,11 @@ export enum CollisionMask {
      * 动态物体的碰撞掩码，允许与车辆、动态物体1和2碰撞
      */
     DYNAMIC_MASK = CollisionGroup.VEHICLE | CollisionGroup.DYNAMIC1 | CollisionGroup.DYNAMIC2,
+
+    /**
+     * 零，不与任何物体碰撞
+     */
+    ZERO_MASK = 0
 }
 
 /**

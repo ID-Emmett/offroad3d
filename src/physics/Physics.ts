@@ -1,6 +1,6 @@
-import { Vector3, Time, BoundingBox } from '@orillusion/core';
+import { Vector3, Time, BoundingBox, Object3D, Quaternion } from '@orillusion/core';
 import { Ammo } from '@orillusion/physics';
-import { RigidBodyComponent, PhysicsMathUtil, ContactProcessedUtil, ClothSoftBodyComponent } from '.';
+import { RigidBodyComponent, PhysicsMathUtil, ContactProcessedUtil, ClothSoftBodyComponent, SoftBodyComponentBase } from '.';
 import { RigidBodyMapping } from './RigidBodyMapping';
 
 class _Physics {
@@ -9,7 +9,7 @@ class _Physics {
     private _gravity: Vector3 = new Vector3(0, -9.8, 0);
     private isInitialized: boolean = false;
 
-    private maxSubSteps: number = 1;
+    private maxSubSteps: number = 10;
     private fixedTimeStep: number = 1 / 60;
     private softBodyWorldInfo: Ammo.btSoftBodyWorldInfo | null = null;
     private physicBound: BoundingBox;
@@ -35,6 +35,11 @@ class _Physics {
 
         this.TEMP_TRANSFORM = new Ammo.btTransform();
         this.switchWorld(useSoftBody);
+
+        // 碰撞回调处理函数通过 Physics.contactProcessedUtil.registerCollisionHandlingCallback 进行注册
+        let funcpointer = Ammo.addFunction(Physics.contactProcessedUtil.contactProcessedCallback)
+        Physics.world.setContactProcessedCallback(funcpointer);
+
         this.isInitialized = true;
         this.physicBound = new BoundingBox(new Vector3(), new Vector3(2000, 2000, 2000));
     }
@@ -91,18 +96,18 @@ class _Physics {
         }
     }
 
-    public removeSoftBody(softBody: Ammo.btSoftBody) {
+    public removeSoftBody(softBody: SoftBodyComponentBase) {
         if (this.world instanceof Ammo.btSoftRigidDynamicsWorld) {
-            this.world.removeSoftBody(softBody);
-            Ammo.destroy(softBody);
-        }else{
+            this.world.removeSoftBody(softBody.btSoftBody);
+            Ammo.destroy(softBody.btSoftBody);
+        } else {
             console.warn('rigid body world can not be destroyed Soft bodies.');
         }
     }
 
-    public update() {
+    public update(maxSubSteps: number = this.maxSubSteps, fixedTimeStep: number = this.fixedTimeStep) {
         if (!this.isInitialized || this.isStop) return;
-        this.world.stepSimulation(Time.delta, this.maxSubSteps, this.fixedTimeStep);
+        this.world.stepSimulation(Time.delta / 1000, maxSubSteps, fixedTimeStep);
     }
 
     public get world(): Ammo.btDiscreteDynamicsWorld | Ammo.btSoftRigidDynamicsWorld {
@@ -152,6 +157,14 @@ class _Physics {
                 body.destroy();
             }
         }
+    }
+
+    /**
+     * 同步图形变换
+     */
+    public syncGraphic(graphic: Object3D, tm: Ammo.btTransform): void {
+        graphic.localPosition = PhysicsMathUtil.fromBtVector3(tm.getOrigin(), Vector3.HELP_0);
+        graphic.localQuaternion = PhysicsMathUtil.fromBtQuaternion(tm.getRotation(), Quaternion.HELP_0);
     }
 }
 

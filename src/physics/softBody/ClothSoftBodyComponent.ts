@@ -4,7 +4,7 @@ import { ActivationState, Ammo, Physics, PhysicsMathUtil, SoftBodyComponentBase,
 export class ClothSoftBodyComponent extends SoftBodyComponentBase {
     private segmentW: number;
     private segmentH: number;
-
+    public margin: number = 0.05
     public fixNodeIndices: CornerType[] | number[]
     protected _geometry: PlaneGeometry;
 
@@ -39,24 +39,119 @@ export class ClothSoftBodyComponent extends SoftBodyComponentBase {
             0,
             true
         );
-
         let sbConfig = this._btSoftBody.get_m_cfg();
-        sbConfig.set_viterations(10);
-        sbConfig.set_piterations(10);
+        sbConfig.set_viterations(10); // Position iterations
+        sbConfig.set_piterations(10); // Position solver iterations
+        sbConfig.set_diterations(10); // Dynamic solver iterations
+        sbConfig.set_citerations(10); // Constraint solver iterations
         this._btSoftBody.setActivationState(4);
 
-        // this._btSoftBody.get_m_materials().at(0).set_m_kLST(0.4);
-        // this._btSoftBody.get_m_materials().at(0).set_m_kAST(0.4);
+
+        /* 
+                set_viterations(value)
+                作用：设置位置迭代次数。增加迭代次数可以提高柔体模拟的准确性，但会增加计算成本。
+                示例：softBody.get_m_cfg().set_viterations(10);
+
+                set_piterations(value)
+                作用：设置位置求解器迭代次数（Position Solver Iterations）。控制柔体在位置求解过程中的迭代次数。
+                示例：softBody.get_m_cfg().set_piterations(10);
+
+                set_diterations(value)
+                作用：设置动态求解器迭代次数（Dynamic Solver Iterations）。控制柔体在动态求解过程中的迭代次数。
+                示例：softBody.get_m_cfg().set_diterations(10);
+
+                set_citerations(value)
+                作用：设置约束迭代次数（Constraint Solver Iterations）。控制柔体在处理约束时的迭代次数。
+                示例：softBody.get_m_cfg().set_citerations(10);
+
+                set_kVCF(value)
+                作用：设置体积保持系数（Volume Conservation Factor）。控制柔体在模拟过程中保持体积的能力。
+                示例：softBody.get_m_cfg().set_kVCF(1.0);
+
+                set_kDP(value)
+                作用：设置阻尼系数（Damping Coefficient）。控制柔体的阻尼效果。
+                示例：softBody.get_m_cfg().set_kDP(0.01);
+
+                set_kDG(value)
+                作用：设置拖拽系数（Drag Coefficient）。控制柔体的空气阻力效果。
+                示例：softBody.get_m_cfg().set_kDG(0.01);
+
+                set_kLF(value)
+                作用：设置升力系数（Lift Coefficient）。控制柔体的升力效果。
+                示例：softBody.get_m_cfg().set_kLF(0.05);
+
+                set_kPR(value)
+                作用：设置压力系数（Pressure Coefficient）。控制柔体的内部压力。
+                示例：softBody.get_m_cfg().set_kPR(1.0);
+         */
+        // sbConfig.set_kVCF(1.0); // Volume conservation factor
+        // sbConfig.set_kDP(0.01); // Damping coefficient
+        // sbConfig.set_kDG(0.01); // Drag coefficient
+        // sbConfig.set_kLF(0.05); // Lift coefficient
+
+
+        // try {
+        //     sbConfig.set_kPR(0.01); // Pressure coefficient
+        // } catch (e) {
+        //     console.error("Error setting kPR: ", e);
+        // }
+
+        // sbConfig.set_kVC(20); // Volume conservation
+
+        sbConfig.set_kDF(0.2); // Dynamic friction
+        sbConfig.set_kDP(0.01); // Damping coefficient
+        sbConfig.set_kLF(0.15); // Lift factor
+        sbConfig.set_kDG(0.01); // Drag coefficient 
+
+        // sbConfig.set_kPR(1); // Pressure coefficient 报错
+        // sbConfig.set_kVCF(0.5); // Volume conversation factor
+
+        /*
+            set_kVCF(value) - 体积保持因子(Volume Conservation Factor)
+            作用：控制柔体的体积保持。
+            示例：softBody.get_m_cfg().set_kVCF(1.0);
+
+            set_kDP(value) - 阻尼系数(Damping Coefficient)
+            作用：控制柔体的阻尼。
+            示例：softBody.get_m_cfg().set_kDP(0.01);
+
+            set_kDG(value) - 拖动系数(Drag Coefficient)
+            作用：控制柔体的空气阻力。
+            示例：softBody.get_m_cfg().set_kDG(0.01);
+
+            set_kLF(value) - 升力系数(Lift Coefficient)
+            作用：控制柔体的升力。
+            示例：softBody.get_m_cfg().set_kLF(0.05);
+
+            set_kPR(value) - 压力系数(Pressure Coefficient)
+            作用：控制柔体的内部压力。
+            示例：softBody.get_m_cfg().set_kPR(1.0);
+
+            set_kVC(value) - 体积刚度系数(Volume Stiffness Coefficient)
+            作用：控制柔体的体积刚度。
+            示例：softBody.get_m_cfg().set_kVC(20);
+         */
+
+
+
+        // 获取材质并设置参数
+        // const material = this._btSoftBody.get_m_materials().at(0);
+        // material.set_m_kLST(0.4); // 设置线性弹性系数
+        // material.set_m_kAST(1); // 设置角度弹性系数
+
+        // material.set_m_kVST(0.4); // 设置体积弹性系数
+        this._btSoftBody.get_m_materials().at(0).set_m_kLST(0.4);
+        this._btSoftBody.get_m_materials().at(0).set_m_kAST(0.4);
 
         this._btSoftBody.setTotalMass(this.mass, false);
-        Ammo.castObject(this._btSoftBody, Ammo.btCollisionObject).getCollisionShape().setMargin(0.05 * 3);
+        Ammo.castObject(this._btSoftBody, Ammo.btCollisionObject).getCollisionShape().setMargin(this.margin * 3);
 
-        this._btSoftBody.generateBendingConstraints(2, this._btSoftBody.get_m_materials().at(0));
+        this._btSoftBody.generateBendingConstraints(2, this._btSoftBody.get_m_materials().at(0)); // 柔体的弯曲约束 distance有效参数为1，2，3
 
         if (this.fixNodeIndices?.length) {
             if (typeof this.fixNodeIndices[0] === 'number') {
                 this.fixClothNode(this.fixNodeIndices as number[])
-            }else{
+            } else {
                 let indexes = this.getCornerIndices(this.fixNodeIndices as CornerType[])
                 this.fixClothNode(indexes)
             }
@@ -86,7 +181,7 @@ export class ClothSoftBodyComponent extends SoftBodyComponentBase {
      * 获取指定位置的索引
      */
     public getCornerIndices(cornerList: CornerType[]): number[] {
-        return cornerList.map(corner =>{
+        return cornerList.map(corner => {
             switch (corner) {
                 case 'left':
                     return this.getVertexIndex(0, Math.floor(this.segmentH / 2));

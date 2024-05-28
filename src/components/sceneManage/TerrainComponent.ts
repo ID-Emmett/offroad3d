@@ -14,8 +14,8 @@ import { TerrainUtil } from "@/utils/TerrainUtil";
 export class TerrainComponent extends ComponentBase {
 
     public terrainName: string = 'mainTerrain'
-    public width: number = 1000/2
-    public height: number = 1000/2
+    public width: number = 1000 * 0.5
+    public height: number = 1000 * 0.5
     public segmentW: number = 199
     public segmentH: number = 199
     public terrainMaxHeight: number = -150
@@ -27,13 +27,13 @@ export class TerrainComponent extends ComponentBase {
     }
 
     async start() {
-        
+
         let terrain = await this.generateTerrain();
 
         this.transform.scene3D.addChild(terrain);
 
         this.initRigidBody(terrain)
-        
+
         // 关联 CreateTree 组件
         Engine3D.inputSystem.dispatchEvent(new CEvent("TerrainInited", { terrainName: this.terrainName }));
 

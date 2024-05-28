@@ -104,7 +104,7 @@ export class TreesComponent extends ComponentBase {
                 newModel.y = TerrainUtil.calculateHeightAtPoint(x, z, terrainGeometry)
                 newModel.z = z
                 newModel.rotationY = Math.floor(Math.random() * 360) - 180
-                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 1.7) + Math.round(Math.random() * (newModel.scaleX * 1.3))
+                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7) + Math.round(Math.random() * (newModel.scaleX * 0.3))
 
                 // let rigidbody = newModel.addComponent(RigidBodyComponent)
                 // rigidbody.mass = 0;

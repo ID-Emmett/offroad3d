@@ -2,6 +2,7 @@ import { Color, ComponentBase, LitMaterial, MeshRenderer, Object3D, Vector3, Sph
 import { ActivationState, RigidBodyComponent, CollisionFlags, ShapeTypes, RigidBodyUtil, Ammo, Physics, SoftBodyComponent, SoftBodyComponentBase, ClothSoftBodyComponent, SphereSoftBodyComponent, TriMeshSoftBodyComponent, VolumeSoftBodyComponent, CollisionGroup, CollisionMask, HingeConstraint, AnchorConstraint } from "@/physics";
 import { GUIUtil } from '@/utils/GUIUtil'
 import { GUIHelp } from "@/utils/debug/GUIHelp";
+import { VehicleControl } from '../vehicleManage';
 // import { Ammo, Physics } from '@orillusion/physics';
 
 export class MainModelComponent extends ComponentBase {
@@ -23,7 +24,7 @@ export class MainModelComponent extends ComponentBase {
         // const indices = new Uint16Array(data.indices);
 
         // Adjust Transform
-        model.scaleX = model.scaleY = model.scaleZ = 0.5
+        model.scaleX = model.scaleY = model.scaleZ = 0.3
         // model.localQuaternion = new Quaternion(0.75, 0, 0, -0.75)
 
         model.y = -5
@@ -56,7 +57,7 @@ export class MainModelComponent extends ComponentBase {
             mr.geometry = new PlaneGeometry(1000, 1000, 1, 1)
             mr.material = new LitMaterial()
             mr.material.cullMode = GPUCullMode.none
-            obj.localPosition = new Vector3(0, -5, 0)
+            obj.localPosition = new Vector3(0, 0, 0)
             this.object3D.transform.scene3D.addChild(obj)
 
             let rigidBody = obj.addComponent(RigidBodyComponent)
@@ -74,8 +75,66 @@ export class MainModelComponent extends ComponentBase {
         boxObjRbComponent.mass = 10
         this.object3D.addChild(boxObj)
 
-        // 软体布料测试1 旗帜
-        if (true) {
+        // 软体布料测试0 车辆旗帜
+        if (false) {
+            const obj: Object3D = new Object3D()
+            let mr: MeshRenderer = obj.addComponent(MeshRenderer)
+            // mr.geometry = new PlaneGeometry(10 * 0.5, 6.6 * 0.5, 10, 10)
+            mr.geometry = new PlaneGeometry(0.5, 0.33, 10, 7)
+
+            let texture = await Engine3D.res.loadTexture('https://raw.githubusercontent.com/ID-Emmett/static-assets/main/images/codepen/american_flag.png');
+            let normalMapTexture = await Engine3D.res.loadTexture('https://raw.githubusercontent.com/ID-Emmett/static-assets/main/images/codepen/sandstone_cracks_nor_gl_1k.png');
+            let mat = new LitMaterial();
+            mat.baseMap = texture;
+            mat.normalMap = normalMapTexture;
+            mat.cullMode = GPUCullMode.none
+            mat.metallic = 0;
+            mat.roughness = 10;
+
+            mr.material = mat;
+            // obj.localPosition = new Vector3(-28 * 0.5, 2 * -0.5, -30 * 0.5)
+            // obj.localPosition = new Vector3(0, 0, 0)
+            // obj.localRotation = new Vector3(0, 0, 0)
+            this.object3D.transform.scene3D.addChild(obj)
+
+            // 布料软体
+            let softBody = obj.addComponent(ClothSoftBodyComponent)
+            softBody.mass = 0.9
+            softBody.margin = 0
+
+
+
+            let carObj = this.transform.scene3D.getChildByName('vehicle') as Object3D
+            let carRbComponent = carObj.getComponent(RigidBodyComponent)
+            
+            // 软体锚点约束
+            let constraint = obj.addComponent(AnchorConstraint)
+            constraint.targetRigidbody = carRbComponent
+            constraint.anchorIndices = ['leftTop', 'leftBottom'];
+            constraint.influence = 1;
+            constraint.disableCollision = true;
+
+            // 布料左边与刚体相连
+            let anchorX = (5 / 2 + 1 / 2) // x偏移 布料平面宽度的一半 + 刚体的宽度的一半
+            // 布料的顶部与刚体对其
+            let anchorY = (5 - 3.3) / 2 // (刚体高 - 布料平面高) / 2
+            // 布料对其矩形刚体的左角
+            let anchorZ = 1 / 2 // 刚体深度 / 2
+
+            // constraint.relativePosition = new Vector3(0.8, 1.2, -1.58)
+            constraint.relativePosition = new Vector3(0, 1, 0)
+            // constraint.absoluteRotation = new Vector3(0, 0, 0)
+
+            GUIHelp.addFolder('CarSoftBody')
+            GUIHelp.addButton('stop SoftBody Movement', () => softBody.stopSoftBodyMovement())
+            GUIHelp.addButton('Destroy AnchorConstraint', () => constraint.destroy())
+            let rot = 0
+            GUIHelp.addButton('change rotition', () => softBody.updateTransform(Vector3.ZERO, new Vector3(0, ++rot, 0)))
+            GUIHelp.open()
+
+
+        }
+        if (false) {
             const obj: Object3D = new Object3D()
             let mr: MeshRenderer = obj.addComponent(MeshRenderer)
             // mr.geometry = new PlaneGeometry(10 * 0.5, 6.6 * 0.5, 10, 10)
@@ -100,6 +159,8 @@ export class MainModelComponent extends ComponentBase {
             let softBody = obj.addComponent(ClothSoftBodyComponent)
             softBody.mass = 0.9
 
+            GUIHelp.addFolder('SoftBody')
+            GUIHelp.open()
             GUIHelp.addButton('stop SoftBody Movement', () => softBody.stopSoftBodyMovement())
 
             // 软体锚点约束
@@ -124,7 +185,7 @@ export class MainModelComponent extends ComponentBase {
 
         }
         // 软体布料测试2  悟空
-        if (true) {
+        if (false) {
             const obj: Object3D = new Object3D()
             let mr: MeshRenderer = obj.addComponent(MeshRenderer)
             mr.geometry = new PlaneGeometry(5, 5.5, 10, 10)
@@ -149,6 +210,7 @@ export class MainModelComponent extends ComponentBase {
             // let softBody = obj.addComponent(SoftBodyComponent)
 
         }
+
 
         // 软体球体测试1
         if (false) {

@@ -248,7 +248,9 @@ export class RigidBodyComponent extends ComponentBase {
             // console.log('静态');
         }
 
-        if (this.group && this.mask) {
+        // if (this.group && this.mask) {    
+        if (typeof this.group !== 'undefined' && this.group !== null &&
+            typeof this.mask !== 'undefined' && this.mask !== null) {
             Physics.world.addRigidBody(this._btRigidbody, this.group, this.mask);
         } else {
             Physics.world.addRigidBody(this._btRigidbody);
@@ -329,7 +331,7 @@ export class RigidBodyComponent extends ComponentBase {
 
             this.transform.localRotQuat = Quaternion.HELP_0;
 
-            Physics.checkBound(this);
+            // Physics.checkBound(this);
         }
     }
 
@@ -347,7 +349,7 @@ export class RigidBodyComponent extends ComponentBase {
     }
 
     public destroy(force?: boolean): void {
-        console.log('RigidBodyComponent Component Destroy');
+        console.log('RigidBodyComponent Component Destroy', this.object3D, this.object3D.name);
 
         RigidBodyUtil.destroyRigidBody(this._btRigidbody)
 

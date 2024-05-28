@@ -188,12 +188,14 @@ export class SoftBodyComponent extends ComponentBase {
     }
 
     public destroy(force?: boolean): void {
-        if (this._softBodyInited) {
-            (Physics.world as Ammo.btSoftRigidDynamicsWorld).removeSoftBody(this._btSoftBody);
-            Ammo.destroy(this._btSoftBody);
-            this._softBodyInited = false;
-        }
-        super.destroy(force);
+        console.log('软体销毁未实现');
+        
+        // if (this._softBodyInited) {
+        //     (Physics.world as Ammo.btSoftRigidDynamicsWorld).removeSoftBody(this);
+        //     Ammo.destroy(this._btSoftBody);
+        //     this._softBodyInited = false;
+        // }
+        // super.destroy(force);
     }
 
     /**
