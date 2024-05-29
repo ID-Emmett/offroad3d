@@ -1,4 +1,4 @@
-import { Engine3D, Scene3D, Camera3D, View3D, Object3D, Color, DirectLight, AtmosphericComponent, SkyRenderer, Vector3, AxisObject, Time, clamp } from '@orillusion/core'
+import { Engine3D, Scene3D, Camera3D, View3D, Object3D, Color, DirectLight, AtmosphericComponent, SkyRenderer, Vector3, AxisObject, Time, clamp, Matrix4 } from '@orillusion/core'
 import { Stats } from "@orillusion/stats"
 import { HoverCameraController } from '@/components/cameraController'
 import { InteractRay } from '@/components/ammoRay/InteractRay';
@@ -10,7 +10,7 @@ import { PostProcessingSetup } from '@/effects/Postprocessing';
 import { GUIHelp } from "@/utils/debug/GUIHelp";
 import { GUIUtil } from '@/utils/GUIUtil'
 
-import { RigidBodyUtil, PhysicsMathUtil, Physics, Ammo } from '@/physics';
+import { RigidBodyUtil, PhysicsMathUtil, Physics, Ammo, DebugDrawMode } from '@/physics';
 
 /**
  * 什么游戏
@@ -20,6 +20,8 @@ import { RigidBodyUtil, PhysicsMathUtil, Physics, Ammo } from '@/physics';
 class Offroad3D {
 
     async run() {
+        // Matrix4.maxCount = 900000;
+        // Matrix4.allocCount = 900000;
 
         Engine3D.setting.shadow.shadowSize = 1024 * 4;
         Engine3D.setting.shadow.csmMargin = 0.1 // 设置不同级别阴影的过渡范围，在0-1区间调节
@@ -28,16 +30,25 @@ class Offroad3D {
         Engine3D.setting.shadow.updateFrameRate = 1 // 阴影更新
         // Engine3D.setting.shadow.type = 'PCF'; // 默认 PCF HARD SOFT
 
-        // Engine3D.frameRate = 361
-        // Engine3D.frameRate = 63.158
-        // if (import.meta.env.PROD) {
-        //     Engine3D.frameRate = 60
-        // } else {
-        //     Engine3D.frameRate = 170
-        // }
+
+        // debug GUI
+        GUIHelp.init();
+        GUIHelp.addButton('Reload', () => location.reload());
+        GUIHelp.add({ 'Tips': 'Look at the console' }, 'Tips');
+        GUIHelp.add(Engine3D, 'frameRate', 10, 170, 10).listen();
 
         // Init physics engine
-        await Physics.init(true)
+        await Physics.init({
+            useSoftBody: true, // 使用软体
+            useCollisionCallback: true, // 使用碰撞回调
+            debugConfig: { // 物理调试配置
+                enable: false,
+                viewIndex: 0,
+                updateFreq: 1,
+                debugDrawMode: 2,
+                maxLineCount: 25000
+            },
+        })
 
         // Init Engine3D
         await Engine3D.init({
@@ -97,14 +108,7 @@ class Offroad3D {
         view.scene = scene
         view.camera = mainCamera
 
-
-        GUIHelp.init();
-        GUIHelp.addButton('Reload', () => location.reload())
-        GUIHelp.add({ 'Tips': 'Look at the console' }, 'Tips');
-        GUIHelp.add(Engine3D, 'frameRate', 10, 170, 10)
-
         this.initGameComponents(scene, cameraCtrl)
-
 
         // start render
         Engine3D.startRenderView(view)
@@ -140,6 +144,15 @@ class Offroad3D {
 
         cameraCtrl.object3D.addComponent(InteractRay);
 
+        let vehicle = scene.addComponent(VehicleComponent);
+        vehicle.vehicleType = VehicleType.LargePickup;
+        vehicle.addInitedFunction((vehicle: Object3D) => {
+            // cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
+            cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 0.5, 0));
+            scene.addComponent(MainModelComponent)
+
+        }, this);
+        return
         const onTerrainReady = () => {
             let vehicle = scene.addComponent(VehicleComponent);
             vehicle.vehicleType = VehicleType.LargePickup;

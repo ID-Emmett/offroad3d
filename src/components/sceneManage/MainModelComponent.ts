@@ -76,20 +76,27 @@ export class MainModelComponent extends ComponentBase {
         this.object3D.addChild(boxObj)
 
         // 软体布料测试0 车辆旗帜
-        if (false) {
+        if (true) {
             const obj: Object3D = new Object3D()
             let mr: MeshRenderer = obj.addComponent(MeshRenderer)
             // mr.geometry = new PlaneGeometry(10 * 0.5, 6.6 * 0.5, 10, 10)
             mr.geometry = new PlaneGeometry(0.5, 0.33, 10, 7)
 
-            let texture = await Engine3D.res.loadTexture('https://raw.githubusercontent.com/ID-Emmett/static-assets/main/images/codepen/american_flag.png');
-            let normalMapTexture = await Engine3D.res.loadTexture('https://raw.githubusercontent.com/ID-Emmett/static-assets/main/images/codepen/sandstone_cracks_nor_gl_1k.png');
-            let mat = new LitMaterial();
+            // let texture = await Engine3D.res.loadTexture('https://raw.githubusercontent.com/ID-Emmett/static-assets/main/images/codepen/american_flag.png');
+            // let normalMapTexture = await Engine3D.res.loadTexture('https://raw.githubusercontent.com/ID-Emmett/static-assets/main/images/codepen/sandstone_cracks_nor_gl_1k.png');
+            // let mat = new LitMaterial();
+            // mat.baseMap = texture;
+            // mat.normalMap = normalMapTexture;
+            // mat.cullMode = GPUCullMode.none
+            // mat.metallic = 0;
+            // mat.roughness = 10;
+            let texture = new BitmapTexture2D()
+            await texture.load('https://cdn.orillusion.com/gltfs/cube/material_02.png')
+            let mat = new UnLitMaterial()
             mat.baseMap = texture;
-            mat.normalMap = normalMapTexture;
             mat.cullMode = GPUCullMode.none
-            mat.metallic = 0;
-            mat.roughness = 10;
+            mr.material = mat;
+
 
             mr.material = mat;
             // obj.localPosition = new Vector3(-28 * 0.5, 2 * -0.5, -30 * 0.5)

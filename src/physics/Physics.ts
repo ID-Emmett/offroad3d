@@ -1,18 +1,24 @@
-import { Vector3, Time, BoundingBox, Object3D, Quaternion } from '@orillusion/core';
+import { Vector3, Time, BoundingBox, Object3D, Quaternion, Engine3D, Scene3D } from '@orillusion/core';
 import { Ammo } from '@orillusion/physics';
+// import Ammo from '@orillusion/ammo';
 import { RigidBodyComponent, PhysicsMathUtil, ContactProcessedUtil, ClothSoftBodyComponent, SoftBodyComponentBase } from '.';
 import { RigidBodyMapping } from './RigidBodyMapping';
+import { PhysicsDebugDrawer, type DebugDrawerOptions } from './PhysicsDebugDrawer';
 
 class _Physics {
     private _world: Ammo.btDiscreteDynamicsWorld | Ammo.btSoftRigidDynamicsWorld;
     private _isStop: boolean = false;
     private _gravity: Vector3 = new Vector3(0, -9.8, 0);
     private isInitialized: boolean = false;
-
-    private maxSubSteps: number = 10;
-    private fixedTimeStep: number = 1 / 60;
     private softBodyWorldInfo: Ammo.btSoftBodyWorldInfo | null = null;
     private physicBound: BoundingBox;
+
+    public maxSubSteps: number = 10;
+    public fixedTimeStep: number = 1 / 60;
+    /**
+     * 调试
+     */
+    public debugDrawer: PhysicsDebugDrawer
 
     /**
      * 刚体映射实例
@@ -28,17 +34,27 @@ class _Physics {
 
     constructor() { }
 
-    public async init(useSoftBody: boolean = false) {
 
+    /**
+     * Init Physics
+     */
+    public async init(options: { useSoftBody?: boolean, useCollisionCallback?: boolean, debugConfig?: DebugDrawerOptions } = {}) {
         await Ammo.bind(window)(Ammo);
         PhysicsMathUtil.init();
 
         this.TEMP_TRANSFORM = new Ammo.btTransform();
-        this.switchWorld(useSoftBody);
+        this.switchWorld(options.useSoftBody);
 
         // 碰撞回调处理函数通过 Physics.contactProcessedUtil.registerCollisionHandlingCallback 进行注册
-        let funcpointer = Ammo.addFunction(Physics.contactProcessedUtil.contactProcessedCallback)
-        Physics.world.setContactProcessedCallback(funcpointer);
+        if (options.useCollisionCallback) {
+            let funcpointer = Ammo.addFunction(Physics.contactProcessedUtil.contactProcessedCallback)
+            Physics.world.setContactProcessedCallback(funcpointer);
+        }
+
+        // 物理对象绘制能力
+        if (options.debugConfig) {
+            this.debugDrawer = new PhysicsDebugDrawer(this.world, options.debugConfig);
+        }
 
         this.isInitialized = true;
         this.physicBound = new BoundingBox(new Vector3(), new Vector3(2000, 2000, 2000));
@@ -46,7 +62,6 @@ class _Physics {
 
     public switchWorld(useSoftBody: boolean) {
         if (this.isInitialized && useSoftBody && this.isSoftBodyWord) return;
-        console.log('创建软体');
 
         if (this.isInitialized) {
             this.softBodyWorldInfo && Ammo.destroy(this.softBodyWorldInfo);
@@ -108,6 +123,8 @@ class _Physics {
     public update(maxSubSteps: number = this.maxSubSteps, fixedTimeStep: number = this.fixedTimeStep) {
         if (!this.isInitialized || this.isStop) return;
         this.world.stepSimulation(Time.delta / 1000, maxSubSteps, fixedTimeStep);
+
+        this.debugDrawer?.update();
     }
 
     public get world(): Ammo.btDiscreteDynamicsWorld | Ammo.btSoftRigidDynamicsWorld {

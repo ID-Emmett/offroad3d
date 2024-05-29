@@ -355,10 +355,5 @@ export class TerrainComponent extends ComponentBase {
         mr.receiveShadow = true
 
         scene3D.addChild(floor)
-
-        // ?--------------------物理start----------------------------
-        // let bodyRb = RigidBodyUtil.terrainShapeRigidBody(width, height, segmentW, segmentH, heightData, minHeight, maxHeight)
-        // Physics.world.addRigidBody(bodyRb);
-        // ?--------------------物理end----------------------------
     }
 }

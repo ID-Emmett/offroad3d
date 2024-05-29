@@ -140,7 +140,7 @@ export class RigidBodyUtil {
      */
     public static heightfieldTerrainShapeRigidBody(
         graphic: Object3D,
-        mass: number = 0,
+        mass: number,
         heightScale: number = 1,
         upAxis: number = 1,
         hdt: Ammo.PHY_ScalarType = 'PHY_FLOAT',
@@ -214,7 +214,7 @@ export class RigidBodyUtil {
      * @param lowObject 可选，从该图形对象取得顶点数据构建碰撞体
      * @returns Ammo.btRigidBody
      */
-    public static convexHullShapeRigidBody(graphic: Object3D, mass: number = 0, modelVertices: Float32Array = null, lowObject: Object3D = null) {
+    public static convexHullShapeRigidBody(graphic: Object3D, mass: number, modelVertices?: Float32Array, lowObject?: Object3D) {
 
         let vertices = modelVertices || this.getAllMeshVerticesAndIndices(lowObject || graphic).vertices
 
@@ -240,7 +240,7 @@ export class RigidBodyUtil {
      * @param lowObject 可选，从该图形对象取得顶点数据构建碰撞体
      * @returns bodyRb
      */
-    public static bvhTriangleMeshShapeRigidBody(graphic: Object3D, mass: number = 0, modelVertices: Float32Array = null, modelIndices: Uint16Array = null, lowObject: Object3D = null) {
+    public static bvhTriangleMeshShapeRigidBody(graphic: Object3D, mass: number, modelVertices?: Float32Array, modelIndices?: Uint16Array, lowObject?: Object3D) {
 
         // orillusion图形引擎中解析的模型顶点与索引值与blender脚本导出的json数据不一致，具体实现有差异，但均能正常工作，前提是vertices与indices必须同一来源。
         const { vertices, indices } = (modelVertices && modelIndices)
@@ -361,7 +361,7 @@ export class RigidBodyUtil {
 
         position ||= graphic.localPosition;
         rotation ||= graphic.localRotation;
-        
+
 
         const transform = Physics.TEMP_TRANSFORM;
         transform.setIdentity();
@@ -379,7 +379,7 @@ export class RigidBodyUtil {
 
         const motionState = new Ammo.btDefaultMotionState(transform);
         const localInertia = PhysicsMathUtil.setBtVector3(0, 0, 0);
-        if (mass !== 0) {
+        if (mass > 0) {
             shape.calculateLocalInertia(mass, localInertia);
         }
 
@@ -395,7 +395,7 @@ export class RigidBodyUtil {
     }
 
     /**
-     * 获取3D对象的所有网格顶点与索引
+     * 获取3D对象所有网格的顶点与索引
      * @param graphic
      * @returns vertex data and  indices data
      */
