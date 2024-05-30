@@ -114,10 +114,11 @@ export class VehicleControl extends ComponentBase {
         vehicle.setCoordinateSystem(0, 1, 2); // 设置坐标系统
 
 
-        // let vehicleBody = vehicle.getRigidBody()
         // 设置车辆的CCD参数
-        // vehicleBody.setCcdMotionThreshold(1e-7);  // 当对象移动超过这个阈值时启用CCD
-        // vehicleBody.setCcdSweptSphereRadius(0.05); // 设置CCD使用的扫描半径，应适当大于物体的最小尺寸
+        const ccdMotionThreshold = 25; // 米/秒
+        const ccdSweptSphereRadius = 0.375; // 米
+        this.rigidbody.setCcdMotionThreshold(ccdMotionThreshold);  // 当对象移动超过这个阈值时启用CCD
+        this.rigidbody.setCcdSweptSphereRadius(ccdSweptSphereRadius); // 设置CCD使用的扫描半径，应适当大于物体的最小尺寸
 
         this.mAmmoVehicle = vehicle;
 
@@ -390,7 +391,7 @@ export class VehicleControl extends ComponentBase {
             case KeyCode.Key_P:
                 if (state) {
                     let { x, y, z } = this.object3D.transform.localPosition
-                    RigidBodyUtil.resetRigidBody(this.rigidbody, new Vector3(x, 200, z), Quaternion._zero)
+                    RigidBodyUtil.resetRigidBody(this.rigidbody, new Vector3(x, 20, z), Quaternion._zero)
                 }
         }
     }

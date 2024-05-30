@@ -42,8 +42,8 @@ export class ClothSoftBodyComponent extends SoftBodyComponentBase {
         let sbConfig = this._btSoftBody.get_m_cfg();
         sbConfig.set_viterations(10); // Position iterations
         sbConfig.set_piterations(10); // Position solver iterations
-        sbConfig.set_diterations(10); // Dynamic solver iterations
-        sbConfig.set_citerations(10); // Constraint solver iterations
+        // sbConfig.set_diterations(10); // Dynamic solver iterations
+        // sbConfig.set_citerations(10); // Constraint solver iterations
         this._btSoftBody.setActivationState(4);
 
 
@@ -146,7 +146,7 @@ export class ClothSoftBodyComponent extends SoftBodyComponentBase {
         this._btSoftBody.setTotalMass(this.mass, false);
         Ammo.castObject(this._btSoftBody, Ammo.btCollisionObject).getCollisionShape().setMargin(this.margin * 3);
 
-        this._btSoftBody.generateBendingConstraints(2, this._btSoftBody.get_m_materials().at(0)); // 柔体的弯曲约束 distance有效参数为1，2，3
+        this._btSoftBody.generateBendingConstraints(2, this._btSoftBody.get_m_materials().at(0)); // 柔体的弯曲约束 distance 有效参数为1，2，3
 
         if (this.fixNodeIndices?.length) {
             if (typeof this.fixNodeIndices[0] === 'number') {

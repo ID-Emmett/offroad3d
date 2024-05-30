@@ -80,22 +80,22 @@ export class MainModelComponent extends ComponentBase {
             const obj: Object3D = new Object3D()
             let mr: MeshRenderer = obj.addComponent(MeshRenderer)
             // mr.geometry = new PlaneGeometry(10 * 0.5, 6.6 * 0.5, 10, 10)
-            mr.geometry = new PlaneGeometry(0.5, 0.33, 10, 7)
+            mr.geometry = new PlaneGeometry(0.5*1, 0.33*1, 10, 7)
 
-            // let texture = await Engine3D.res.loadTexture('https://raw.githubusercontent.com/ID-Emmett/static-assets/main/images/codepen/american_flag.png');
-            // let normalMapTexture = await Engine3D.res.loadTexture('https://raw.githubusercontent.com/ID-Emmett/static-assets/main/images/codepen/sandstone_cracks_nor_gl_1k.png');
-            // let mat = new LitMaterial();
-            // mat.baseMap = texture;
-            // mat.normalMap = normalMapTexture;
-            // mat.cullMode = GPUCullMode.none
-            // mat.metallic = 0;
-            // mat.roughness = 10;
-            let texture = new BitmapTexture2D()
-            await texture.load('https://cdn.orillusion.com/gltfs/cube/material_02.png')
-            let mat = new UnLitMaterial()
+            let texture = await Engine3D.res.loadTexture('https://raw.githubusercontent.com/ID-Emmett/static-assets/main/images/codepen/american_flag.png');
+            let normalMapTexture = await Engine3D.res.loadTexture('https://raw.githubusercontent.com/ID-Emmett/static-assets/main/images/codepen/sandstone_cracks_nor_gl_1k.png');
+            let mat = new LitMaterial();
             mat.baseMap = texture;
+            mat.normalMap = normalMapTexture;
             mat.cullMode = GPUCullMode.none
-            mr.material = mat;
+            mat.metallic = 0;
+            mat.roughness = 10;
+            // let texture = new BitmapTexture2D()
+            // await texture.load('https://cdn.orillusion.com/gltfs/cube/material_02.png')
+            // let mat = new UnLitMaterial()
+            // mat.baseMap = texture;
+            // mat.cullMode = GPUCullMode.none
+            // mr.material = mat;
 
 
             mr.material = mat;
@@ -113,12 +113,12 @@ export class MainModelComponent extends ComponentBase {
 
             let carObj = this.transform.scene3D.getChildByName('vehicle') as Object3D
             let carRbComponent = carObj.getComponent(RigidBodyComponent)
-            
+
             // 软体锚点约束
             let constraint = obj.addComponent(AnchorConstraint)
             constraint.targetRigidbody = carRbComponent
             constraint.anchorIndices = ['leftTop', 'leftBottom'];
-            constraint.influence = 1;
+            constraint.influence = [1, 1];
             constraint.disableCollision = true;
 
             // 布料左边与刚体相连
@@ -141,7 +141,7 @@ export class MainModelComponent extends ComponentBase {
 
 
         }
-        if (false) {
+        if (true) {
             const obj: Object3D = new Object3D()
             let mr: MeshRenderer = obj.addComponent(MeshRenderer)
             // mr.geometry = new PlaneGeometry(10 * 0.5, 6.6 * 0.5, 10, 10)
@@ -192,7 +192,7 @@ export class MainModelComponent extends ComponentBase {
 
         }
         // 软体布料测试2  悟空
-        if (false) {
+        if (true) {
             const obj: Object3D = new Object3D()
             let mr: MeshRenderer = obj.addComponent(MeshRenderer)
             mr.geometry = new PlaneGeometry(5, 5.5, 10, 10)

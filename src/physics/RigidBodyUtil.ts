@@ -357,7 +357,7 @@ export class RigidBodyUtil {
      */
     public static createRigidBody(shape: Ammo.btCollisionShape, mass: number, graphic: Object3D, position?: Vector3, rotation?: Vector3 | Quaternion): Ammo.btRigidBody {
 
-        shape.setMargin(0.05)
+        shape.setMargin(0.04)
 
         position ||= graphic.localPosition;
         rotation ||= graphic.localRotation;

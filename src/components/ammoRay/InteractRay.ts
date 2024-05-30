@@ -296,7 +296,7 @@ export class InteractRay extends ComponentBase {
 
             // 法线向量
             let hitNormal = this.cameraRay.get_m_hitNormalWorld();
-            let hitNormalWorld = Vector3.HELP_0.set(hitNormal.x(), hitNormal.y(), hitNormal.z());
+            let hitNormalWorld = PhysicsMathUtil.fromBtVector3(hitNormal, Vector3.HELP_0);
             hitNormalWorld = hitNormalWorld.normalize();  // 确保目标法向量是单位向量
 
             // 计算旋转轴和角度
@@ -310,8 +310,8 @@ export class InteractRay extends ComponentBase {
             this.referencePoint.transform.localRotQuat = quaternion;
 
             // 计算底部接触点的位置
-            // 此处2.5表示几何体质心与底部的距离，height / 2
-            this.referencePoint.transform.localPosition = hitNormalWorld.scaleBy(2.5).add(hitPointWorld, Vector3.HELP_2); // 根据法向量乘以距离并与原位置相加，即可得到朝向法向量偏移的新位置
+            // 此处0.25表示几何体质心与底部的距离，height / 2
+            this.referencePoint.transform.localPosition = hitNormalWorld.scaleBy(0.25).add(hitPointWorld, Vector3.HELP_2); // 根据法向量乘以距离并与原位置相加，即可得到朝向法向量偏移的新位置
 
 
             // 相机射向指针的参考线
@@ -338,7 +338,7 @@ export class InteractRay extends ComponentBase {
         const obj = new Object3D()
         let mr = obj.addComponent(MeshRenderer)
         // mr.geometry = new BoxGeometry(5, 5, 5)
-        mr.geometry = new CylinderGeometry(0.01, 2, 5, 32);
+        mr.geometry = new CylinderGeometry(0.01, 0.2, 0.5, 32);
         let mat = new LitMaterial()
         mat.baseColor = new Color(Math.random(), Math.random(), Math.random(), 1.0)
         mr.materials = [mat, mat, mat];
@@ -366,7 +366,7 @@ export class InteractRay extends ComponentBase {
         const obj = new Object3D()
         let mr = obj.addComponent(MeshRenderer)
         // mr.geometry = new SphereGeometry(5, 32, 32); // 球
-        mr.geometry = new BoxGeometry(5, 5, 5) // 盒子
+        mr.geometry = new BoxGeometry(0.5, 0.5, 0.5) // 盒子
         // mr.geometry = new CylinderGeometry(15, 15, 20, 32, 32); // 圆柱
         let mat = new LitMaterial()
         mat.baseColor = new Color(Math.random(), Math.random(), Math.random(), 1.0)
@@ -385,7 +385,7 @@ export class InteractRay extends ComponentBase {
         // }, this)
 
         // rigidbody.size = new Vector3(5, 5, 5);
-        rigidbody.radius = 5
+        // rigidbody.radius = 5
         // rigidbody.height = 20
 
 

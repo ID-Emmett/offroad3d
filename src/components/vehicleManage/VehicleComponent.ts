@@ -1,4 +1,4 @@
-import { ComponentBase, Engine3D, Object3D, Vector2, Vector3, View3D } from '@orillusion/core'
+import { BoundUtil, ComponentBase, Engine3D, Object3D, Vector2, Vector3, View3D } from '@orillusion/core'
 import { RigidBodyComponent, CollisionFlags, ActivationState, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil, Physics, Ammo, PhysicsMathUtil } from "@/physics";
 import { VehicleControl, VehicleType } from '.'
 import { GUIUtil } from '@/utils/GUIUtil'
@@ -392,6 +392,8 @@ export class VehicleComponent extends ComponentBase {
                 vehicle.localPosition = this.position
                 vehicle.name = 'vehicle'
                 vehicle.scaleX = vehicle.scaleY = vehicle.scaleZ = SCALE
+                // console.log('vehicle size', BoundUtil.genMeshBounds(vehicle).size.toString());
+
 
                 this.object3D.addChild(vehicle);
 
@@ -401,7 +403,7 @@ export class VehicleComponent extends ComponentBase {
                 const vertices = new Float32Array(data.vertices);
 
                 // 创建刚体
-                let rigidBodyComponent = this.initRigidBody(vehicle, 400)
+                let rigidBodyComponent = this.initRigidBody(vehicle, 1000 * SCALE)
                 rigidBodyComponent.modelVertices = vertices
 
                 // 载具控制器依赖载具刚体，需要先为载具添加刚体再添加控制器
@@ -409,26 +411,26 @@ export class VehicleComponent extends ComponentBase {
                 // controller.enable = false
                 controller.mVehicleArgs = {
                     wheelSize: SCALE,
-                    // friction: 1000, // 摩擦力 1000 值越大越滑
-                    // suspensionStiffness: 8.0, // 悬架刚度 20.0
-                    // suspensionDamping: 0.4, // 悬架阻尼 2.3
-                    // suspensionCompression: 0.4, // 悬架压缩 4.4
-                    // suspensionRestLength: 0.5, // 悬架未受压时的长度 0.6  
+                    // friction: 100, // 摩擦力 1000 值越大越滑
+                    // suspensionStiffness: 30, // 悬架刚度 20.0
+                    // suspensionDamping: 1, // 悬架阻尼 2.3
+                    // suspensionCompression: 1, // 悬架压缩 4.4
+                    // suspensionRestLength: 0.08, // 悬架未受压时的长度 0.6  
                     // rollInfluence: 0.5, // 离心力 影响力 0.2
-                    // steeringIncrement: 0.003,  // 转向增量 0.04
+                    // steeringIncrement: .004,  // 转向增量 0.04
                     // steeringClamp: 0.35, // 转向钳 0.5
-                    // maxEngineForce: 2500, // 最大发动机力 1500
-                    // maxBreakingForce: 50, // 最大断裂力 500
-                    // maxSuspensionTravelCm: 135 // 最大悬架行程
+                    // maxEngineForce: 300, // 最大发动机力 1500
+                    // maxBreakingForce: 10, // 最大断裂力 500
+                    // maxSuspensionTravelCm: 135 // 最大悬架行程 
                     friction: 100, // 摩擦力 1000 值越大越滑
-                    suspensionStiffness: 20, // 悬架刚度 20.0
-                    suspensionDamping: 0.3, // 悬架阻尼 2.3
+                    suspensionStiffness: 30, // 悬架刚度 20.0
+                    suspensionDamping: 1, // 悬架阻尼 2.3
                     suspensionCompression: 1, // 悬架压缩 4.4
                     suspensionRestLength: 0.08, // 悬架未受压时的长度 0.6  
-                    rollInfluence: 0.2, // 离心力 影响力 0.2
+                    rollInfluence: 0.5, // 离心力 影响力 0.2
                     steeringIncrement: .004,  // 转向增量 0.04
                     steeringClamp: 0.35, // 转向钳 0.5
-                    maxEngineForce: 400, // 最大发动机力 1500
+                    maxEngineForce: 300, // 最大发动机力 1500
                     maxBreakingForce: 10, // 最大断裂力 500
                     maxSuspensionTravelCm: 135 // 最大悬架行程 
                     // friction: 1.2, // 摩擦力 1000 值越大越滑
@@ -472,7 +474,7 @@ export class VehicleComponent extends ComponentBase {
     private initRigidBody(vehicle: Object3D, mass: number, damping?: Vector2): RigidBodyComponent {
         const rigidBodyComponent = vehicle.addComponent(RigidBodyComponent)
         rigidBodyComponent.mass = mass;
-        rigidBodyComponent.damping = damping || new Vector2(0.1, 0.1);
+        rigidBodyComponent.damping = damping || new Vector2(0.2, 0.2);
         // rigidBodyComponent.restitution = 0;
         // rigidBodyComponent.friction = 0;
         // rigidBodyComponent.rollingFriction = 1;
@@ -530,7 +532,7 @@ export class VehicleComponent extends ComponentBase {
 
         this.vehicleGUI.HP = Array.from(VehicleCollisionHandler.healthMap.values())[0] || 100;
         this.vehicleGUI.SPEED = this.vehicle?.getComponent(VehicleControl)?.vehicleSpeed || 0
-        
+
     }
     /**
       * @internal

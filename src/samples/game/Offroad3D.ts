@@ -144,15 +144,16 @@ class Offroad3D {
 
         cameraCtrl.object3D.addComponent(InteractRay);
 
-        let vehicle = scene.addComponent(VehicleComponent);
-        vehicle.vehicleType = VehicleType.LargePickup;
-        vehicle.addInitedFunction((vehicle: Object3D) => {
-            // cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
-            cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 0.5, 0));
-            scene.addComponent(MainModelComponent)
+        // let vehicle = scene.addComponent(VehicleComponent);
+        // vehicle.vehicleType = VehicleType.LargePickup;
+        // vehicle.addInitedFunction((vehicle: Object3D) => {
+        //     // cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
+        //     cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 0.5, 0));
+        //     scene.addComponent(MainModelComponent)
 
-        }, this);
-        return
+        // }, this);
+        // return
+        
         const onTerrainReady = () => {
             let vehicle = scene.addComponent(VehicleComponent);
             vehicle.vehicleType = VehicleType.LargePickup;

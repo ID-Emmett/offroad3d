@@ -18,7 +18,7 @@ export class TerrainComponent extends ComponentBase {
     public height: number = 1000 * 0.5
     public segmentW: number = 199
     public segmentH: number = 199
-    public terrainMaxHeight: number = -150
+    public terrainMaxHeight: number = -43
 
     private _terrainGeometry: TerrainGeometry
 
@@ -101,7 +101,7 @@ export class TerrainComponent extends ComponentBase {
 
         let mat = new LitMaterial()
         mat.name = 'terrainMaterial'
-        mat.setUniformVector4('transformUV1', new Vector4(0, 0, 30, 30))
+        mat.setUniformVector4('transformUV1', new Vector4(0, 0, 60, 60))
         mat.baseMap = texture
         mat.normalMap = normalMap
         // mat.aoMap = aoMap
@@ -159,7 +159,8 @@ export class TerrainComponent extends ComponentBase {
         })
 
 
-        let transUV = new Vector4(0, 0, 30, 30)
+        let transUV = terrain.getComponent(MeshRenderer).material.getUniformV4('transformUV1')
+        //  new Vector4(0, 0, 60, 60)
 
         gui.add(transUV, 'x', 0, 100, 1).onChange((v) => changeUV()).name('uv-x')
         gui.add(transUV, 'y', 0, 100, 1).onChange((v) => changeUV()).name('uv-y')
@@ -278,28 +279,9 @@ export class TerrainComponent extends ComponentBase {
 
     }
 
-    // TEST
-    private async createModelFloor(scene3D: Scene3D) {
-
-
-        let glftModel = await Engine3D.res.loadGltf('models/wethumid_desert_-_terrain_merge.glb');  // 地图
-        // let m = glftModel.getComponents(MeshRenderer)
-
-        glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 1000
-
-        // console.log(m[0].geometry);
-
-        // let posAttrData = m[0].geometry.getAttribute(VertexAttributeName.position)
-        // console.log(posAttrData);
-
-        scene3D.addChild(glftModel)
-
-
-        let bodyRb = RigidBodyUtil.bvhTriangleMeshShapeRigidBody(glftModel, 0)
-        Physics.world.addRigidBody(bodyRb);
-
-    }
-
+    /**
+     * 柏林噪声地形
+     */
     private async createNoiseFloor(scene3D: Scene3D) {
 
         let width = 1000
