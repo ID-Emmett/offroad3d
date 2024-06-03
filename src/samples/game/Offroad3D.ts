@@ -1,4 +1,4 @@
-import { Engine3D, Scene3D, Camera3D, View3D, Object3D, Color, DirectLight, AtmosphericComponent, SkyRenderer, Vector3, AxisObject, Time, clamp } from '@orillusion/core'
+import { Engine3D, Scene3D, Camera3D, View3D, Object3D, Color, DirectLight, AtmosphericComponent, SkyRenderer, Vector3, AxisObject, Time, clamp, Matrix4 } from '@orillusion/core'
 import { Stats } from "@orillusion/stats"
 import { HoverCameraController } from '@/components/cameraController'
 import { InteractRay } from '@/components/ammoRay/InteractRay';
@@ -10,7 +10,7 @@ import { PostProcessingSetup } from '@/effects/Postprocessing';
 import { GUIHelp } from "@/utils/debug/GUIHelp";
 import { GUIUtil } from '@/utils/GUIUtil'
 
-import { RigidBodyUtil, PhysicsMathUtil, Physics, Ammo } from '@/physics';
+import { RigidBodyUtil, PhysicsMathUtil, Physics, Ammo, DebugDrawMode } from '@/physics';
 
 /**
  * 什么游戏
@@ -20,6 +20,8 @@ import { RigidBodyUtil, PhysicsMathUtil, Physics, Ammo } from '@/physics';
 class Offroad3D {
 
     async run() {
+        // Matrix4.maxCount = 900000;
+        // Matrix4.allocCount = 900000;
 
         Engine3D.setting.shadow.shadowSize = 1024 * 4;
         Engine3D.setting.shadow.csmMargin = 0.1 // 设置不同级别阴影的过渡范围，在0-1区间调节
@@ -28,23 +30,32 @@ class Offroad3D {
         Engine3D.setting.shadow.updateFrameRate = 1 // 阴影更新
         // Engine3D.setting.shadow.type = 'PCF'; // 默认 PCF HARD SOFT
 
-        // Engine3D.frameRate = 361
-        // Engine3D.frameRate = 63.158
-        if (import.meta.env.PROD) {
-            Engine3D.frameRate = 60
-        } else {
-            Engine3D.frameRate = 170
-        }
+
+        // debug GUI
+        GUIHelp.init();
+        GUIHelp.addButton('Reload', () => location.reload());
+        GUIHelp.add({ 'Tips': 'Look at the console' }, 'Tips');
+        GUIHelp.add(Engine3D, 'frameRate', 10, 170, 10).listen();
 
         // Init physics engine
-        await Physics.init(true)
+        await Physics.init({
+            useSoftBody: true, // 使用软体
+            useCollisionCallback: true, // 使用碰撞回调
+            debugConfig: { // 物理调试配置
+                enable: false,
+                viewIndex: 0,
+                updateFreq: 1,
+                debugDrawMode: 2,
+                maxLineCount: 25000
+            },
+        })
 
         // Init Engine3D
         await Engine3D.init({
             // canvasConfig: { devicePixelRatio: 1 },
-            // renderLoop: () => this.loop()
-            beforeRender: () => this.loop()
-            // lateRender: () => this.loop()
+            renderLoop: () => Physics.update()
+            // beforeRender: () => Physics.update()
+            // lateRender: () => Physics.update()
         })
 
         let scene = new Scene3D()
@@ -77,7 +88,7 @@ class Offroad3D {
         let cameraCtrl = mainCamera.object3D.addComponent(HoverCameraController)
         cameraCtrl.setCamera(160, -15, 10)
         cameraCtrl.smooth = false
-        // cameraCtrl.dragSmooth = 10
+        cameraCtrl.dragSmooth = 10 // 50
         cameraCtrl.maxDistance = 1000
         cameraCtrl.rollSmooth = 8
         scene.addChild(cameraObj)
@@ -97,14 +108,7 @@ class Offroad3D {
         view.scene = scene
         view.camera = mainCamera
 
-
-        GUIHelp.init();
-        GUIHelp.addButton('Reload', () => location.reload())
-        GUIHelp.add({ 'Tips': 'Look at the console' }, 'Tips');
-        GUIHelp.add(Engine3D, 'frameRate', 10, 170, 10)
-
         this.initGameComponents(scene, cameraCtrl)
-
 
         // start render
         Engine3D.startRenderView(view)
@@ -140,18 +144,29 @@ class Offroad3D {
 
         cameraCtrl.object3D.addComponent(InteractRay);
 
+        // let vehicle = scene.addComponent(VehicleComponent);
+        // vehicle.vehicleType = VehicleType.LargePickup;
+        // vehicle.addInitedFunction((vehicle: Object3D) => {
+        //     // cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
+        //     cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 0.5, 0));
+        //     scene.addComponent(MainModelComponent)
+
+        // }, this);
+        // return
+        
         const onTerrainReady = () => {
             let vehicle = scene.addComponent(VehicleComponent);
             vehicle.vehicleType = VehicleType.LargePickup;
             vehicle.addInitedFunction((vehicle: Object3D) => {
                 // cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
-                cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 1, 0));
+                cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 0.5, 0));
+                scene.addComponent(MainModelComponent)
+
             }, this);
         }
 
         Engine3D.inputSystem.addEventListener("TerrainInited", onTerrainReady, this);
 
-        scene.addComponent(MainModelComponent)
 
         if (import.meta.env.PROD) {
             this.printing()
@@ -177,7 +192,7 @@ class Offroad3D {
             "%c⌨️H: %coff/on 显示或隐藏调试器\n" +
             "%c⌨️B: %c长按 相机拍摄目标前方\n" +
             "%c⌨️P: %c重置车辆方向与高度，xz位置不变\n" +
-            "%c⌨️U: %c开启170FPS或60FPS，如果渲染帧率不匹配会直接影响到物理步进模拟速率\n" +
+            "%c⌨️U: %coff/on 锁定60hz\n" +
             "%c⌨️7: %c+fov 视野缩放\n" +
             "%c⌨️8: %c-fov 视野缩放\n",
 
@@ -201,36 +216,6 @@ class Offroad3D {
         );
 
     }
-
-
-    loop() {
-        // Physics.update()
-        let timeStep = 1 / (Engine3D.frameRate / 1.6);
-        // console.log(timeStep);
-
-        Physics.world.stepSimulation(timeStep, 1, timeStep);
-
-        // Physics.world.stepSimulation(timeStep, 1, 1/60);
-        // Physics.world.stepSimulation(1 / 60, 10, 1 / 60);
-        // Physics.world.stepSimulation(Time.delta * 0.002, 10, 1 / 170);
-        // Physics.world.stepSimulation(Time.delta/1000, 10, 1/60);
-        // Physics.world.stepSimulation(Time.delta / 1000, 10, 1 / Engine3D.frameRate);
-        // Physics.world.stepSimulation(0.0166, 10, 1/60);
-
-        // Physics.world.stepSimulation(Time.delta / 1000, 1, Time.delta / 1000);
-        // Physics.world.stepSimulation(Time.delta / 1000, 1, 1 / Engine3D.frameRate);
-        // Physics.world.stepSimulation(Time.delta / 1000, 1);
-        // Physics.world.stepSimulation(Time.delta, 1);
-
-        // Physics.world.stepSimulation(Time.delta/1000, 10,1/60);
-        // Physics.world.stepSimulation(0.1);
-
-
-        // Physics.world.stepSimulation(Time.delta * 0.001, 10);
-        // Physics.world.stepSimulation(Time.delta / 1000, 1);
-
-    }
-
 }
 
 

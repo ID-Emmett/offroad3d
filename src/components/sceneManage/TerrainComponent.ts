@@ -14,11 +14,11 @@ import { TerrainUtil } from "@/utils/TerrainUtil";
 export class TerrainComponent extends ComponentBase {
 
     public terrainName: string = 'mainTerrain'
-    public width: number = 1000/2
-    public height: number = 1000/2
+    public width: number = 1000 * 0.5
+    public height: number = 1000 * 0.5
     public segmentW: number = 199
     public segmentH: number = 199
-    public terrainMaxHeight: number = -150
+    public terrainMaxHeight: number = -43
 
     private _terrainGeometry: TerrainGeometry
 
@@ -27,13 +27,13 @@ export class TerrainComponent extends ComponentBase {
     }
 
     async start() {
-        
+
         let terrain = await this.generateTerrain();
 
         this.transform.scene3D.addChild(terrain);
 
         this.initRigidBody(terrain)
-        
+
         // 关联 CreateTree 组件
         Engine3D.inputSystem.dispatchEvent(new CEvent("TerrainInited", { terrainName: this.terrainName }));
 
@@ -101,7 +101,7 @@ export class TerrainComponent extends ComponentBase {
 
         let mat = new LitMaterial()
         mat.name = 'terrainMaterial'
-        mat.setUniformVector4('transformUV1', new Vector4(0, 0, 30, 30))
+        mat.setUniformVector4('transformUV1', new Vector4(0, 0, 60, 60))
         mat.baseMap = texture
         mat.normalMap = normalMap
         // mat.aoMap = aoMap
@@ -138,6 +138,7 @@ export class TerrainComponent extends ComponentBase {
         let f = gui.addFolder(this.terrainName)
 
         f.add(this, 'terrainMaxHeight', -1000, 1000, 1).onChange(v => setTerrainSize(v, 'terrainMaxHeight')).onFinishChange(v => resetRigidBody())
+        f.add(terrain.transform, 'enable')
         f.add(this, 'width', 100, 5000, 10).onChange(v => setTerrainSize(v, 'width')).onFinishChange(v => resetRigidBody())
         f.add(this, 'height', 100, 5000, 10).onChange(v => setTerrainSize(v, 'height')).onFinishChange(v => resetRigidBody())
         f.add(this, 'segmentW', 1, 1000, 1).onFinishChange(v => setTerrainSegment())
@@ -158,7 +159,8 @@ export class TerrainComponent extends ComponentBase {
         })
 
 
-        let transUV = new Vector4(0, 0, 30, 30)
+        let transUV = terrain.getComponent(MeshRenderer).material.getUniformV4('transformUV1')
+        //  new Vector4(0, 0, 60, 60)
 
         gui.add(transUV, 'x', 0, 100, 1).onChange((v) => changeUV()).name('uv-x')
         gui.add(transUV, 'y', 0, 100, 1).onChange((v) => changeUV()).name('uv-y')
@@ -277,28 +279,9 @@ export class TerrainComponent extends ComponentBase {
 
     }
 
-    // TEST
-    private async createModelFloor(scene3D: Scene3D) {
-
-
-        let glftModel = await Engine3D.res.loadGltf('models/wethumid_desert_-_terrain_merge.glb');  // 地图
-        // let m = glftModel.getComponents(MeshRenderer)
-
-        glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 1000
-
-        // console.log(m[0].geometry);
-
-        // let posAttrData = m[0].geometry.getAttribute(VertexAttributeName.position)
-        // console.log(posAttrData);
-
-        scene3D.addChild(glftModel)
-
-
-        let bodyRb = RigidBodyUtil.bvhTriangleMeshShapeRigidBody(glftModel, 0)
-        Physics.world.addRigidBody(bodyRb);
-
-    }
-
+    /**
+     * 柏林噪声地形
+     */
     private async createNoiseFloor(scene3D: Scene3D) {
 
         let width = 1000
@@ -354,10 +337,5 @@ export class TerrainComponent extends ComponentBase {
         mr.receiveShadow = true
 
         scene3D.addChild(floor)
-
-        // ?--------------------物理start----------------------------
-        // let bodyRb = RigidBodyUtil.terrainShapeRigidBody(width, height, segmentW, segmentH, heightData, minHeight, maxHeight)
-        // Physics.world.addRigidBody(bodyRb);
-        // ?--------------------物理end----------------------------
     }
 }

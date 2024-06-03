@@ -16,7 +16,7 @@ export class RigidBodyComponent extends ComponentBase {
     private _isStatic: boolean = false;
     private _isTrigger: boolean = false;
     private _btRigidbody: Ammo.btRigidBody;
-    private _btRigidbodyInited: boolean = false;
+    private _btBodyInited: boolean = false;
     private _friction: number; // 0.6
     private _rollingFriction: number; // 0.1
     private _restitution: number // 0.8
@@ -159,8 +159,8 @@ export class RigidBodyComponent extends ComponentBase {
     /**
      * Check if rigidbody inited
      */
-    public get btRigidbodyInited(): boolean {
-        return this._btRigidbodyInited;
+    public get btBodyInited(): boolean {
+        return this._btBodyInited;
     }
 
     init(): void {
@@ -184,7 +184,7 @@ export class RigidBodyComponent extends ComponentBase {
             let fun = this._initedFunctions[i];
             fun.fun.call(fun.thisObj);
         }
-        this._btRigidbodyInited = true;
+        this._btBodyInited = true;
     }
 
     private addRigidBodyComponent(): void {
@@ -248,7 +248,9 @@ export class RigidBodyComponent extends ComponentBase {
             // console.log('静态');
         }
 
-        if (this.group && this.mask) {
+        // if (this.group && this.mask) {    
+        if (typeof this.group !== 'undefined' && this.group !== null &&
+            typeof this.mask !== 'undefined' && this.mask !== null) {
             Physics.world.addRigidBody(this._btRigidbody, this.group, this.mask);
         } else {
             Physics.world.addRigidBody(this._btRigidbody);
@@ -329,7 +331,7 @@ export class RigidBodyComponent extends ComponentBase {
 
             this.transform.localRotQuat = Quaternion.HELP_0;
 
-            Physics.checkBound(this);
+            // Physics.checkBound(this);
         }
     }
 
@@ -347,7 +349,7 @@ export class RigidBodyComponent extends ComponentBase {
     }
 
     public destroy(force?: boolean): void {
-        console.log('RigidBodyComponent Component Destroy');
+        console.log('RigidBody Component Destroy', this.object3D, this.object3D.name);
 
         RigidBodyUtil.destroyRigidBody(this._btRigidbody)
 

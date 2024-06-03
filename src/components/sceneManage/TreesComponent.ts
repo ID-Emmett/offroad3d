@@ -43,9 +43,10 @@ export class TreesComponent extends ComponentBase {
 
     private async createTrees(terrainGeometry: TerrainGeometry) {
 
+        const SIZE = 0.2 
         const { width, height } = terrainGeometry;
 
-        let points = new Float32Array(100 * 3); // 100个点 每个点3个坐标：x, y, z
+        let points = new Float32Array(20 * 3); // 100个点 每个点3个坐标：x, y, z
 
         // 填充x和z值，y值默认为0
         for (let i = 0; i < points.length; i += 3) {
@@ -56,7 +57,7 @@ export class TreesComponent extends ComponentBase {
         points = TerrainUtil.calculateHeightsForPoints(points, terrainGeometry); // 计算高度值
 
         let glftModel = await Engine3D.res.loadGltf('models/trees/pine_tree_blue.glb');  // 蓝色树
-        glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 1;
+        glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = SIZE;
 
         for (let i = 0, count = points.length / 3; i < count; i++) {
             let newModel = glftModel.clone()
@@ -72,7 +73,7 @@ export class TreesComponent extends ComponentBase {
             grassYellow.name = 'grassYellow'
 
             let glftModel = await Engine3D.res.loadGltf('models/trees/grass_yellow.glb');  // 黄草
-            glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 3;
+            glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 3 * SIZE;
 
             for (let i = 0; i < 1000; i++) {
                 const newModel = glftModel.clone()
@@ -82,7 +83,7 @@ export class TreesComponent extends ComponentBase {
                 newModel.y = TerrainUtil.calculateHeightAtPoint(x, z, terrainGeometry)
                 newModel.z = z
                 newModel.rotationY = Math.floor(Math.random() * 360) - 180
-                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7) + Math.round(Math.random() * (newModel.scaleX * 0.3))
+                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7 ) + Math.round(Math.random() * (newModel.scaleX * 0.3 ))
 
                 let one = glftModel.entityChildren[0].entityChildren[0] as Object3D
                 let mr = one.getComponent(MeshRenderer)
@@ -104,7 +105,7 @@ export class TreesComponent extends ComponentBase {
                 newModel.y = TerrainUtil.calculateHeightAtPoint(x, z, terrainGeometry)
                 newModel.z = z
                 newModel.rotationY = Math.floor(Math.random() * 360) - 180
-                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 1.7) + Math.round(Math.random() * (newModel.scaleX * 1.3))
+                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7 * SIZE) + Math.round(Math.random() * (newModel.scaleX * 0.3 * SIZE))
 
                 // let rigidbody = newModel.addComponent(RigidBodyComponent)
                 // rigidbody.mass = 0;
@@ -120,6 +121,7 @@ export class TreesComponent extends ComponentBase {
         }
         {
             let glftModel = await Engine3D.res.loadGltf('models/trees/pine_tree_pink.glb'); // 中红树
+            glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = SIZE;
 
             for (let i = 0; i < 100; i++) {
                 const newModel = glftModel.clone()
@@ -144,49 +146,6 @@ export class TreesComponent extends ComponentBase {
             }
         }
 
-    }
-
-    /**
-     * 插值计算地形上给定点的高度。
-     * @param {TerrainGeometry} terrainGeometry - 地形的几何数据，包含宽、高、分段数和高度数据。
-     * @param {Float32Array} points - 包含x, z坐标的浮点数组，可选。如果未提供，则根据x和z参数创建。
-     * @param {number} x - x坐标，可选。
-     * @param {number} z - z坐标，可选。
-     * @returns {Float32Array} 包含更新高度的points数组。
-     */
-    protected interpolateHeights(terrainGeometry: TerrainGeometry, points?: Float32Array, x?: number, z?: number): Float32Array {
-        if (!points && x !== undefined && z !== undefined) {
-            points = new Float32Array([x, 0, z]);  // 如果只给出x和z，则构造points数组
-        } else if (!points) {
-            console.error('Invalid parameters: either points array or both x and z must be provided.');
-            return null; // 返回null或抛出错误，以明确表示函数未能执行
-        }
-
-        const { width, height, segmentW, segmentH, heightData } = terrainGeometry;
-        const scaleX = segmentW / width;
-        const scaleZ = segmentH / height;
-
-        for (let i = 0; i < points.length; i += 3) {
-            const x = points[i];
-            const z = points[i + 2];
-            const gridX = (x + width / 2) * scaleX;
-            const gridZ = (z + height / 2) * scaleZ;
-
-            const x0 = Math.min(Math.floor(gridX), segmentW - 2);
-            const z0 = Math.min(Math.floor(gridZ), segmentH - 2);
-            const x1 = Math.min(x0 + 1, segmentW - 2);
-            const z1 = Math.min(z0 + 1, segmentH - 2);
-            const tx = gridX - x0;
-            const tz = gridZ - z0;
-
-            const h00 = heightData[z0][x0];
-            const h01 = heightData[z0][x1];
-            const h10 = heightData[z1][x0];
-            const h11 = heightData[z1][x1];
-
-            points[i + 1] = h00 + tx * (h01 - h00) + tz * ((h10 + tx * (h11 - h10)) - (h00 + tx * (h01 - h00))); // 双线性插值
-        }
-        return points;
     }
 
     destroy(force?: boolean): void {

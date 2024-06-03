@@ -285,7 +285,7 @@ export class HoverCameraController extends ComponentBase {
                 }
                 break;
             case KeyCode.Key_M:
-                // 相机位置到水底
+                // 相机固定位置
                 if (isKeyDown) {
                     let scene = this.transform.scene3D
                     if (!scene.getChildByName('test')) {
@@ -297,7 +297,7 @@ export class HoverCameraController extends ComponentBase {
                         this.slowTracking(obj)
                     } else {
                         // this._flowTarget = scene.getChildByName('vehicle')
-                        this.slowTracking(scene.getChildByName('vehicle'), 3000, new Vector3(0, 2, 0))
+                        this.slowTracking(scene.getChildByName('vehicle'), 3000, new Vector3(0, 0.5, 0))
                         scene.getChildByName('test').removeSelf()
                     }
 
@@ -338,11 +338,8 @@ export class HoverCameraController extends ComponentBase {
 
             case KeyCode.Key_U:
                 if (state) {
-                    if (Engine3D.frameRate === 60) {
-                        Engine3D.frameRate = 170
-                    } else {
-                        Engine3D.frameRate = 60
-                    }
+                    // 锁帧
+                    Engine3D.frameRate = Engine3D.frameRate === 60 ? 360 : 60
                 }
                 break;
 
@@ -549,8 +546,8 @@ export class HoverCameraController extends ComponentBase {
     }
 
     public onBeforeUpdate(view?: View3D) {
-    // public onLateUpdate(view?: View3D) {
-    // public onUpdate(view?: View3D) {
+        // public onLateUpdate(view?: View3D) {
+        // public onUpdate(view?: View3D) {
 
         if (!this.enable) return;
         if (this._flowTarget) {

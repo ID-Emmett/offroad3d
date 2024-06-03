@@ -12,7 +12,7 @@ export class SphereSoftBodyComponent extends SoftBodyComponentBase {
     }
 
     protected initSoftBody(): void {
-        if (this._softBodyInited) return;
+        if (this._btBodyInited) return;
 
         const softBodyHelpers = new Ammo.btSoftBodyHelpers();
         const softBodyWorldInfo = Physics.worldInfo;
@@ -36,20 +36,6 @@ export class SphereSoftBodyComponent extends SoftBodyComponentBase {
             // 363 // 363 128
         );
 
-        this._btSoftBody.translate(PhysicsMathUtil.toBtVector3(position));
-        this._btSoftBody.rotate(PhysicsMathUtil.toBtQuaternion(Quaternion.HELP_0.fromEulerAngles(rotation.x, rotation.y, rotation.z)));
-
-        // const btTransform = new Ammo.btTransform();
-        // btTransform.setIdentity();
-        // btTransform.setOrigin(new Ammo.btVector3(position.x, position.y, position.z));
-        // const btQuaternion = new Ammo.btQuaternion(Quaternion.HELP_0.x, Quaternion.HELP_0.y, Quaternion.HELP_0.z, Quaternion.HELP_0.w);
-        // btTransform.setRotation(btQuaternion);
-        // this._btSoftBody.transform(btTransform);
-
-
-        this.transform.localPosition = Vector3.ZERO;
-        this.transform.localRotation = Vector3.ZERO;
-
         let sbConfig = this._btSoftBody.get_m_cfg();
         sbConfig.set_viterations(10);
         sbConfig.set_piterations(10);
@@ -60,6 +46,6 @@ export class SphereSoftBodyComponent extends SoftBodyComponentBase {
         this._btSoftBody.setTotalMass(this.mass, false);
 
         Physics.addSoftBody(this._btSoftBody);
-        this._softBodyInited = true;
+        this._btBodyInited = true;
     }
 }
