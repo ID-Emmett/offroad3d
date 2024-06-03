@@ -4,7 +4,7 @@ import { ActivationState, Ammo, Physics, PhysicsMathUtil, SoftBodyComponentBase,
 export class ClothSoftBodyComponent extends SoftBodyComponentBase {
     private segmentW: number;
     private segmentH: number;
-    public margin: number = 0.05
+    public margin: number = 0.02
     public fixNodeIndices: CornerType[] | number[]
     protected _geometry: PlaneGeometry;
 
@@ -157,6 +157,12 @@ export class ClothSoftBodyComponent extends SoftBodyComponentBase {
             }
         }
 
+        if (this.anchorIndices.length > 0) {
+            if (!this.appendRigidbody) throw new Error('Needs a rigid body');
+            this.setAnchor()
+
+        }
+
         Physics.addSoftBody(this._btSoftBody);
         this._btBodyInited = true;
     }
@@ -205,6 +211,41 @@ export class ClothSoftBodyComponent extends SoftBodyComponentBase {
                     throw new Error('Invalid corner');
             }
         })
+    }
+
+
+    private setAnchor() {
+        // 获取节点索引
+        let anchorIndices = typeof this.anchorIndices[0] === 'number'
+            ? this.anchorIndices as number[]
+            : this.getCornerIndices(this.anchorIndices as CornerType[])
+
+        // 检查节点索引的有效性
+        let nodesSize = this.btSoftBody.get_m_nodes().size()
+        for (let nodeIndex of anchorIndices) {
+            if (nodeIndex < 0 || nodeIndex >= nodesSize) {
+                console.error(`Invalid node index ${nodeIndex} for soft body`);
+                return;
+            }
+        }
+
+        // 应用变换，控制软体的位置和旋转，以便在刚体的具体位置添加锚点
+        this.relativePosition ||= new Vector3()
+        this.absoluteRotation ||= new Vector3()
+        PhysicsMathUtil.fromBtVector3(this.appendRigidbody.getWorldTransform().getOrigin(), Vector3.HELP_0);
+        Vector3.HELP_0.add(this.relativePosition, Vector3.HELP_1);
+        // this.updateTransform(Vector3.HELP_1, this.absoluteRotation)
+        Quaternion.HELP_0.fromEulerAngles(this.absoluteRotation.x, this.absoluteRotation.y, this.absoluteRotation.z)
+        this._btSoftBody.rotate(PhysicsMathUtil.toBtQuaternion(Quaternion.HELP_0));
+        this._btSoftBody.translate(PhysicsMathUtil.toBtVector3(Vector3.HELP_1));
+
+
+        // 设置锚点
+        anchorIndices.forEach((nodeIndex, idx) => {
+            let influence = this.influence instanceof Array ? (this.influence[idx] ?? 0.5) : this.influence
+            let disableCollision = this.disableCollision instanceof Array ? (this.disableCollision[idx] ?? false) : this.disableCollision
+            this.btSoftBody.appendAnchor(nodeIndex, this.appendRigidbody, disableCollision, influence);
+        });
     }
 
     /**

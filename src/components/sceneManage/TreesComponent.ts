@@ -43,9 +43,10 @@ export class TreesComponent extends ComponentBase {
 
     private async createTrees(terrainGeometry: TerrainGeometry) {
 
+        const SIZE = 0.2 
         const { width, height } = terrainGeometry;
 
-        let points = new Float32Array(100 * 3); // 100个点 每个点3个坐标：x, y, z
+        let points = new Float32Array(20 * 3); // 100个点 每个点3个坐标：x, y, z
 
         // 填充x和z值，y值默认为0
         for (let i = 0; i < points.length; i += 3) {
@@ -56,7 +57,7 @@ export class TreesComponent extends ComponentBase {
         points = TerrainUtil.calculateHeightsForPoints(points, terrainGeometry); // 计算高度值
 
         let glftModel = await Engine3D.res.loadGltf('models/trees/pine_tree_blue.glb');  // 蓝色树
-        glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 1;
+        glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = SIZE;
 
         for (let i = 0, count = points.length / 3; i < count; i++) {
             let newModel = glftModel.clone()
@@ -72,7 +73,7 @@ export class TreesComponent extends ComponentBase {
             grassYellow.name = 'grassYellow'
 
             let glftModel = await Engine3D.res.loadGltf('models/trees/grass_yellow.glb');  // 黄草
-            glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 3;
+            glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = 3 * SIZE;
 
             for (let i = 0; i < 1000; i++) {
                 const newModel = glftModel.clone()
@@ -82,7 +83,7 @@ export class TreesComponent extends ComponentBase {
                 newModel.y = TerrainUtil.calculateHeightAtPoint(x, z, terrainGeometry)
                 newModel.z = z
                 newModel.rotationY = Math.floor(Math.random() * 360) - 180
-                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7) + Math.round(Math.random() * (newModel.scaleX * 0.3))
+                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7 ) + Math.round(Math.random() * (newModel.scaleX * 0.3 ))
 
                 let one = glftModel.entityChildren[0].entityChildren[0] as Object3D
                 let mr = one.getComponent(MeshRenderer)
@@ -104,7 +105,7 @@ export class TreesComponent extends ComponentBase {
                 newModel.y = TerrainUtil.calculateHeightAtPoint(x, z, terrainGeometry)
                 newModel.z = z
                 newModel.rotationY = Math.floor(Math.random() * 360) - 180
-                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7) + Math.round(Math.random() * (newModel.scaleX * 0.3))
+                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7 * SIZE) + Math.round(Math.random() * (newModel.scaleX * 0.3 * SIZE))
 
                 // let rigidbody = newModel.addComponent(RigidBodyComponent)
                 // rigidbody.mass = 0;
@@ -120,6 +121,7 @@ export class TreesComponent extends ComponentBase {
         }
         {
             let glftModel = await Engine3D.res.loadGltf('models/trees/pine_tree_pink.glb'); // 中红树
+            glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = SIZE;
 
             for (let i = 0; i < 100; i++) {
                 const newModel = glftModel.clone()

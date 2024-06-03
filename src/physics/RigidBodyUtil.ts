@@ -625,7 +625,7 @@ export class RigidBodyUtil {
      * 激活所有动态刚体
      */
     public static activateAllKinematicObject() {
-        Physics.rigidBodyMapping.getAllPhysicsObjectMap.forEach((graphic, rigidBody) => {
+        Physics.rigidBodyMapping.getAllGraphicObjectMap.forEach(rigidBody => {
             // 检查是否是动态刚体
             if (!rigidBody.isStaticObject() && !rigidBody.isKinematicObject()) {
                 rigidBody.activate();
@@ -634,7 +634,7 @@ export class RigidBodyUtil {
     }
 
     /**
-     * 重置刚体位置和旋转
+     * 重置刚体变换
      */
     public static resetRigidBody(bodyRb: Ammo.btRigidBody, newPosition: Vector3, newRotation: Vector3 | Quaternion = Quaternion._zero): void {
         const transform = Physics.TEMP_TRANSFORM;
@@ -668,7 +668,8 @@ export class RigidBodyUtil {
         // 移除映射
         Physics.rigidBodyMapping.removeMappingByPhysics(bodyRb);
 
-        if (!bodyRb) return
+        if (!bodyRb) return console.error('There is no rigid body');
+        
         Physics.world.removeRigidBody(bodyRb);
         Ammo.destroy(bodyRb.getCollisionShape());
         Ammo.destroy(bodyRb.getMotionState());

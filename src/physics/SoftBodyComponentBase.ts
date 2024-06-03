@@ -1,5 +1,5 @@
 import { ComponentBase, GeometryBase, Quaternion, Time, Vector3, VertexAttributeName } from '@orillusion/core';
-import { ActivationState, Ammo, Physics, PhysicsMathUtil } from '.';
+import { ActivationState, Ammo, Physics, PhysicsMathUtil, type CornerType } from '.';
 
 export abstract class SoftBodyComponentBase extends ComponentBase {
     public mass: number = 1;
@@ -9,9 +9,48 @@ export abstract class SoftBodyComponentBase extends ComponentBase {
     protected abstract _geometry: GeometryBase;
     protected abstract initSoftBody(): void;
 
-    private _connectedRigidBody: Ammo.btRigidBody;
     private _initedFunctions: { fun: Function; thisObj: Object }[] = [];
     private diff: Vector3 = new Vector3()
+
+    private _appendRigidbody: Ammo.btRigidBody;
+    /**
+     * 锚点索引数组
+     */
+    public anchorIndices: CornerType[] | number[] = [];
+
+    /**
+     * 影响力系数，表示锚点对软体节点的影响程度。其值通常在 0 到 1 之间，默认 0.5
+     */
+    public influence: number | number[] = 0.5;
+
+    /**
+     * 是否禁用锚定点和刚体之间的碰撞, 默认 false 会产生碰撞
+     */
+    public disableCollision: boolean | boolean[] = false;
+
+    /**
+     * 软体同步至刚体的相对位置，默认位于刚体原点
+     * 设置为 Vector(1,2,3) 时软体的坐标是相对刚体的 x+1, y+2, z+3
+     */
+    public relativePosition: Vector3
+
+    /**
+     * 软体与世界坐标的绝对旋转
+     */
+    public absoluteRotation: Vector3
+
+    /**
+     * 锚定的刚体
+     */
+    public get appendRigidbody(): Ammo.btRigidBody {
+        return this._appendRigidbody;
+    }
+    public set appendRigidbody(rb: Ammo.btRigidBody) {
+        this._appendRigidbody = rb;
+        this.diff.set(0, 0, 0)
+
+    }
+
 
     public get btBodyInited(): boolean {
         return this._btBodyInited;
@@ -19,17 +58,6 @@ export abstract class SoftBodyComponentBase extends ComponentBase {
 
     public get btSoftBody(): Ammo.btSoftBody {
         return this._btSoftBody;
-    }
-
-    /**
-     * 连接的刚体
-     */
-    public get connectedRigidBody(): Ammo.btRigidBody {
-        return this._connectedRigidBody;
-    }
-    public set connectedRigidBody(rb: Ammo.btRigidBody) {
-        this._connectedRigidBody = rb;
-        this.diff.set(0, 0, 0)
     }
 
     init() {
@@ -68,6 +96,7 @@ export abstract class SoftBodyComponentBase extends ComponentBase {
             const negateRot = this._softBodyRotate.negate();
             this._btSoftBody.translate(PhysicsMathUtil.toBtVector3(negatePos));
             this._btSoftBody.rotate(PhysicsMathUtil.toBtQuaternion(Quaternion.HELP_0.fromEulerAngles(negateRot.x, negateRot.y, negateRot.z)));
+
             this._softBodyTranslate.copy(position);
             this._softBodyRotate.copy(rotation);
         } else {
@@ -126,9 +155,9 @@ export abstract class SoftBodyComponentBase extends ComponentBase {
     onUpdate(): void {
         if (!this._btBodyInited) return
 
-        if (this.connectedRigidBody) {
-            this.connectedRigidBody.getMotionState().getWorldTransform(Physics.TEMP_TRANSFORM);
-            const nowPos = this.connectedRigidBody.getWorldTransform().getOrigin();
+        if (this.appendRigidbody) {
+            this.appendRigidbody.getMotionState().getWorldTransform(Physics.TEMP_TRANSFORM);
+            const nowPos = this.appendRigidbody.getWorldTransform().getOrigin();
 
             PhysicsMathUtil.fromBtVector3(Physics.TEMP_TRANSFORM.getOrigin(), Vector3.HELP_0);
             PhysicsMathUtil.fromBtVector3(nowPos, Vector3.HELP_1);
@@ -157,12 +186,23 @@ export abstract class SoftBodyComponentBase extends ComponentBase {
 
     }
 
+    /**
+     * clear anchors
+     */
+    public clearAnchor(){
+        console.log('destroy anchor');
+        let anchors = this._btSoftBody.get_m_anchors();
+        anchors.clear();
+        this._btSoftBody.set_m_anchors(anchors);
+        this._appendRigidbody = null
+    }
+
     public destroy(force?: boolean): void {
         if (this._btBodyInited) {
             Physics.removeSoftBody(this);
             this._btSoftBody = null;
             this._btBodyInited = false;
-            this._connectedRigidBody = null
+            this._appendRigidbody = null
         }
         this._initedFunctions = null;
 

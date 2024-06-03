@@ -349,7 +349,7 @@ export class RigidBodyComponent extends ComponentBase {
     }
 
     public destroy(force?: boolean): void {
-        console.log('RigidBodyComponent Component Destroy', this.object3D, this.object3D.name);
+        console.log('RigidBody Component Destroy', this.object3D, this.object3D.name);
 
         RigidBodyUtil.destroyRigidBody(this._btRigidbody)
 

@@ -1,10 +1,12 @@
-import { BoundUtil, ComponentBase, Engine3D, Object3D, Vector2, Vector3, View3D } from '@orillusion/core'
+import { BoundUtil, ComponentBase, Engine3D, GPUCullMode, LitMaterial, MeshRenderer, Object3D, PlaneGeometry, Vector2, Vector3, View3D } from '@orillusion/core'
 import { RigidBodyComponent, CollisionFlags, ActivationState, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil, Physics, Ammo, PhysicsMathUtil } from "@/physics";
 import { VehicleControl, VehicleType } from '.'
 import { GUIUtil } from '@/utils/GUIUtil'
 import { HoverCameraController } from '../cameraController';
 
 import { VehicleCollisionHandler, vehicleRigidBodies } from './VehicleCollisionHandler';
+import { ClothSoftBody } from '@/physics/softBody/ClothSoftBody';
+import { GUIHelp } from '@/utils/debug/GUIHelp';
 /**
  * 载具组件
  */
@@ -12,7 +14,7 @@ export class VehicleComponent extends ComponentBase {
 
     private vehicle: Object3D
 
-    private _position: Vector3 = new Vector3(0, 10, 0)
+    private _position: Vector3 = new Vector3(0, 5, 0)
     private _vehicleType: VehicleType = VehicleType.Pickup
 
     private _initedFunctions: { fun: Function; thisObj: Object }[] = [];
@@ -388,7 +390,8 @@ export class VehicleComponent extends ComponentBase {
 
                 const SCALE = 0.3
                 let wheel = await Engine3D.res.loadGltf('models/vehicles/large_wheel.glb')
-                vehicle = await Engine3D.res.loadGltf('models/vehicles/large_pickup_chassis.glb');
+                // vehicle = await Engine3D.res.loadGltf('models/vehicles/large_pickup_chassis.glb');
+                vehicle = await Engine3D.res.loadGltf('models/vehicles/large_pickup_aerial_chassis.glb');
                 vehicle.localPosition = this.position
                 vehicle.name = 'vehicle'
                 vehicle.scaleX = vehicle.scaleY = vehicle.scaleZ = SCALE
@@ -404,7 +407,12 @@ export class VehicleComponent extends ComponentBase {
 
                 // 创建刚体
                 let rigidBodyComponent = this.initRigidBody(vehicle, 1000 * SCALE)
-                rigidBodyComponent.modelVertices = vertices
+                rigidBodyComponent.modelVertices = vertices;
+                rigidBodyComponent.addInitedFunction(() => {
+                    // 创建旗帜软体
+                    this.initFlagSoftBody(rigidBodyComponent.btRigidbody)
+                }, this)
+
 
                 // 载具控制器依赖载具刚体，需要先为载具添加刚体再添加控制器
                 let controller = vehicle.addComponent(VehicleControl);
@@ -489,6 +497,54 @@ export class VehicleComponent extends ComponentBase {
             VehicleCollisionHandler.registerVehicle(rigidBodyComponent.btRigidbody);
         }, this)
         return rigidBodyComponent
+    }
+
+    private async initFlagSoftBody(btRigidbody: Ammo.btRigidBody) {
+        const obj: Object3D = new Object3D()
+        let mr: MeshRenderer = obj.addComponent(MeshRenderer)
+        mr.geometry = new PlaneGeometry(0.5 * 1, 0.33 * 1, 10, 7)
+
+        let texture = await Engine3D.res.loadTexture('textures/flag.jpg');
+        // let normalMapTexture = await Engine3D.res.loadTexture('textures/sandstone_cracks/sandstone_cracks_diff_1k.jpg');
+        let mat = new LitMaterial();
+        mat.baseMap = texture;
+        // mat.normalMap = normalMapTexture;
+        mat.cullMode = GPUCullMode.none
+        mat.metallic = 0;
+        mat.roughness = 10;
+        // let texture = new BitmapTexture2D()
+        // await texture.load('textures/flag.jpg')
+        // let mat = new UnLitMaterial()
+        // mat.baseMap = texture;
+        // mat.cullMode = GPUCullMode.none
+        // mr.material = mat;
+
+        mr.material = mat;
+        this.object3D.transform.scene3D.addChild(obj)
+
+        let softBody = obj.addComponent(ClothSoftBody)
+        softBody.mass = 0.9
+        softBody.margin = 0
+        softBody.appendRigidbody = btRigidbody
+        softBody.anchorIndices = ['leftTop', 'leftBottom'];
+        softBody.influence = 1;
+        softBody.disableCollision = false;
+        softBody.applyPosition = new Vector3(0.02, 1.05, -0.03)
+        softBody.applyRotation = new Vector3(0, 0, 0)
+        softBody.addInitedFunction(() => {
+            let sbConfig = softBody.btSoftBody.get_m_cfg();
+            sbConfig.set_viterations(10);
+            sbConfig.set_piterations(10);
+            sbConfig.set_kDF(0.2);
+            sbConfig.set_kDP(0.01);
+            sbConfig.set_kLF(0.15);
+            sbConfig.set_kDG(0.01);
+        }, this)
+
+        GUIHelp.addFolder('SoftBody Vehicle flag')
+        GUIHelp.open()
+        GUIHelp.addButton('Stop SoftBody Movement', () => softBody.stopSoftBodyMovement())
+        GUIHelp.addButton('Clear Anchors', () => softBody.clearAnchors())
     }
 
     private debug() {

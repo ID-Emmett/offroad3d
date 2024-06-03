@@ -3,6 +3,7 @@ import { Scene3D, Object3D, Engine3D, ColliderComponent, BoxColliderShape, Vecto
 
 import { eventBus } from '@/modules/store/index'
 import { RigidBodyComponent, RigidBodyUtil, Ammo, Physics, CollisionFlags, CollisionMask, CollisionGroup, ShapeTypes, PhysicsMathUtil } from '@/physics';
+import { HoverCameraController } from '../cameraController';
 
 enum VehicleControlType {
     acceleration,
@@ -139,7 +140,7 @@ export class VehicleControl extends ComponentBase {
             // wheelInfo.set_m_suspensionRestLength1(0.2); 
             wheelInfo.set_m_chassisConnectionPointCS(new Ammo.btVector3(x, y - 0.1, z));
             // wheelInfo.set_m_clippedInvContactDotSuspension(10.5);
-            wheelInfo.set_m_maxSuspensionForce(this.mVehicleArgs.suspensionStiffness * 100000);
+            // wheelInfo.set_m_maxSuspensionForce(this.mVehicleArgs.suspensionStiffness * 100000);
 
             // wheelInfo.set_m_wheelsSuspensionForce(100000); // 设置悬架力
 
@@ -168,8 +169,8 @@ export class VehicleControl extends ComponentBase {
 
     }
 
-    onUpdate() {  // 标准更新 载具跳动 场景平滑 渲染58hz （set 80 frameRate）
-        // onLateUpdate() { // 物理步进在更新时或更新前 此处后 载具可以平滑 但场景跳动
+    // onUpdate() {  // 标准更新 载具跳动 场景平滑 渲染58hz （set 80 frameRate）
+    onLateUpdate() { // 物理步进在更新时或更新前 此处后 载具可以平滑 但场景跳动  新测试较为正常
         // onBeforeUpdate() { // 还未测试
 
         if (!this.mAmmoVehicle) return;
@@ -234,8 +235,8 @@ export class VehicleControl extends ComponentBase {
                 vehicle.applyEngineForce(0, BACK_RIGHT); // 动力输出
                 vehicle.applyEngineForce(0, FRONT_LEFT); // 动力输出
                 vehicle.applyEngineForce(0, FRONT_RIGHT); // 动力输出
-                vehicle.setBrake(50, BACK_LEFT);
-                vehicle.setBrake(50, BACK_RIGHT);
+                vehicle.setBrake(30, BACK_LEFT);
+                vehicle.setBrake(30, BACK_RIGHT);
             } else {
                 vehicle.applyEngineForce(this.mEngineForce, BACK_LEFT); // 动力输出
                 vehicle.applyEngineForce(this.mEngineForce, BACK_RIGHT); // 动力输出
@@ -260,57 +261,14 @@ export class VehicleControl extends ComponentBase {
             }
         }
 
-        // update body position
-        let tm: Ammo.btTransform,
-            p: Ammo.btVector3,
-            q: Ammo.btQuaternion,
-            qua: Quaternion = Quaternion.HELP_0;
-        // Physics.world.stepSimulation(1/40, 1, 1 / 40);
-
-        // const deltaTime = Time.delta / 1000
-        // Physics.world.stepSimulation(deltaTime, 10);
-        // Physics.update();
-
-        // Physics.world.stepSimulation(deltaTime, 10, 1/170);
-
-        // Physics.world.stepSimulation(1/60, 1,1/60);
-
-        // let timeStep = 1 / (Engine3D.frameRate / 1.6);
-        // Physics.world.stepSimulation(timeStep, 1, timeStep);
-
-        // vehicle.updateAction(Physics.world, deltaTime);
-        // vehicle.updateVehicle(deltaTime);
-        // vehicle.updateSuspension(deltaTime)
-        // vehicle.updateFriction(deltaTime)
-
+        // update body position and rotation
         for (let i = 0; i < n; i++) {
-            // this.mVehicleControlState[VehicleControlType.handbrake] || vehicle.updateWheelTransformsWS(this.wheelInfos[i], true);
             this.mVehicleControlState[VehicleControlType.handbrake] || vehicle.updateWheelTransform(i, true);
-            tm = vehicle.getWheelTransformWS(i);
-            // p = tm.getOrigin();
-            // q = tm.getRotation();
-            // this.mWheels[i].transform.localPosition = Vector3.HELP_0.set(p.x(), p.y(), p.z());
-            // qua.set(q.x(), q.y(), q.z(), q.w());
-            // this.mWheels[i].transform.localRotQuat = qua;
-
-            Physics.syncGraphic(this.mWheels[i], tm)
+            Physics.syncGraphic(this.mWheels[i], vehicle.getWheelTransformWS(i))
         }
 
-
         this.rigidbody.getMotionState().getWorldTransform(Physics.TEMP_TRANSFORM)
-        tm = Physics.TEMP_TRANSFORM
-        // tm = vehicle.getChassisWorldTransform(); // 获取底盘世界变换
-        // let tm2 = vehicle.getChassisWorldTransform(); // 获取底盘世界变换
-        // console.log('底盘',PhysicsMathUtil.fromBtVector3(tm2.getOrigin()).toArray()); // 底盘数据并不是每一帧更新的
-        // console.log('插值', PhysicsMathUtil.fromBtVector3(tm.getOrigin()).toArray());
-
-        // p = tm.getOrigin();
-        // q = tm.getRotation();
-        // this.transform.localPosition = Vector3.HELP_0.set(p.x(), p.y(), p.z());
-        // qua.set(q.x(), q.y(), q.z(), q.w());
-        // this.transform.localRotQuat = qua;
-        
-        Physics.syncGraphic(this.object3D, tm)
+        Physics.syncGraphic(this.object3D, Physics.TEMP_TRANSFORM)
 
     }
 

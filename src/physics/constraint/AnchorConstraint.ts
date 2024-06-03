@@ -81,7 +81,7 @@ export class AnchorConstraint extends ComponentBase {
         selfSbCom.updateTransform(Vector3.HELP_0, this.absoluteRotation, true)
 
         // 通知软体组件已应用描点，更新顶点时需要依赖刚体的插值坐标
-        selfSbCom.connectedRigidBody = this.targetRigidbody.btRigidbody
+        selfSbCom.appendRigidbody = this.targetRigidbody.btRigidbody
 
         // 遍历节点索引并添加锚点
         // for (let nodeIndex of anchorIndices) {
@@ -125,7 +125,7 @@ export class AnchorConstraint extends ComponentBase {
         let anchors = this.selfSoftBody.btSoftBody.get_m_anchors();
         anchors.clear();
         this.selfSoftBody.btSoftBody.set_m_anchors(anchors);
-        this.selfSoftBody.connectedRigidBody = null
+        this.selfSoftBody.appendRigidbody = null
 
         this._selfSoftBody = null;
         this._targetRigidbody = null;

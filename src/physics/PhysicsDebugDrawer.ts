@@ -172,6 +172,7 @@ export class PhysicsDebugDrawer {
         // 物理步进模拟调试
         GUIHelp.add(Physics, 'maxSubSteps', 1, 10, 1);
         GUIHelp.add(Physics, 'fixedTimeStep', (1 / 170), (1 / 60), 0.00001);
+        GUIHelp.add(Physics, 'isStop').name('PhysicsStop');
         GUIHelp.open();
     }
 }
