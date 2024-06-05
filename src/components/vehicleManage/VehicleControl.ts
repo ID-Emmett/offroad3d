@@ -3,7 +3,7 @@ import { Scene3D, Object3D, Engine3D, ColliderComponent, BoxColliderShape, Vecto
 
 import { eventBus } from '@/modules/store/index'
 import { RigidBodyComponent, RigidBodyUtil, Ammo, Physics, CollisionFlags, CollisionMask, CollisionGroup, ShapeTypes, PhysicsMathUtil } from '@/physics';
-import { HoverCameraController } from '../cameraController';
+import { CustomCameraController } from '../cameraController';
 
 enum VehicleControlType {
     acceleration,
@@ -181,7 +181,7 @@ export class VehicleControl extends ComponentBase {
 
         // 仅受控时处理相关操作
         if (this._enableKeyEvent) {
-            const delta = Time.delta * 0.16 // 0.16
+            const delta = Time.delta * 0.16
             const speed = this.speed = vehicle.getCurrentSpeedKmHour();
 
             this.mBreakingForce = 0;
@@ -231,17 +231,17 @@ export class VehicleControl extends ComponentBase {
 
             // 手刹
             if (this.mVehicleControlState[VehicleControlType.handbrake]) {
-                vehicle.applyEngineForce(0, BACK_LEFT); // 动力输出
-                vehicle.applyEngineForce(0, BACK_RIGHT); // 动力输出
-                vehicle.applyEngineForce(0, FRONT_LEFT); // 动力输出
-                vehicle.applyEngineForce(0, FRONT_RIGHT); // 动力输出
+                vehicle.applyEngineForce(0, BACK_LEFT);
+                vehicle.applyEngineForce(0, BACK_RIGHT);
+                vehicle.applyEngineForce(0, FRONT_LEFT);
+                vehicle.applyEngineForce(0, FRONT_RIGHT);
                 vehicle.setBrake(30, BACK_LEFT);
                 vehicle.setBrake(30, BACK_RIGHT);
             } else {
-                vehicle.applyEngineForce(this.mEngineForce, BACK_LEFT); // 动力输出
-                vehicle.applyEngineForce(this.mEngineForce, BACK_RIGHT); // 动力输出
-                vehicle.applyEngineForce(this.mEngineForce, FRONT_LEFT); // 动力输出
-                vehicle.applyEngineForce(this.mEngineForce, FRONT_RIGHT); // 动力输出
+                vehicle.applyEngineForce(this.mEngineForce, BACK_LEFT);
+                vehicle.applyEngineForce(this.mEngineForce, BACK_RIGHT);
+                vehicle.applyEngineForce(this.mEngineForce, FRONT_LEFT);
+                vehicle.applyEngineForce(this.mEngineForce, FRONT_RIGHT);
             }
 
 
@@ -252,18 +252,18 @@ export class VehicleControl extends ComponentBase {
                 vehicle.setSteeringValue(this.mVehicleSteering / 4, 4);
                 vehicle.setSteeringValue(this.mVehicleSteering / 4, 5);
 
-                vehicle.applyEngineForce(this.mEngineForce, 4); // 动力输出
-                vehicle.applyEngineForce(this.mEngineForce, 5); // 动力输出
-                vehicle.applyEngineForce(this.mEngineForce, 6); // 动力输出
-                vehicle.applyEngineForce(this.mEngineForce, 7); // 动力输出
-                vehicle.applyEngineForce(this.mEngineForce, 8); // 动力输出
-                vehicle.applyEngineForce(this.mEngineForce, 9); // 动力输出
+                vehicle.applyEngineForce(this.mEngineForce, 4);
+                vehicle.applyEngineForce(this.mEngineForce, 5);
+                vehicle.applyEngineForce(this.mEngineForce, 6);
+                vehicle.applyEngineForce(this.mEngineForce, 7);
+                vehicle.applyEngineForce(this.mEngineForce, 8);
+                vehicle.applyEngineForce(this.mEngineForce, 9);
             }
         }
 
         // update body position and rotation
         for (let i = 0; i < n; i++) {
-            this.mVehicleControlState[VehicleControlType.handbrake] || vehicle.updateWheelTransform(i, true);
+            vehicle.updateWheelTransform(i, true);
             Physics.syncGraphic(this.mWheels[i], vehicle.getWheelTransformWS(i))
         }
 
@@ -349,7 +349,7 @@ export class VehicleControl extends ComponentBase {
             case KeyCode.Key_P:
                 if (state) {
                     let { x, y, z } = this.object3D.transform.localPosition
-                    RigidBodyUtil.resetRigidBody(this.rigidbody, new Vector3(x, 20, z), Quaternion._zero)
+                    RigidBodyUtil.resetRigidBody(this.rigidbody, new Vector3(x, 10, z), Quaternion._zero)
                 }
         }
     }

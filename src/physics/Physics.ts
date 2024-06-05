@@ -1,8 +1,8 @@
 import { Vector3, Time, BoundingBox, Object3D, Quaternion, Engine3D, Scene3D } from '@orillusion/core';
 import { Ammo } from '@orillusion/physics';
 // import Ammo from '@orillusion/ammo';
-import { RigidBodyComponent, PhysicsMathUtil, ContactProcessedUtil, ClothSoftBodyComponent, SoftBodyComponentBase } from '.';
-import { RigidBodyMapping } from './RigidBodyMapping';
+import { RigidBodyComponent, PhysicsMathUtil, ContactProcessedUtil,ClothSoftBody } from '.';
+import { RigidBodyMapping } from './utils/RigidBodyMapping';
 import { PhysicsDebugDrawer, type DebugDrawerOptions } from './PhysicsDebugDrawer';
 
 class _Physics {
@@ -111,7 +111,7 @@ class _Physics {
         }
     }
 
-    public removeSoftBody(softBody: SoftBodyComponentBase) {
+    public removeSoftBody(softBody: ClothSoftBody) {
         if (this.world instanceof Ammo.btSoftRigidDynamicsWorld) {
             this.world.removeSoftBody(softBody.btSoftBody);
             Ammo.destroy(softBody.btSoftBody);

@@ -43,7 +43,7 @@ export class TreesComponent extends ComponentBase {
 
     private async createTrees(terrainGeometry: TerrainGeometry) {
 
-        const SIZE = 0.2 
+        const SIZE = 0.3 
         const { width, height } = terrainGeometry;
 
         let points = new Float32Array(20 * 3); // 100个点 每个点3个坐标：x, y, z
@@ -105,7 +105,7 @@ export class TreesComponent extends ComponentBase {
                 newModel.y = TerrainUtil.calculateHeightAtPoint(x, z, terrainGeometry)
                 newModel.z = z
                 newModel.rotationY = Math.floor(Math.random() * 360) - 180
-                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7 * SIZE) + Math.round(Math.random() * (newModel.scaleX * 0.3 * SIZE))
+                newModel.scaleX = newModel.scaleY = newModel.scaleZ = (newModel.scaleX * 0.7 * SIZE * 2) + Math.round(Math.random() * (newModel.scaleX * 0.3 * SIZE * 2))
 
                 // let rigidbody = newModel.addComponent(RigidBodyComponent)
                 // rigidbody.mass = 0;
@@ -123,7 +123,7 @@ export class TreesComponent extends ComponentBase {
             let glftModel = await Engine3D.res.loadGltf('models/trees/pine_tree_pink.glb'); // 中红树
             glftModel.scaleX = glftModel.scaleY = glftModel.scaleZ = SIZE;
 
-            for (let i = 0; i < 100; i++) {
+            for (let i = 0; i < 200; i++) {
                 const newModel = glftModel.clone()
                 let x = (Math.random() * width) - width / 2;
                 let z = (Math.random() * height) - height / 2;
@@ -138,8 +138,8 @@ export class TreesComponent extends ComponentBase {
                 let rigidbody = newModel.addComponent(RigidBodyComponent)
                 rigidbody.mass = 0;
                 rigidbody.shape = ShapeTypes.btCylinderShape
-                rigidbody.radius = 0.5;
-                rigidbody.height = 24;
+                rigidbody.radius = 0.5 * SIZE;
+                rigidbody.height = 24 * SIZE;
 
 
                 this.terrain.addChild(newModel);

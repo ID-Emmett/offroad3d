@@ -245,7 +245,6 @@ export class RigidBodyComponent extends ComponentBase {
 
         if (this.mass <= 0) {
             this._btRigidbody.setCollisionFlags(this._btRigidbody.getCollisionFlags() | CollisionFlags.STATIC_OBJECT);
-            // console.log('静态');
         }
 
         // if (this.group && this.mask) {    
@@ -331,7 +330,7 @@ export class RigidBodyComponent extends ComponentBase {
 
             this.transform.localRotQuat = Quaternion.HELP_0;
 
-            // Physics.checkBound(this);
+            Physics.checkBound(this);
         }
     }
 
@@ -349,7 +348,7 @@ export class RigidBodyComponent extends ComponentBase {
     }
 
     public destroy(force?: boolean): void {
-        console.log('RigidBody Component Destroy', this.object3D, this.object3D.name);
+        // console.log('RigidBody Component Destroy', this.object3D, this.object3D.name);
 
         RigidBodyUtil.destroyRigidBody(this._btRigidbody)
 

@@ -1,6 +1,6 @@
 import { Engine3D, Scene3D, Camera3D, View3D, Object3D, Color, DirectLight, AtmosphericComponent, SkyRenderer, Vector3, AxisObject, Time, clamp, Matrix4 } from '@orillusion/core'
 import { Stats } from "@orillusion/stats"
-import { HoverCameraController } from '@/components/cameraController'
+import { CustomCameraController } from '@/components/cameraController'
 import { InteractRay } from '@/components/ammoRay/InteractRay';
 import { TerrainComponent, TreesComponent, Grass, BoxGenerator, MainModelComponent } from '@/components/sceneManage';
 import { VehicleComponent, VehicleType } from '@/components/vehicleManage';
@@ -10,26 +10,21 @@ import { PostProcessingSetup } from '@/effects/Postprocessing';
 import { GUIHelp } from "@/utils/debug/GUIHelp";
 import { GUIUtil } from '@/utils/GUIUtil'
 
-import { RigidBodyUtil, PhysicsMathUtil, Physics, Ammo, DebugDrawMode } from '@/physics';
-
+import { Physics } from '@/physics';
+import { Elevator, SlidingPlatform } from '@/components/facilities'
 /**
- * 什么游戏
  * @export
  * @class 
  */
 class Offroad3D {
 
     async run() {
-        // Matrix4.maxCount = 900000;
-        // Matrix4.allocCount = 900000;
-
         Engine3D.setting.shadow.shadowSize = 1024 * 4;
         Engine3D.setting.shadow.csmMargin = 0.1 // 设置不同级别阴影的过渡范围，在0-1区间调节
         Engine3D.setting.shadow.csmScatteringExp = 0.9 // 微调各个级别阴影的范围，以满足不同的场景需求
         Engine3D.setting.shadow.csmAreaScale = 0.2 // 微调阴影能够覆盖的最大范围，在0.0-1区间调节
         Engine3D.setting.shadow.updateFrameRate = 1 // 阴影更新
-        // Engine3D.setting.shadow.type = 'PCF'; // 默认 PCF HARD SOFT
-
+        // Engine3D.setting.shadow.type = 'PCF'; // PCF HARD SOFT
 
         // debug GUI
         GUIHelp.init();
@@ -52,66 +47,49 @@ class Offroad3D {
 
         // Init Engine3D
         await Engine3D.init({
-            // canvasConfig: { devicePixelRatio: 1 },
+            // canvasConfig: { devicePixelRatio: 2 },
             renderLoop: () => Physics.update()
-            // beforeRender: () => Physics.update()
-            // lateRender: () => Physics.update()
         })
 
-        let scene = new Scene3D()
-        scene.addComponent(Stats)
+        let scene = new Scene3D();
+        scene.addComponent(Stats);
 
-        /* 大气天空盒 */
-        // let sky = view.scene.addComponent(AtmosphericComponent)
-        // sky.sunY = 0.65
-
-        /* 全景天空盒默认 */
-        // let sky = scene3D.getOrAddComponent(SkyRenderer)
-        // sky.map = await Engine3D.res.loadHDRTextureCube('https://cdn.orillusion.com//hdri/sunset.hdr')
-        // scene3D.envMap = sky.map
-
-        /* 全景天空盒2 */
         let skyTexture = await Engine3D.res.loadLDRTextureCube('textures/sky/kloppenheim_07_puresky-min.jpg');
         let sky = scene.addComponent(SkyRenderer);
         sky.map = skyTexture;
         // sky.exposure = 0.6
         scene.envMap = skyTexture;
 
-
-        let cameraObj = new Object3D()
-        let mainCamera = cameraObj.addComponent(Camera3D)
-        // mainCamera.object3D.transform.localScale = new Vector3(0.5,0.1,0.5)
-        // mainCamera.lookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0))
-        mainCamera.perspective(55, Engine3D.aspect, 0.2, 2000.0)
+        let cameraObj = new Object3D();
+        let mainCamera = cameraObj.addComponent(Camera3D);
+        mainCamera.perspective(55, Engine3D.aspect, 0.2, 2000.0);
         mainCamera.enableCSM = true;
 
-        let cameraCtrl = mainCamera.object3D.addComponent(HoverCameraController)
-        cameraCtrl.setCamera(160, -15, 10)
-        cameraCtrl.smooth = false
-        cameraCtrl.dragSmooth = 10 // 50
-        cameraCtrl.maxDistance = 1000
-        cameraCtrl.rollSmooth = 8
-        scene.addChild(cameraObj)
+        let cameraCtrl = mainCamera.object3D.addComponent(CustomCameraController);
+        cameraCtrl.setCamera(160, -15, 10, new Vector3(-96, -22, -96));
+        cameraCtrl.smooth = false;
+        cameraCtrl.dragSmooth = 10; // 50
+        cameraCtrl.maxDistance = 1000;
+        cameraCtrl.rollSmooth = 8;
+        scene.addChild(cameraObj);
 
-        let light = new Object3D()
-        // light.rotationX = 145
-        // light.rotationY = 10
-        light.rotationX = 50
-        light.rotationY = 50
-        let directLight = light.addComponent(DirectLight)
-        directLight.lightColor = new Color(1.0, 1.0, 1.0, 1.0)
-        directLight.intensity = 49
-        directLight.castShadow = true
-        scene.addChild(light)
+        let light = new Object3D();
+        light.rotationX = 50;
+        light.rotationY = 50;
+        let directLight = light.addComponent(DirectLight);
+        directLight.lightColor = new Color(1.0, 1.0, 1.0, 1.0);
+        directLight.intensity = 49;
+        directLight.castShadow = true;
+        scene.addChild(light);
 
-        let view = new View3D()
-        view.scene = scene
-        view.camera = mainCamera
+        let view = new View3D();
+        view.scene = scene;
+        view.camera = mainCamera;
 
-        this.initGameComponents(scene, cameraCtrl)
+        this.initGameComponents(scene, cameraCtrl);
 
         // start render
-        Engine3D.startRenderView(view)
+        Engine3D.startRenderView(view);
 
         scene.addComponent(PostProcessingSetup);
 
@@ -123,53 +101,54 @@ class Offroad3D {
 
     }
 
-    initGameComponents(scene: Scene3D, cameraCtrl: HoverCameraController) {
+    initGameComponents(scene: Scene3D, cameraCtrl: CustomCameraController) {
 
-        let axis = new AxisObject(250, 0.8);
+        // 坐标轴
+        let axis = new AxisObject(125, 0.8);
         scene.addChild(axis);
         axis.transform.enable = false;
-
         GUIHelp.addFolder('Axis')
         GUIHelp.add(axis.transform, 'enable');
 
         scene.addComponent(FrameTaskQueue);
 
-        scene.addComponent(TerrainComponent);
+        // 场景模型
+        scene.addComponent(MainModelComponent);
 
-        scene.addComponent(TreesComponent);
-
-        scene.addComponent(Grass).enable = false; // gui control
-
-        scene.addComponent(BoxGenerator).enable = false; // gui control
-
-        cameraCtrl.object3D.addComponent(InteractRay);
-
-        // let vehicle = scene.addComponent(VehicleComponent);
-        // vehicle.vehicleType = VehicleType.LargePickup;
-        // vehicle.addInitedFunction((vehicle: Object3D) => {
-        //     // cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
-        //     cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 0.5, 0));
-        //     scene.addComponent(MainModelComponent)
-
-        // }, this);
-        // return
-        
+        // 载具
         const onTerrainReady = () => {
             let vehicle = scene.addComponent(VehicleComponent);
             vehicle.vehicleType = VehicleType.LargePickup;
+            vehicle.position = new Vector3(-96, -22, -96)
             vehicle.addInitedFunction((vehicle: Object3D) => {
-                // cameraCtrl.flowTarget(vehicle, new Vector3(0, 2, 0));
                 cameraCtrl.slowTracking(vehicle, 2000, new Vector3(0, 0.5, 0));
-                scene.addComponent(MainModelComponent)
 
             }, this);
         }
+        Engine3D.inputSystem.addEventListener("MainModelInited", onTerrainReady, this);
 
-        Engine3D.inputSystem.addEventListener("TerrainInited", onTerrainReady, this);
 
+        // 地形
+        scene.addComponent(TerrainComponent);
+
+        // 植被
+        scene.addComponent(TreesComponent);
+
+        // 草
+        // scene.addComponent(Grass).enable = false; // gui control
+
+        // 盒子生成器
+        scene.addComponent(BoxGenerator).enable = false; // gui control
+
+        // 交互射线
+        cameraCtrl.object3D.addComponent(InteractRay);
+
+        // 移动设施
+        scene.addComponent(Elevator);
+        scene.addComponent(SlidingPlatform);
 
         if (import.meta.env.PROD) {
-            this.printing()
+            this.printing();
         }
     }
 
@@ -220,4 +199,4 @@ class Offroad3D {
 
 
 
-new Offroad3D().run()
+new Offroad3D().run();

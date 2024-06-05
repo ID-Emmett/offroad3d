@@ -18,7 +18,7 @@ export class TerrainComponent extends ComponentBase {
     public height: number = 1000 * 0.5
     public segmentW: number = 199
     public segmentH: number = 199
-    public terrainMaxHeight: number = -43
+    public terrainMaxHeight: number = -111 // -43
 
     private _terrainGeometry: TerrainGeometry
 
@@ -88,7 +88,7 @@ export class TerrainComponent extends ComponentBase {
         let texture = await Engine3D.res.loadTexture('textures/sandstone_cracks/sandstone_cracks_diff_1k.jpg');
         let normalMap = await Engine3D.res.loadTexture('textures/sandstone_cracks/sandstone_cracks_nor_gl_1k.png');
 
-        let heightTexture = await Engine3D.res.loadTexture('https://cdn.orillusion.com/terrain/test01/height.png')
+        let heightTexture = await Engine3D.res.loadTexture('images/height_map.jpg')
 
         let terrainGeometry: TerrainGeometry = new TerrainGeometry(this.width, this.height, this.segmentW, this.segmentH);
         terrainGeometry.setHeight(heightTexture as BitmapTexture2D, this.terrainMaxHeight);
@@ -112,7 +112,7 @@ export class TerrainComponent extends ComponentBase {
         mat.roughness = 2
         // mat.acceptShadow = true
 
-        texture.addressModeU = GPUAddressMode.repeat; // 水平方向与竖直方向
+        texture.addressModeU = GPUAddressMode.repeat;
         texture.addressModeV = GPUAddressMode.repeat;
 
         mr.material = mat;
@@ -133,7 +133,6 @@ export class TerrainComponent extends ComponentBase {
     }
 
     private debug(terrain: Object3D) {
-        // let gui = new dat.GUI()
         let gui = GUIUtil.GUI
         let f = gui.addFolder(this.terrainName)
 
@@ -150,8 +149,8 @@ export class TerrainComponent extends ComponentBase {
             let mat = terrain.getComponent(MeshRenderer).material as LitMaterial;
 
             if (mat.baseMap.name === 'sandstone_cracks_diff_1k') {
-                mat.baseMap = await Engine3D.res.loadTexture('textures/floor_tiles_06_4k/floor_tiles_06_diff_4k.jpg')
-                mat.normalMap = await Engine3D.res.loadTexture('textures/floor_tiles_06_4k/floor_tiles_06_nor_gl_4k.jpg')
+                mat.baseMap = await Engine3D.res.loadTexture('textures/floor_tiles_06_1k/floor_tiles_06_diff_1k.jpg')
+                mat.normalMap = await Engine3D.res.loadTexture('textures/floor_tiles_06_1k/floor_tiles_06_nor_gl_1k.jpg')
             } else {
                 mat.baseMap = await Engine3D.res.loadTexture('textures/sandstone_cracks/sandstone_cracks_diff_1k.jpg');
                 mat.normalMap = await Engine3D.res.loadTexture('textures/sandstone_cracks/sandstone_cracks_nor_gl_1k.png');
@@ -196,7 +195,7 @@ export class TerrainComponent extends ComponentBase {
         }
 
         const setTerrainSegment = async () => {
-            let heightTexture = await Engine3D.res.loadTexture('https://cdn.orillusion.com/terrain/test01/height.png');
+            let heightTexture = await Engine3D.res.loadTexture('images/height_map.jpg');
             let newGeometry = new TerrainGeometry(this.width, this.height, this.segmentW, this.segmentH);
             newGeometry.setHeight(heightTexture as BitmapTexture2D, this.terrainMaxHeight);
 
@@ -230,6 +229,7 @@ export class TerrainComponent extends ComponentBase {
             GUIUtil.renderLitMaterial(material, false, 'terrainMaterial')
         }
 
+        // 分帧队列
         let taskQueue = this.transform.scene3D.getComponent(FrameTaskQueue)
 
         // 重置地形子元素高度
