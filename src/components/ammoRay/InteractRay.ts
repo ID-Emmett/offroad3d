@@ -257,7 +257,8 @@ export class InteractRay extends ComponentBase {
 
 
             // 按下左键，并且不是地形时，存储数据进行拖拽准备
-            if (this._mouseLeftDown && this.cameraRay.get_m_collisionObject().getUserIndex() !== 2) {
+            let userIndex = this.cameraRay.get_m_collisionObject().getUserIndex()
+            if (this._mouseLeftDown && (userIndex !== 2 && userIndex !== 99)) {
 
                 this.cameraRay.set_m_collisionFilterMask(CollisionGroup.TERRAIN); // 定义射线或物体可以与哪些碰撞组相碰撞
                 // console.log('选中物体');
@@ -351,7 +352,7 @@ export class InteractRay extends ComponentBase {
         mat.baseColor = new Color(Math.random(), Math.random(), Math.random(), 1.0)
         mr.material = mat;
         obj.x = pos.x
-        obj.y = pos.y + 5
+        obj.y = pos.y + 0.5
         obj.z = pos.z
         let rigidbody = obj.addComponent(RigidBodyComponent)
         rigidbody.shape = ShapeTypes.btBoxShape
