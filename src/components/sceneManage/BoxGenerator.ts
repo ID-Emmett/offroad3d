@@ -11,12 +11,12 @@ export class BoxGenerator extends ComponentBase {
     private _lastTime: number = performance.now() // save last time
 
     public container: Object3D
-    public positionY: number = 100
-    public posRange: number = 200
-    public offsetX: number = 0
-    public offsetZ: number = 0
+    public positionY: number = 50
+    public posRange: number = 80
+    public offsetX: number = -87
+    public offsetZ: number = -87
     public interval: number = 3000
-    public size: number = 5
+    public size: number = 0.6
     public mass: number = 1
     public geometryShape: GeometryShape = GeometryShape.Sphere
 

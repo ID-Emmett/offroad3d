@@ -1,8 +1,5 @@
 import { Engine3D, Camera3D, View3D, Object3D, PointerEvent3D, clamp, Quaternion, Vector3, BoundUtil, Time, Vector3Ex, ComponentBase, lerp, lerpVector3, MathUtil, DEGREES_TO_RADIANS, RADIANS_TO_DEGREES, KeyEvent, KeyCode, Color, kPI, MeshRenderer, SphereGeometry, LitMaterial, ColliderComponent, SphereColliderShape, BoxGeometry, CylinderGeometry, Ray } from "@orillusion/core";
-// import { Ammo, Physics, Rigidbody } from "@orillusion/physics";
 import { RigidBodyComponent, ShapeTypes, CollisionFlags, ActivationState, CollisionGroup, CollisionMask, RigidBodyUtil, PhysicsMathUtil, Physics, Ammo } from "@/physics";
-
-
 
 /**
  * Ammo Interact Ray
@@ -286,10 +283,7 @@ export class InteractRay extends ComponentBase {
                 let cameraTobassDir = Vector3.sub(basePos, cameraPos).normalize() // 计算射线从相机起点到基座点的方向
                 this.offsetDirection = Vector3.sub(ray.direction.normalize(), cameraTobassDir) // 原方向与基座点方向的差，表示偏移量，在之后的射线中，需要应用此偏移量
 
-
-                this.lineStartPos.set(originPos.x(), originPos.y(), originPos.z())
-                // this.lineStartPos.copyFrom(hitPointWorld)
-                // todo 两个方案  从鼠标参数下手或是从偏移量方向下手
+                PhysicsMathUtil.fromBtVector3(originPos, this.lineStartPos)
 
             }
 
@@ -347,52 +341,22 @@ export class InteractRay extends ComponentBase {
         Engine3D.views[0].scene.addChild(obj)
     }
 
-    private testBox: Object3D
-    private oneBox() {
-        const obj = new Object3D()
-        let mr = obj.addComponent(MeshRenderer)
-        mr.geometry = new SphereGeometry(5, 32, 32)
-        let mat = new LitMaterial()
-        mat.baseColor = new Color(Math.random(), Math.random(), Math.random(), 1.0)
-        mr.material = mat;
-
-        this.testBox = obj
-        Engine3D.views[0].scene.addChild(obj)
-    }
-
     private _addBox(pos: Vector3): void {
         console.log(pos);
         
         const obj = new Object3D()
         let mr = obj.addComponent(MeshRenderer)
-        // mr.geometry = new SphereGeometry(5, 32, 32); // 球
         mr.geometry = new BoxGeometry(0.5, 0.5, 0.5) // 盒子
-        // mr.geometry = new CylinderGeometry(15, 15, 20, 32, 32); // 圆柱
         let mat = new LitMaterial()
         mat.baseColor = new Color(Math.random(), Math.random(), Math.random(), 1.0)
-        // mr.materials = [mat, mat, mat];
         mr.material = mat;
         obj.x = pos.x
         obj.y = pos.y + 5
         obj.z = pos.z
         let rigidbody = obj.addComponent(RigidBodyComponent)
-        // rigidbody.shape = ShapeTypes.btSphereShape
         rigidbody.shape = ShapeTypes.btBoxShape
         rigidbody.mass = 0.7
-        // rigidbody.restitution = 1
-        // rigidbody.addInitedFunction(() => {
-        //     rigidbody.btRigidbody.setUserIndex(1000)
-        // }, this)
 
-        // rigidbody.size = new Vector3(5, 5, 5);
-        // rigidbody.radius = 5
-        // rigidbody.height = 20
-
-
-        // let rigidbody = obj.addComponent(Rigidbody)
-        // rigidbody.mass = 100
-        // let collider = obj.addComponent(ColliderComponent)
-        // collider.shape = new SphereColliderShape(5)
 
         this.transform.scene3D.addChild(obj)
     }

@@ -1,5 +1,5 @@
 import { ComponentBase, Vector3 } from '@orillusion/core'
-import { Ammo, Physics, RigidBodyComponent, PhysicsMathUtil, ClothSoftBodyComponent } from '..';
+import { Ammo, Physics, RigidBodyComponent, PhysicsMathUtil } from '..';
 /**
  * @internal
  * @group Plugin

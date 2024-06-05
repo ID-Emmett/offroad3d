@@ -163,7 +163,7 @@ export class ClothSoftBody extends ComponentBase {
             this.btSoftBody.translate(PhysicsMathUtil.toBtVector3(this.applyPosition));
         }
 
-        // 变换将由顶点控制，避免影响需要重置图形对象变换
+        // 布料变换将由顶点控制，避免影响需要重置图形对象变换
         this.transform.localPosition = Vector3.ZERO;
         this.transform.localRotation = Vector3.ZERO;
 

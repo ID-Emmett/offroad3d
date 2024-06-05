@@ -1,6 +1,6 @@
 import { Object3D, Vector3, ComponentBase, Quaternion, Camera3D, Vector3Ex, lerpVector3, clamp, Time, View3D } from '@orillusion/core';
 
-import { HoverCameraController } from './HoverCameraController';
+import { CustomCameraController } from './CustomCameraController';
 
 /**
  * Fix camera to a target
@@ -20,12 +20,6 @@ export class FixedCameraController extends ComponentBase {
         this._tempDir = new Vector3();
         this._tempPos = new Vector3();
         this.camera = this.object3D.getComponent(Camera3D);
-
-        // this.camera.object3D.getComponent(HoverCameraController).enable = false
-
-        // this.camera.object3D.removeComponent(HoverCameraController)
-
-        // this._currentTarget.copy(this._target.transform.localPosition)
     }
     get target() {
         return this._target;
@@ -35,30 +29,16 @@ export class FixedCameraController extends ComponentBase {
     }
 
     onEnable(view?: View3D) {
-        // this.object3D.getComponent(HoverCameraController).enable = false;
-        let hoverCamera = this.object3D.getComponent(HoverCameraController);
+        let hoverCamera = this.object3D.getComponent(CustomCameraController);
         hoverCamera.enable = false;
 
-        // this._currentTarget = this._target.localPosition.clone()
-        // this._currentTarget = new Vector3(100, 100, 100)
         this._currentTarget.copy(this._target.transform.localPosition)
 
         this._currentCamera.copy(this.camera.transform.localPosition)
     }
     onDisable(view?: View3D) {
-        // const camera = this.object3D.getComponent(Camera3D)
-        // let cameraPos = camera.object3D.transform.localPosition.clone()
 
-        let hoverCamera = this.object3D.getComponent(HoverCameraController);
-
-
-        // hoverCamera.object3D.transform.localPosition = new Vector3(100, 100, 100)
-
-
-        // hoverCamera.target = this._currentCamera
-
-        // hoverCamera.target = this._target.transform.localPosition
-        // hoverCamera.slowTracking(this._target)
+        let hoverCamera = this.object3D.getComponent(CustomCameraController);
         hoverCamera.enable = true;
 
     }
@@ -67,8 +47,6 @@ export class FixedCameraController extends ComponentBase {
         if (!this._target) return;
 
         let dt = clamp(Time.delta, 0.01, 0.03);
-        // let dt = clamp(Time.delta, 0.01, 0.014);
-
 
         this._currentTarget = lerpVector3(this._currentTarget, this._target.transform.worldPosition, dt);
 

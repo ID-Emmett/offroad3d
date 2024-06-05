@@ -1,6 +1,6 @@
 import { View3D, Engine3D, Scene3D, CameraUtil, HoverCameraController, AtmosphericComponent, Vector3Ex, Color, Vector3, Object3D, MeshRenderer, CylinderGeometry, LitMaterial, DirectLight, Quaternion, SphereGeometry, AxisObject, SolidColorSky, SkyRenderer } from '@orillusion/core'
 import * as dat from 'dat.gui';
-import { bend, interpolatePoints } from '@/utils/BendUtil'
+import { interpolatePoints } from '@/utils/BendUtil'
 class TestCurvature {
     view: View3D;
     scene: Scene3D;
@@ -49,80 +49,6 @@ class TestCurvature {
         this.gui();
     }
 
-    createTree() {
-
-        let axis = new AxisObject(100, 0.5)
-        this.scene.addChild(axis)
-
-        this.rootObject = new Object3D();
-        this.rootObject.name = 'root';
-
-        let childNum = 6;
-
-        for (let i = 0; i < childNum; i++) {
-            let child = new Object3D();
-            let mr = child.addComponent(MeshRenderer);
-            mr.geometry = new CylinderGeometry(2, 2, 10);
-            let mat = new LitMaterial()
-            mat.baseColor = Color.random()
-            mr.materials = [mat, mat, mat]
-
-            child.y = i * 10 + (10 / 2)
-
-            this.rootObject.addChild(child)
-        }
-
-        this.scene.addChild(this.rootObject)
-
-
-        let topPointObj = new Object3D()
-        let mr = topPointObj.addComponent(MeshRenderer);
-        mr.geometry = new SphereGeometry(1, 50, 50);
-        let mat = new LitMaterial()
-        mat.baseColor = Color.random()
-        mr.material = mat
-        this.scene.addChild(topPointObj)
-        topPointObj.localPosition = new Vector3(5, 60, 10)
-
-        let rootPointObj = new Object3D()
-        let mr2 = rootPointObj.addComponent(MeshRenderer);
-        mr2.geometry = new SphereGeometry(1, 50, 50);
-        let mat2 = new LitMaterial()
-        mat2.baseColor = Color.random()
-        mr2.material = mat
-        this.scene.addChild(rootPointObj)
-        rootPointObj.localPosition = new Vector3(0, 0, 0)
-        rootPointObj.localQuaternion = new Quaternion(0, 0, 0, 1)
-
-
-
-        let bendRateObj = { bendRate: 0.5 }
-
-        const bendfun = () => {
-            let rootQuat = Quaternion.HELP_0.fromEulerAngles(rootPointObj.rotationX, rootPointObj.rotationY, rootPointObj.rotationZ)
-            bend(this.rootObject, rootPointObj.localPosition, rootQuat, topPointObj.localPosition, bendRateObj.bendRate)
-        }
-
-        bendfun()
-
-        let gui = new dat.GUI();
-        let f = gui.addFolder('Test');
-
-        f.add(bendRateObj, 'bendRate', 0, 1, 0.1).onChange(() => bendfun())
-        f.add(topPointObj.transform, 'x', -100, 100, 1).onChange(() => bendfun()).name('TOP X')
-        f.add(topPointObj.transform, 'y', -100, 100, 1).onChange(() => bendfun()).name('TOP Y')
-        f.add(topPointObj.transform, 'z', -100, 100, 1).onChange(() => bendfun()).name('TOP Z')
-
-        f.add(rootPointObj.transform, 'x', -100, 100, 1).onChange(() => bendfun()).name('ROOT X')
-        f.add(rootPointObj.transform, 'y', -100, 100, 1).onChange(() => bendfun()).name('ROOT Y')
-        f.add(rootPointObj.transform, 'z', -100, 100, 1).onChange(() => bendfun()).name('ROOT Z')
-
-        f.add(rootPointObj.transform, 'rotationX', 0, 360, 1).onChange(() => bendfun()).name('ROOT rotationX')
-        f.add(rootPointObj.transform, 'rotationY', 0, 360, 1).onChange(() => bendfun()).name('ROOT rotationY')
-        f.add(rootPointObj.transform, 'rotationZ', 0, 360, 1).onChange(() => bendfun()).name('ROOT rotationZ')
-
-        f.open()
-    }
     createPoint() {
         let axis = new AxisObject(100, 0.5)
         this.scene.addChild(axis)

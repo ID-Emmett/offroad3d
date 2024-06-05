@@ -2,7 +2,7 @@ import { BoundUtil, ComponentBase, Engine3D, GPUCullMode, LitMaterial, MeshRende
 import { RigidBodyComponent, CollisionFlags, ActivationState, ShapeTypes, CollisionGroup, CollisionMask, RigidBodyUtil, Physics, Ammo, PhysicsMathUtil } from "@/physics";
 import { VehicleControl, VehicleType } from '.'
 import { GUIUtil } from '@/utils/GUIUtil'
-import { HoverCameraController } from '../cameraController';
+import { CustomCameraController } from '../cameraController';
 
 import { VehicleCollisionHandler, vehicleRigidBodies } from './VehicleCollisionHandler';
 import { ClothSoftBody } from '@/physics/softBody/ClothSoftBody';
@@ -254,16 +254,7 @@ export class VehicleComponent extends ComponentBase {
                 this.object3D.addChild(vehicle);
 
                 // 创建刚体
-                // this._vehicleRigidBody = RigidBodyUtil.convexHullShapeRigidBody(vehicle, 1000)
-                // this._vehicleRigidBody.setDamping(0.2, 0)
-                // this._vehicleRigidBody.setActivationState(4)
-                // vehicle.data ||= { bodyRb: this._vehicleRigidBody }
-                // Physics.world.addRigidBody(this._vehicleRigidBody, CollisionGroup.VEHICLE, CollisionMask.DEFAULT_MASK);
-
-
-                // 创建刚体
                 this.initRigidBody(vehicle, 1000)
-
 
                 // add keyboard controller to the car
                 let controller = vehicle.addComponent(VehicleControl);
@@ -280,20 +271,6 @@ export class VehicleComponent extends ComponentBase {
                     maxEngineForce: 1300, // 最大发动机力 1500
                     maxBreakingForce: 50, // 最大断裂力 500
                     maxSuspensionTravelCm: 100 // 最大悬架行程
-
-
-                    // friction: 10, // 摩擦力 1000 值越大越滑
-                    // suspensionStiffness: 20.0, // 悬架刚度 20.0
-                    // suspensionDamping: 0.3, // 悬架阻尼 2.3
-                    // suspensionCompression: 1.3, // 悬架压缩 4.4
-                    // suspensionRestLength: 0.6, // 悬吊长度 0.6
-                    // rollInfluence: 0.8, // 离心力 影响力 0.2
-                    // steeringIncrement: 0.003,  // 转向增量 0.04
-                    // steeringClamp: 0.42, // 转向钳 0.5
-                    // maxEngineForce: 1320, // 最大发动机力 1500
-                    // maxBreakingForce: 50, // 最大断裂力 500
-                    // maxSuspensionTravelCm: 500 // 最大悬架行程
-
                 }
                 // 车轮位置偏移
                 controller.wheelPosOffset = [
@@ -310,13 +287,6 @@ export class VehicleComponent extends ComponentBase {
                 vehicle.name = 'vehicle'
 
                 this.object3D.addChild(vehicle);
-
-                // 创建刚体
-                // this._vehicleRigidBody = RigidBodyUtil.convexHullShapeRigidBody(vehicle, 5000)
-                // this._vehicleRigidBody.setDamping(0.2, 0)
-                // this._vehicleRigidBody.setActivationState(4)
-                // vehicle.data ||= { bodyRb: this._vehicleRigidBody }
-                // Physics.world.addRigidBody(this._vehicleRigidBody);
 
                 // 创建刚体
                 this.initRigidBody(vehicle, 5000)
@@ -419,17 +389,6 @@ export class VehicleComponent extends ComponentBase {
                 // controller.enable = false
                 controller.mVehicleArgs = {
                     wheelSize: SCALE,
-                    // friction: 100, // 摩擦力 1000 值越大越滑
-                    // suspensionStiffness: 30, // 悬架刚度 20.0
-                    // suspensionDamping: 1, // 悬架阻尼 2.3
-                    // suspensionCompression: 1, // 悬架压缩 4.4
-                    // suspensionRestLength: 0.08, // 悬架未受压时的长度 0.6  
-                    // rollInfluence: 0.5, // 离心力 影响力 0.2
-                    // steeringIncrement: .004,  // 转向增量 0.04
-                    // steeringClamp: 0.35, // 转向钳 0.5
-                    // maxEngineForce: 300, // 最大发动机力 1500
-                    // maxBreakingForce: 10, // 最大断裂力 500
-                    // maxSuspensionTravelCm: 135 // 最大悬架行程 
                     friction: 100, // 摩擦力 1000 值越大越滑
                     suspensionStiffness: 30, // 悬架刚度 20.0
                     suspensionDamping: 1, // 悬架阻尼 2.3
@@ -441,25 +400,8 @@ export class VehicleComponent extends ComponentBase {
                     maxEngineForce: 300, // 最大发动机力 1500
                     maxBreakingForce: 10, // 最大断裂力 500
                     maxSuspensionTravelCm: 135 // 最大悬架行程 
-                    // friction: 1.2, // 摩擦力 1000 值越大越滑
-                    // suspensionStiffness: 20, // 悬架刚度 20.0
-                    // suspensionDamping: 2.3, // 悬架阻尼 2.3
-                    // suspensionCompression: 4.4, // 悬架压缩 4.4
-                    // suspensionRestLength: 0.2, // 悬架未受压时的长度 0.6  
-                    // rollInfluence: 0.1, // 离心力 影响力 0.2
-                    // steeringIncrement: .003,  // 转向增量 0.04
-                    // steeringClamp: 0.35, // 转向钳 0.5
-                    // maxEngineForce: 1000, // 最大发动机力 1500
-                    // maxBreakingForce: 100, // 最大断裂力 500
-                    // maxSuspensionTravelCm: 135 // 最大悬架行程
                 }
                 controller.wheelObject = wheel
-                // controller.wheelPosOffset = [
-                //     { x: 1.2, z: 1.25 },
-                //     { x: -1.2, z: 1.25 },
-                //     { x: 1.2, z: -1.25 },
-                //     { x: -1.2, z: -1.25 },
-                // ]
                 controller.wheelPosOffset = [
                     { x: 1.2 * SCALE, z: 1.25 * SCALE },
                     { x: -1.2 * SCALE, z: 1.25 * SCALE },
@@ -555,27 +497,26 @@ export class VehicleComponent extends ComponentBase {
         f.add(this.vehicleGUI, 'HP', 0, 100, 0.1).listen()
         f.add(this.vehicleGUI, 'SPEED').listen();
         f.open()
-        return
+
         // 提取枚举键值对
-        const vehicleTypeObject = Object.keys(VehicleType)
-            .filter(key => isNaN(Number(key))) // 过滤出非数值键
-            .reduce((obj, key) => {
-                obj[key] = VehicleType[key as keyof typeof VehicleType];
-                return obj;
-            }, {} as Record<string, VehicleType>);
+        // const vehicleTypeObject = Object.keys(VehicleType)
+        //     .filter(key => isNaN(Number(key))) // 过滤出非数值键
+        //     .reduce((obj, key) => {
+        //         obj[key] = VehicleType[key as keyof typeof VehicleType];
+        //         return obj;
+        //     }, {} as Record<string, VehicleType>);
 
-        const params = { vehicleType: this._vehicleType }; // 默认值
+        // const params = { vehicleType: this._vehicleType }; // 默认值
 
-        f.add(params, 'vehicleType', vehicleTypeObject)
-            .onChange(value => {
-                console.log('Selected vehicle type:', value);
-                this.vehicleType = +value
-                setTimeout(() => {
-                    this.transform.view3D.camera.object3D.getComponent(HoverCameraController).flowTarget(this.vehicle, new Vector3(0, 2, 0));
-                }, 5000);
-            });
+        // f.add(params, 'vehicleType', vehicleTypeObject)
+        //     .onChange(value => {
+        //         console.log('Selected vehicle type:', value);
+        //         this.vehicleType = +value
+        //         setTimeout(() => {
+        //             this.transform.view3D.camera.object3D.getComponent(CustomCameraController).flowTarget(this.vehicle, new Vector3(0, 2, 0));
+        //         }, 5000);
+        //     });
 
-        // f.open()
 
     }
     public vehicleGUI = {
