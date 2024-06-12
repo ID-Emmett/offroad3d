@@ -7,6 +7,7 @@ import { CustomCameraController } from '../cameraController';
 import { VehicleCollisionHandler, vehicleRigidBodies } from './VehicleCollisionHandler';
 import { ClothSoftBody } from '@/physics/softBody/ClothSoftBody';
 import { GUIHelp } from '@/utils/debug/GUIHelp';
+import { Object3DUtil } from '@orillusion/core';
 /**
  * 载具组件
  */
@@ -365,8 +366,13 @@ export class VehicleComponent extends ComponentBase {
                 vehicle.localPosition = this.position
                 vehicle.name = 'vehicle'
                 vehicle.scaleX = vehicle.scaleY = vehicle.scaleZ = SCALE
+
                 // console.log('vehicle size', BoundUtil.genMeshBounds(vehicle).size.toString());
 
+                // 参考载具大小
+                // let obj = Object3DUtil.GetSingleCube(1.8, .6, 4, 0.1, 0.8, 0.1)
+                // obj.localPosition = this.position;
+                // this.object3D.addChild(obj);
 
                 this.object3D.addChild(vehicle);
 
@@ -377,10 +383,11 @@ export class VehicleComponent extends ComponentBase {
 
                 // 创建刚体
                 let rigidBodyComponent = this.initRigidBody(vehicle, 1000 * SCALE)
+                // let rigidBodyComponent = this.initRigidBody(vehicle, 800)
                 rigidBodyComponent.modelVertices = vertices;
                 rigidBodyComponent.addInitedFunction(() => {
-                    // 创建旗帜软体
-                    this.initFlagSoftBody(rigidBodyComponent.btRigidbody)
+                    this.initFlagSoftBody(rigidBodyComponent.btRigidbody); // 创建旗帜软体
+                    // rigidBodyComponent.btRigidbody.setGravity(PhysicsMathUtil.setBtVector3(0, -15, 0));  // 略微增加重力加速度
                 }, this)
 
 
@@ -389,11 +396,24 @@ export class VehicleComponent extends ComponentBase {
                 // controller.enable = false
                 controller.mVehicleArgs = {
                     wheelSize: SCALE,
-                    friction: 100, // 摩擦力 1000 值越大越滑
+
+                    // friction: 10, // 摩擦力 1000 值越大越滑
+                    // suspensionStiffness: 32.0, // 悬架刚度 20.0
+                    // suspensionDamping: 1.8, // 悬架阻尼 2.3
+                    // suspensionCompression: 1.5, // 悬架压缩 4.4
+                    // suspensionRestLength: 0.32, // 悬吊长度 0.6
+                    // rollInfluence: 0.4, // 离心力 影响力 0.2
+                    // steeringIncrement: .004,  // 转向增量 0.04
+                    // steeringClamp: 0.35, // 转向钳 0.5
+                    // maxEngineForce: 1000, // 最大发动机力 1500
+                    // maxBreakingForce: 100, // 最大断裂力 车身前后惯性力 500  
+                    // maxSuspensionTravelCm: 500 // 最大悬架行程
+
+                    friction: 10, // 摩擦力 1000 值越大越滑
                     suspensionStiffness: 30, // 悬架刚度 20.0
                     suspensionDamping: 1, // 悬架阻尼 2.3
                     suspensionCompression: 1, // 悬架压缩 4.4
-                    suspensionRestLength: 0.08, // 悬架未受压时的长度 0.6  
+                    suspensionRestLength: 0.18, // 悬架未受压时的长度 0.6  
                     rollInfluence: 0.5, // 离心力 影响力 0.2
                     steeringIncrement: .004,  // 转向增量 0.04
                     steeringClamp: 0.35, // 转向钳 0.5
@@ -408,9 +428,72 @@ export class VehicleComponent extends ComponentBase {
                     { x: 1.2 * SCALE, z: -1.25 * SCALE },
                     { x: -1.2 * SCALE, z: -1.25 * SCALE },
                 ]
-
                 // 轮胎大小标准	wheelRadiusFront = .35; wheelWidthFront = .2;
                 // 底部大小标准 chassisWidth = 1.8;  chassisHeight = .6; chassisLength = 4;  massVehicle = 800;
+                
+                // debug
+                let configObj = {...controller.mVehicleArgs}
+                let rigidBodyObj = {
+                    mass: 800,
+                    gravity: -9.8
+                }
+                GUIHelp.addFolder('vehicle')
+                GUIHelp.add(rigidBodyObj, 'mass').onFinishChange(v => {
+                    if (rigidBodyComponent.mass === v) return
+                    rigidBodyComponent.mass = v
+                    rigidBodyComponent.btRigidbody.setGravity(PhysicsMathUtil.setBtVector3(0, rigidBodyObj.gravity, 0));
+                    reAddControl(null, v)
+                }).name('刚体质量')
+                GUIHelp.add(rigidBodyObj, 'gravity').onFinishChange(v => {
+                    rigidBodyComponent.btRigidbody.setGravity(PhysicsMathUtil.setBtVector3(0, v, 0));
+                }).name('刚体重力')
+                GUIHelp.add(configObj, 'friction').onFinishChange(v => {
+                    reAddControl('friction', v)
+                }).name('摩擦力')
+                GUIHelp.add(configObj, 'suspensionStiffness').onFinishChange(v => {
+                    reAddControl('suspensionStiffness', v)
+                }).name('悬架刚度')
+                GUIHelp.add(configObj, 'suspensionDamping').onFinishChange(v => {
+                    reAddControl('suspensionDamping', v)
+                }).name('悬架阻尼')
+                GUIHelp.add(configObj, 'suspensionCompression').onFinishChange(v => {
+                    reAddControl('suspensionCompression', v)
+                }).name('悬架压缩')
+                GUIHelp.add(configObj, 'suspensionRestLength').onFinishChange(v => {
+                    reAddControl('suspensionRestLength', v)
+                }).name('悬吊长度')
+                GUIHelp.add(configObj, 'rollInfluence').onFinishChange(v => {
+                    reAddControl('rollInfluence', v)
+                }).name('离心力')
+                GUIHelp.add(configObj, 'steeringIncrement').onFinishChange(v => {
+                    reAddControl('steeringIncrement', v)
+                }).name('转向增量')
+                GUIHelp.add(configObj, 'steeringClamp').onFinishChange(v => {
+                    reAddControl('steeringClamp', v)
+                }).name('转向钳')
+                GUIHelp.add(configObj, 'maxEngineForce').onFinishChange(v => {
+                    reAddControl('maxEngineForce', v)
+                }).name('最大发动机力')
+                GUIHelp.add(configObj, 'maxBreakingForce').onFinishChange(v => {
+                    reAddControl('maxBreakingForce', v)
+                }).name('最大断裂力')
+
+                const reAddControl = (key: string, value: number) => {
+
+                    if ((vehicle.getComponent(VehicleControl) as any).mVehicleArgs[key] === value) return
+
+                    vehicle.removeComponent(VehicleControl)
+
+                    let controller = vehicle.addComponent(VehicleControl);
+                    controller.mVehicleArgs = { ...configObj }
+                    controller.wheelObject = wheel
+                    controller.wheelPosOffset = [
+                        { x: 1.2 * SCALE, z: 1.25 * SCALE },
+                        { x: -1.2 * SCALE, z: 1.25 * SCALE },
+                        { x: 1.2 * SCALE, z: -1.25 * SCALE },
+                        { x: -1.2 * SCALE, z: -1.25 * SCALE },
+                    ]
+                }
             }
                 break;
             default:
@@ -424,7 +507,7 @@ export class VehicleComponent extends ComponentBase {
     private initRigidBody(vehicle: Object3D, mass: number, damping?: Vector2): RigidBodyComponent {
         const rigidBodyComponent = vehicle.addComponent(RigidBodyComponent)
         rigidBodyComponent.mass = mass;
-        rigidBodyComponent.damping = damping || new Vector2(0.2, 0.2);
+        rigidBodyComponent.damping = damping || new Vector2(0.2, 0.1);
         // rigidBodyComponent.restitution = 0;
         // rigidBodyComponent.friction = 0;
         // rigidBodyComponent.rollingFriction = 1;
@@ -492,7 +575,7 @@ export class VehicleComponent extends ComponentBase {
     private debug() {
 
         let gui = GUIUtil.GUI
-        gui.removeFolder('vehicle')
+        // gui.removeFolder('vehicle')
         let f = gui.addFolder('vehicle')
         f.add(this.vehicleGUI, 'HP', 0, 100, 0.1).listen()
         f.add(this.vehicleGUI, 'SPEED').listen();

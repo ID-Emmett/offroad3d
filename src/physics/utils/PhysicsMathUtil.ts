@@ -11,6 +11,7 @@ export class PhysicsMathUtil {
     public static tmpVecC: Ammo.btVector3 | null = null;
     public static tmpVecD: Ammo.btVector3 | null = null;
     public static tmpQuaA: Ammo.btQuaternion | null = null;
+    public static tmpQuaB: Ammo.btQuaternion | null = null;
 
     public static BT_VEC_HELP_0: Ammo.btVector3 | null = null;
     public static BT_VEC_HELP_1: Ammo.btVector3 | null = null;
@@ -25,6 +26,7 @@ export class PhysicsMathUtil {
         this.tmpVecC = new Ammo.btVector3(0, 0, 0);
         this.tmpVecD = new Ammo.btVector3(0, 0, 0);
         this.tmpQuaA = new Ammo.btQuaternion(0, 0, 0, 1);
+        this.tmpQuaB = new Ammo.btQuaternion(0, 0, 0, 1);
 
         this.BT_VEC_HELP_0 = new Ammo.btVector3(0, 0, 0);
         this.BT_VEC_HELP_1 = new Ammo.btVector3(0, 0, 0);

@@ -1,4 +1,4 @@
-import { Object3D, BoundUtil, Vector3, Quaternion, Object3DUtil, MeshRenderer, VertexAttributeName, PlaneGeometry, type ArrayBufferData } from '@orillusion/core';
+import { Object3D, BoundUtil, Vector3, Quaternion, Object3DUtil, MeshRenderer, VertexAttributeName, PlaneGeometry, type ArrayBufferData, Matrix4 } from '@orillusion/core';
 import { Physics, Ammo, PhysicsMathUtil, ShapeTypes, type ChildShapes } from '..';
 
 /**
@@ -10,7 +10,6 @@ export class RigidBodyUtil {
      * 平面碰撞体，适用于静态无限平面的碰撞形状，通常用于表示地面、墙壁等静态平面
      */
     public static staticPlaneShapeRigidBody(graphic: Object3D, mass: number, planeNormal: Vector3 = Vector3.UP, planeConstant: number = 0) {
-
         const normal = PhysicsMathUtil.toBtVector3(planeNormal);
         const shape = new Ammo.btStaticPlaneShape(normal, planeConstant);
 
@@ -18,10 +17,12 @@ export class RigidBodyUtil {
     }
 
     /**
-     * 盒型碰撞体，未指定尺寸时默认使用包围盒大小，使用包围盒时需要禁止应用旋转，否则包围盒尺寸数据将无法准确匹配
+     * 盒型碰撞体，未指定尺寸时默认使用包围盒大小
      */
     public static boxShapeRigidBody(graphic: Object3D, mass: number, size?: Vector3) {
-        size ||= BoundUtil.genMeshBounds(graphic).size;
+        // size ||= BoundUtil.genMeshBounds(graphic).size;
+        // size ||= graphic.renderNode?.geometry.bounds.size;
+        size ||= this.calculateLocalBoundingBox(graphic).size;
 
         const halfExtents = PhysicsMathUtil.setBtVector3(size.x / 2, size.y / 2, size.z / 2);
         let shape = new Ammo.btBoxShape(halfExtents);
@@ -33,7 +34,7 @@ export class RigidBodyUtil {
      * 球型碰撞体，未指定尺寸时默认使用包围盒半径(x)
      */
     public static sphereShapeRigidBody(graphic: Object3D, mass: number, radius?: number) {
-        radius ||= BoundUtil.genMeshBounds(graphic).extents.x;
+        radius ||= this.calculateLocalBoundingBox(graphic).extents.x;
         let shape = new Ammo.btSphereShape(radius);
 
         return this.createRigidBody(shape, mass, graphic)
@@ -49,13 +50,10 @@ export class RigidBodyUtil {
      * @returns  The newly created Ammo.btRigidBody object.
      */
     public static capsuleShapeRigidBody(graphic: Object3D, mass: number, radius?: number, height?: number, boundSize?: Vector3) {
-        if (!radius || !height) boundSize ||= BoundUtil.genMeshBounds(graphic).size;
+        if (!radius || !height) boundSize ||= this.calculateLocalBoundingBox(graphic).size;
 
         radius ||= boundSize.x / 2;
         height ||= boundSize.y - radius * 2;
-
-        // graphic.addChild(Object3DUtil.GetSingleCube(radius, height, radius, 1, 1, 1));
-
         let shape = new Ammo.btCapsuleShape(radius, height);
 
         return this.createRigidBody(shape, mass, graphic);
@@ -71,15 +69,11 @@ export class RigidBodyUtil {
      * @returns  The newly created Ammo.btRigidBody object.
      */
     public static cylinderShapeRigidBody(graphic: Object3D, mass: number, radius?: number, height?: number, boundSize?: Vector3) {
-        if (!radius || !height) boundSize ||= BoundUtil.genMeshBounds(graphic).size;
+        if (!radius || !height) boundSize ||= this.calculateLocalBoundingBox(graphic).size;
 
         radius ||= boundSize.x / 2;
         height ||= boundSize.y;
-
         const halfExtents = PhysicsMathUtil.setBtVector3(radius, height / 2, radius);
-
-        // graphic.addChild(Object3DUtil.GetSingleCube(radius, height / 2, radius, 1, 1, 1))
-
         let shape = new Ammo.btCylinderShape(halfExtents);
 
         return this.createRigidBody(shape, mass, graphic)
@@ -95,19 +89,18 @@ export class RigidBodyUtil {
      * @returns The newly created Ammo.btRigidBody object.
      */
     public static coneShapeRigidBody(graphic: Object3D, mass: number, radius?: number, height?: number, boundSize?: Vector3) {
-        if (!radius || !height) boundSize ||= BoundUtil.genMeshBounds(graphic).size;
+        // if (!radius || !height) boundSize ||= BoundUtil.genMeshBounds(graphic).size;
+        if (!radius || !height) boundSize ||= this.calculateLocalBoundingBox(graphic).size;
 
         radius ||= boundSize.x / 2;
         height ||= boundSize.y;
-
         const shape = new Ammo.btConeShape(radius, height);
 
         return this.createRigidBody(shape, mass, graphic);
     }
 
     /**
-     * 高度场形状刚体体，基于平面顶点
-     * @static
+     * 高度场形状，基于平面顶点，用于模拟地形
      * @param graphic
      * @param mass
      * @param heightScale
@@ -124,8 +117,7 @@ export class RigidBodyUtil {
         hdt: Ammo.PHY_ScalarType = 'PHY_FLOAT',
         flipQuadEdges: boolean = false,
     ): Ammo.btRigidBody {
-
-        let geometry = graphic.getComponent(MeshRenderer)?.geometry
+        let geometry = graphic.renderNode?.geometry
         if (!(geometry instanceof PlaneGeometry)) throw new Error("Wrong geometry type");
 
         const { width, height, segmentW, segmentH } = geometry;
@@ -350,6 +342,7 @@ export class RigidBodyUtil {
         let rotQuat = (rotation instanceof Vector3)
             ? PhysicsMathUtil.toBtQuaternion(Quaternion.HELP_0.fromEulerAngles(rotation.x, rotation.y, rotation.z)) // 欧拉角转四元数
             : PhysicsMathUtil.toBtQuaternion(rotation); // 直接应用四元数
+        // transform.getRotation().setEulerZYX(rotation.x, rotation.y, rotation.z)
 
         transform.setRotation(rotQuat);
 
@@ -607,6 +600,24 @@ export class RigidBodyUtil {
                 rigidBody.activate();
             }
         })
+    }
+
+    /**
+     * 计算图形对象尺寸
+     */
+    private static calculateLocalBoundingBox(graphic: Object3D) {
+        // 使用渲染节点的几何体包围盒
+        if (graphic.renderNode) {
+            return graphic.renderNode.geometry.bounds
+        }
+
+        // 计算包围盒，通过重置对象旋转避免错误的尺寸数据
+        let rotation = graphic.localRotation.clone();
+        graphic.localRotation = Vector3.ZERO;
+        let bounds = BoundUtil.genMeshBounds(graphic);
+        graphic.localRotation = rotation;
+
+        return bounds;
     }
 
     /**

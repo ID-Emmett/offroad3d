@@ -13,11 +13,11 @@ export class Generic6DofSpringConstraint extends ComponentBase {
     public rotationSelf: Quaternion = new Quaternion();
     public rotationTarget: Quaternion = new Quaternion();
 
-    public linearLowerLimit: Vector3 = new Vector3(-1e30, -1e30, -1e30);
-    public linearUpperLimit: Vector3 = new Vector3(1e30, 1e30, 1e30);
-    public angularLowerLimit: Vector3 = new Vector3(-Math.PI, -Math.PI, -Math.PI);
-    public angularUpperLimit: Vector3 = new Vector3(Math.PI, Math.PI, Math.PI);
-    
+    public linearLowerLimit: Vector3 = new Vector3(); // -1e30
+    public linearUpperLimit: Vector3 = new Vector3(); // 1e30
+    public angularLowerLimit: Vector3 = new Vector3(); // -Math.PI
+    public angularUpperLimit: Vector3 = new Vector3(); // Math.PI
+
     public disableCollisionsBetweenLinkedBodies: boolean = true;
 
     start(): void {
@@ -55,8 +55,8 @@ export class Generic6DofSpringConstraint extends ComponentBase {
         transformB.setRotation(rotInB);
 
         if (this._targetRigidbody) {
-            const rotInA = PhysicsMathUtil.toBtQuaternion(this.rotationTarget);
-            const frameInA = PhysicsMathUtil.toBtVector3(this.pivotTarget);
+            const rotInA = PhysicsMathUtil.toBtQuaternion(this.rotationTarget, PhysicsMathUtil.tmpQuaB);
+            const frameInA = PhysicsMathUtil.toBtVector3(this.pivotTarget, PhysicsMathUtil.tmpVecB);
             const transformA = new Ammo.btTransform();
             transformA.setIdentity();
             transformA.setOrigin(frameInA);

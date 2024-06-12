@@ -258,8 +258,7 @@ class TestAmmo {
     }
 
     animate() {
-        return
-        requestAnimationFrame((t) => this.render(t));
+        // requestAnimationFrame((t) => this.render(t));
     }
     // private lastTime: number = performance.now();
 

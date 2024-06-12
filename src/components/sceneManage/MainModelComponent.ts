@@ -1,9 +1,10 @@
-import { Color, ComponentBase, LitMaterial, MeshRenderer, Object3D, Vector3, SphereGeometry, Engine3D, Quaternion, Object3DUtil, PlaneGeometry, GPUCullMode, VertexAttributeName, BoxGeometry, GeometryBase, UnLitMaterial, BitmapTexture2D, CEvent } from '@orillusion/core'
+import { Color, ComponentBase, LitMaterial, MeshRenderer, Object3D, Vector3, SphereGeometry, Engine3D, Quaternion, Object3DUtil, PlaneGeometry, GPUCullMode, VertexAttributeName, BoxGeometry, GeometryBase, UnLitMaterial, BitmapTexture2D, CEvent, Vector2, BoundUtil } from '@orillusion/core'
 import { ActivationState, RigidBodyComponent, CollisionFlags, ShapeTypes, RigidBodyUtil, Ammo, Physics, CollisionMask, HingeConstraint } from "@/physics";
 import { GUIUtil } from '@/utils/GUIUtil'
 import { GUIHelp } from "@/utils/debug/GUIHelp";
 import { VehicleControl } from '../vehicleManage';
 import { ClothSoftBody } from '@/physics/softBody/ClothSoftBody';
+import { RotatingPlatform } from '../facilities';
 
 export class MainModelComponent extends ComponentBase {
 
@@ -34,7 +35,7 @@ export class MainModelComponent extends ComponentBase {
         model.z = -87.2
 
         // split training_grounds
-        {
+        if (true) {
             let boxes = new Object3D()
             boxes.name = 'training_grounds_splitObject'
 
@@ -48,7 +49,7 @@ export class MainModelComponent extends ComponentBase {
                 let boxRBC = box.addComponent(RigidBodyComponent);
                 boxRBC.shape = ShapeTypes.btBoxShape;
                 boxRBC.size = new Vector3(1.54, 1.54, 1.54).scaleBy(SCALE);
-                boxRBC.mass = 10
+                boxRBC.mass = 50
                 boxes.addChild(box)
             }
 
@@ -60,7 +61,7 @@ export class MainModelComponent extends ComponentBase {
             let sphereRBC = sphere.addComponent(RigidBodyComponent);
             sphereRBC.shape = ShapeTypes.btSphereShape;
             sphereRBC.radius = 3.79 * SCALE / 2;
-            sphereRBC.mass = 20;
+            sphereRBC.mass = 50;
             boxes.addChild(sphere);
 
             // cone
@@ -69,7 +70,7 @@ export class MainModelComponent extends ComponentBase {
             cone.localPosition = model.localPosition.add(cone.localPosition.scaleBy(SCALE), Vector3.HELP_0)
             let coneRBC = cone.addComponent(RigidBodyComponent);
             coneRBC.shape = ShapeTypes.btConvexHullShape;
-            coneRBC.mass = 10;
+            coneRBC.mass = 50;
             boxes.addChild(cone);
 
             this.object3D.addChild(boxes)
@@ -83,7 +84,7 @@ export class MainModelComponent extends ComponentBase {
         // rigidbody.modelVertices = vertices
         // rigidbody.modelIndices = indices
 
-        this.object3D.transform.scene3D.addChild(model)
+        this.object3D.addChild(model)
 
         this.debug(model, rigidbody)
 
@@ -94,7 +95,7 @@ export class MainModelComponent extends ComponentBase {
         // let testRBC = testHollow.addComponent(RigidBodyComponent)
         // testRBC.shape = ShapeTypes.btCompoundShape
         // testRBC.childShapes = shapes
-        // this.object3D.transform.scene3D.addChild(testHollow)
+        // this.object3D.addChild(testHollow)
 
 
         // 静态平面刚体测试
@@ -105,7 +106,7 @@ export class MainModelComponent extends ComponentBase {
             mr.material = new LitMaterial()
             mr.material.cullMode = GPUCullMode.none
             obj.localPosition = new Vector3(0, 0, 0)
-            this.object3D.transform.scene3D.addChild(obj)
+            this.object3D.addChild(obj)
 
             let rigidBody = obj.addComponent(RigidBodyComponent)
             rigidBody.shape = ShapeTypes.btStaticPlaneShape
@@ -139,7 +140,7 @@ export class MainModelComponent extends ComponentBase {
 
             mr.material = mat;
 
-            this.object3D.transform.scene3D.addChild(obj)
+            this.object3D.addChild(obj)
 
             // 布料软体
             let softBody = obj.addComponent(ClothSoftBody)
@@ -175,7 +176,7 @@ export class MainModelComponent extends ComponentBase {
             mat.cullMode = GPUCullMode.none
             mr.material = mat;
 
-            this.object3D.transform.scene3D.addChild(obj)
+            this.object3D.addChild(obj)
             let softBody = obj.addComponent(ClothSoftBody)
             softBody.fixNodeIndices = ['leftTop', 'rightTop']
             softBody.applyPosition = new Vector3(-89.8, -21.2, -110)
@@ -184,6 +185,66 @@ export class MainModelComponent extends ComponentBase {
             // GUIHelp.addFolder('SoftBody wukong')
             // GUIHelp.open()
             // GUIHelp.addButton('fixClothNode leftBottom', () => softBody.applyFixedNodes(['leftBottom']))
+        }
+
+        // 旋转平台测试
+        if (true) {
+            {
+                let boxObj = Object3DUtil.GetSingleCube(5, 1, 1, Math.random(), Math.random(), Math.random());
+                boxObj.localPosition = new Vector3(-84, -22.4, -84);
+                // boxObj.rotationY = 0;
+                // boxObj.rotationZ = 45;
+                // boxObj.rotationX = 45;
+
+                // 刚体组件
+                let boxObjRbComponent = boxObj.addComponent(RigidBodyComponent);
+                boxObjRbComponent.shape = ShapeTypes.btBoxShape;
+                boxObjRbComponent.mass = 100;
+                boxObjRbComponent.damping = new Vector2(0.2, 0.2);
+                boxObjRbComponent.activationState = ActivationState.DISABLE_DEACTIVATION;
+
+                // 旋转组件
+                let rotationgPlatform = boxObj.addComponent(RotatingPlatform);
+                rotationgPlatform.rotationSpeed = 1;
+                rotationgPlatform.rotationAxis = 'Y';
+                // rotationgPlatform.enable = false;
+                this.object3D.addChild(boxObj);
+            }
+
+            {
+                let boxObj = Object3DUtil.GetSingleCube(8, 1, 1, Math.random(), Math.random(), Math.random());
+                boxObj.localPosition = new Vector3(-80, -18.8, -78);
+                // 刚体组件
+                let boxObjRbComponent = boxObj.addComponent(RigidBodyComponent);
+                boxObjRbComponent.shape = ShapeTypes.btBoxShape;
+                boxObjRbComponent.mass = 100;
+                boxObjRbComponent.damping = new Vector2(0.2, 0.2);
+                boxObjRbComponent.activationState = ActivationState.DISABLE_DEACTIVATION;
+
+                // 旋转组件
+                let rotationgPlatform = boxObj.addComponent(RotatingPlatform);
+                rotationgPlatform.rotationSpeed = 1;
+                rotationgPlatform.rotationAxis = 'Z';
+                // rotationgPlatform.enable = false;
+                this.object3D.addChild(boxObj);
+            }
+            {
+                let boxObj = Object3DUtil.GetSingleCube(8, 1, 1, Math.random(), Math.random(), Math.random());
+                boxObj.localPosition = new Vector3(-90, -22.1, -88);
+                // 刚体组件
+                let boxObjRbComponent = boxObj.addComponent(RigidBodyComponent);
+                boxObjRbComponent.shape = ShapeTypes.btBoxShape;
+                boxObjRbComponent.mass = 100;
+                boxObjRbComponent.damping = new Vector2(0.2, 0.2);
+                boxObjRbComponent.activationState = ActivationState.DISABLE_DEACTIVATION;
+
+                // 旋转组件
+                let rotationgPlatform = boxObj.addComponent(RotatingPlatform);
+                rotationgPlatform.rotationSpeed = 1;
+                rotationgPlatform.rotationAxis = 'X';
+                // rotationgPlatform.enable = false;
+                this.object3D.addChild(boxObj);
+            }
         }
 
         Engine3D.inputSystem.dispatchEvent(new CEvent("MainModelInited"));
@@ -212,7 +273,7 @@ export class MainModelComponent extends ComponentBase {
         gui.add(model, 'y', -300, 300, 0.1).onFinishChange((v) => changePos())
         gui.add(model, 'z', -300, 300, 0.1).onFinishChange((v) => changePos())
 
-        const changePos = () =>{ 
+        const changePos = () => {
             model.getComponent(RigidBodyComponent)?.resetRigidBody();
             // 激活所有动态刚体
             RigidBodyUtil.activateAllKinematicObject()

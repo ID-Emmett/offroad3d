@@ -105,6 +105,7 @@ export class GUIUtil {
     public static renderBloom(bloom: BloomPost, open: boolean = true, name?: string) {
         name ||= 'Bloom';
         GUIHelp.addFolder(name);
+        GUIHelp.add(bloom, 'enable');
         GUIHelp.add(bloom, 'downSampleBlurSize', 3, 15, 1);
         GUIHelp.add(bloom, 'downSampleBlurSigma', 0.01, 1, 0.001);
         GUIHelp.add(bloom, 'upSampleBlurSize', 3, 15, 1);

@@ -27,7 +27,8 @@ export class SlidingPlatform extends ComponentBase {
 
     private createPlatform() {
         let boxObj = Object3DUtil.GetSingleCube(5, 0.05, 5, Math.random(), Math.random(), Math.random());
-        boxObj.localPosition = new Vector3(-71, -22.98, -92)
+        boxObj.name = 'platform'
+        boxObj.localPosition = new Vector3(-71, -23.01, -92)
         let boxObjRbComponent = boxObj.addComponent(RigidBodyComponent);
         boxObjRbComponent.shape = ShapeTypes.btBoxShape;
         boxObjRbComponent.mass = this.mass;
@@ -45,8 +46,6 @@ export class SlidingPlatform extends ComponentBase {
         let constraint = boxObj.addComponent(Generic6DofSpringConstraint)
         constraint.linearLowerLimit.set(-1e30, 0, 0)
         constraint.linearUpperLimit.set(1e30, 0, 0)
-        constraint.angularLowerLimit.set(0, 0, 0)
-        constraint.angularUpperLimit.set(0, 0, 0)
     }
 
     private debug() {

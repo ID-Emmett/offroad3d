@@ -1,7 +1,7 @@
 import { Vector3, Time, BoundingBox, Object3D, Quaternion, Engine3D, Scene3D } from '@orillusion/core';
 import { Ammo } from '@orillusion/physics';
 // import Ammo from '@orillusion/ammo';
-import { RigidBodyComponent, PhysicsMathUtil, ContactProcessedUtil,ClothSoftBody } from '.';
+import { RigidBodyComponent, PhysicsMathUtil, ContactProcessedUtil, ClothSoftBody } from '.';
 import { RigidBodyMapping } from './utils/RigidBodyMapping';
 import { PhysicsDebugDrawer, type DebugDrawerOptions } from './PhysicsDebugDrawer';
 
@@ -36,7 +36,12 @@ class _Physics {
 
 
     /**
-     * Init Physics
+     * 初始化物理引擎和相关配置。
+     *
+     * @param options - 初始化选项参数对象。
+     * @param options.useSoftBody - 是否启用软体模拟。如果为 true，则启用软体模拟功能（如布料、软体物体等）。
+     * @param options.useCollisionCallback - 是否启用碰撞回调。如果为 true，则在发生碰撞时触发回调函数。
+     * @param options.debugConfig - 调试绘制选项，用于配置物理调试绘制器。如果提供，则启用物理调试绘制功能。
      */
     public async init(options: { useSoftBody?: boolean, useCollisionCallback?: boolean, debugConfig?: DebugDrawerOptions } = {}) {
         await Ammo.bind(window)(Ammo);
@@ -51,7 +56,7 @@ class _Physics {
             Physics.world.setContactProcessedCallback(funcpointer);
         }
 
-        // 物理对象绘制能力
+        // 物理对象调试绘制
         if (options.debugConfig) {
             this.debugDrawer = new PhysicsDebugDrawer(this.world, options.debugConfig);
         }
@@ -120,6 +125,11 @@ class _Physics {
         }
     }
 
+    /**
+     * 物理步进模拟
+     * @param maxSubSteps - 最大子步数
+     * @param fixedTimeStep - 固定时间步长
+     */
     public update(maxSubSteps: number = this.maxSubSteps, fixedTimeStep: number = this.fixedTimeStep) {
         if (!this.isInitialized || this.isStop) return;
         this.world.stepSimulation(Time.delta / 1000, maxSubSteps, fixedTimeStep);

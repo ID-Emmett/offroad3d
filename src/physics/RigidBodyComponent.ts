@@ -80,6 +80,8 @@ export class RigidBodyComponent extends ComponentBase {
      * 测试使用，仅为创建碰撞体时提供顶点与索引数据
      */
     public lowObject: Object3D;
+
+    public _gravity: Vector3;
     // -----------------END----------------
 
     /**
@@ -107,7 +109,7 @@ export class RigidBodyComponent extends ComponentBase {
     }
 
     /**
-     * 刚体阻尼
+     * 刚体阻尼 x:线性阻尼，y:角阻尼
      */
     public get damping() {
         return this._damping;
@@ -116,6 +118,17 @@ export class RigidBodyComponent extends ComponentBase {
     public set damping(value: Vector2) {
         this._damping = value;
         if (this._btRigidbody) this._btRigidbody.setDamping(value.x, value.y);
+    }
+
+    /**
+     * 重力
+     */
+    public get gravity() {
+        return this._gravity
+    }
+    public set gravity(value: Vector3) {
+        this._gravity = value
+        if (this._btRigidbody) this._btRigidbody.setGravity(PhysicsMathUtil.toBtVector3(value));
     }
     /**
      * Get friction value
@@ -242,6 +255,7 @@ export class RigidBodyComponent extends ComponentBase {
         this.damping && this._btRigidbody.setDamping(this.damping.x, this.damping.y);
         this.activationState && this._btRigidbody.setActivationState(this.activationState);
         this.collisionFlags && this._btRigidbody.setCollisionFlags(this.collisionFlags);
+        this.gravity && this._btRigidbody.setGravity(PhysicsMathUtil.toBtVector3(this.gravity));
 
         if (this.mass <= 0) {
             this._btRigidbody.setCollisionFlags(this._btRigidbody.getCollisionFlags() | CollisionFlags.STATIC_OBJECT);
@@ -324,10 +338,11 @@ export class RigidBodyComponent extends ComponentBase {
 
             this._btRigidbody.getMotionState().getWorldTransform(Physics.TEMP_TRANSFORM);
 
-            this.transform.localPosition = Vector3.HELP_0.set(Physics.TEMP_TRANSFORM.getOrigin().x(), Physics.TEMP_TRANSFORM.getOrigin().y(), Physics.TEMP_TRANSFORM.getOrigin().z());
+            let pos = Physics.TEMP_TRANSFORM.getOrigin()
+            let qua = Physics.TEMP_TRANSFORM.getRotation()
+            Quaternion.HELP_0.set(qua.x(), qua.y(), qua.z(), qua.w());
 
-            Quaternion.HELP_0.set(Physics.TEMP_TRANSFORM.getRotation().x(), Physics.TEMP_TRANSFORM.getRotation().y(), Physics.TEMP_TRANSFORM.getRotation().z(), Physics.TEMP_TRANSFORM.getRotation().w());
-
+            this.transform.localPosition = Vector3.HELP_0.set(pos.x(), pos.y(), pos.z());
             this.transform.localRotQuat = Quaternion.HELP_0;
 
             Physics.checkBound(this);

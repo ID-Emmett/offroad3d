@@ -4,6 +4,7 @@ import { Scene3D, Object3D, Engine3D, ColliderComponent, BoxColliderShape, Vecto
 import { eventBus } from '@/modules/store/index'
 import { RigidBodyComponent, RigidBodyUtil, Ammo, Physics, CollisionFlags, CollisionMask, CollisionGroup, ShapeTypes, PhysicsMathUtil } from '@/physics';
 import { CustomCameraController } from '../cameraController';
+import { GUIHelp } from '@/utils/debug/GUIHelp';
 
 enum VehicleControlType {
     acceleration,
@@ -22,7 +23,7 @@ export class VehicleControl extends ComponentBase {
     private speed: number
     private mAmmoVehicle: Ammo.btRaycastVehicle;
     private rigidbody: Ammo.btRigidBody;
-    private wheelInfos: Ammo.btWheelInfo[] = []
+    private mWheelInfos: Ammo.btWheelInfo[] = []
     private mVehicleControlState = [false, false, false, false]; // 车辆控制状态
 
     private _enableKeyEvent: boolean = true
@@ -75,6 +76,7 @@ export class VehicleControl extends ComponentBase {
 
         this._enableKeyEvent && this.updateKeyboardEventListeners()
 
+        this.fov = this.transform.view3D.camera.fov
     }
 
     /**
@@ -98,10 +100,12 @@ export class VehicleControl extends ComponentBase {
         }
     }
 
+    public get wheelInfos(): Ammo.btWheelInfo[] {
+        return this.mWheelInfos
+    }
 
     private async initRaycastVehicle() {
 
-        //raycast Vehicle 光线投射车辆
         let tuning = new Ammo.btVehicleTuning(); // 车辆调校
         // tuning.set_m_suspensionStiffness(20.0);
         // tuning.set_m_suspensionDamping(2.3);
@@ -129,16 +133,17 @@ export class VehicleControl extends ComponentBase {
         let wheelAxleCS = new Ammo.btVector3(-1, 0, 0);  // 轴
 
         let addWheel = (isFront: boolean, x: number, y: number, z: number, radius: number) => {
-            let wheelInfo = vehicle.addWheel(new Ammo.btVector3(x, y, z), wheelDirectCS0, wheelAxleCS, this.mVehicleArgs.suspensionRestLength, radius, tuning, isFront);
+            let wheelInfo = vehicle.addWheel(PhysicsMathUtil.setBtVector3(x, y, z), wheelDirectCS0, wheelAxleCS, this.mVehicleArgs.suspensionRestLength, radius, tuning, isFront);
             wheelInfo.set_m_suspensionStiffness(this.mVehicleArgs.suspensionStiffness); // 设置悬架刚度
             wheelInfo.set_m_wheelsDampingRelaxation(this.mVehicleArgs.suspensionDamping); // 设置车轮阻尼松弛
             wheelInfo.set_m_wheelsDampingCompression(this.mVehicleArgs.suspensionCompression); // 设置车轮阻尼压缩
+            // wheelInfo.set_m_frictionSlip(isFront ? this.mVehicleArgs.friction : 4); // 设置摩擦滑动
             wheelInfo.set_m_frictionSlip(this.mVehicleArgs.friction); // 设置摩擦滑动
             wheelInfo.set_m_rollInfluence(this.mVehicleArgs.rollInfluence); // 设置滚动影响
             // wheelInfo.set_m_maxSuspensionTravelCm(this.mVehicleArgs.maxSuspensionTravelCm); // 设置悬架行程
 
             // wheelInfo.set_m_suspensionRestLength1(0.2); 
-            wheelInfo.set_m_chassisConnectionPointCS(new Ammo.btVector3(x, y - 0.1, z));
+            // wheelInfo.set_m_chassisConnectionPointCS(new Ammo.btVector3(x, y - 0.1, z));
             // wheelInfo.set_m_clippedInvContactDotSuspension(10.5);
             // wheelInfo.set_m_maxSuspensionForce(this.mVehicleArgs.suspensionStiffness * 100000);
 
@@ -146,7 +151,7 @@ export class VehicleControl extends ComponentBase {
 
             // console.log(this.mVehicleArgs);
 
-            this.wheelInfos.push(wheelInfo)
+            this.mWheelInfos.push(wheelInfo)
         };
 
         const r = BoundUtil.genMeshBounds(this.mWheels[0]).size.y / 2; // 半径
@@ -162,10 +167,104 @@ export class VehicleControl extends ComponentBase {
         addWheel(false, (-x + w3.x), -y, (-z + w3.z), r);
         addWheel(false, (x + w4.x), -y, (-z + w4.z), r);
 
+        Ammo.destroy(wheelDirectCS0)
+        Ammo.destroy(wheelAxleCS)
         // 追加额外的车轮
-        for (let index = 0; index < this.wheelPosOffset.length - 4; index++) {
-            addWheel(false, (-x + this.wheelPosOffset[4 + index].x), -y, (-z + this.wheelPosOffset[4 + index].z), r);
-        }
+        // for (let index = 0; index < this.wheelPosOffset.length - 4; index++) {
+        //     addWheel(false, (-x + this.wheelPosOffset[4 + index].x), -y, (-z + this.wheelPosOffset[4 + index].z), r);
+        // }
+
+        // this.debug()
+    }
+
+    private debug() {
+        let wheelInfos = this.wheelInfos;
+        let wheelObj: any = {}
+        wheelObj['getSuspensionRestLength'] = wheelInfos[0].getSuspensionRestLength()
+        // wheelObj['get_m_bIsFrontWheel'] = wheelInfos[0].get_m_bIsFrontWheel()
+        wheelObj['get_m_brake'] = wheelInfos[0].get_m_brake()
+        // wheelObj['get_m_chassisConnectionPointCS'] = wheelInfos[0].get_m_chassisConnectionPointCS()
+        wheelObj['get_m_clippedInvContactDotSuspension'] = wheelInfos[0].get_m_clippedInvContactDotSuspension()
+        wheelObj['get_m_deltaRotation'] = wheelInfos[0].get_m_deltaRotation()
+        wheelObj['get_m_engineForce'] = wheelInfos[0].get_m_engineForce()
+        wheelObj['get_m_frictionSlip'] = wheelInfos[0].get_m_frictionSlip()
+        wheelObj['get_m_maxSuspensionForce'] = wheelInfos[0].get_m_maxSuspensionForce()
+        wheelObj['get_m_maxSuspensionTravelCm'] = wheelInfos[0].get_m_maxSuspensionTravelCm()
+        // wheelObj['get_m_raycastInfo'] = wheelInfos[0].get_m_raycastInfo()
+        wheelObj['get_m_rollInfluence'] = wheelInfos[0].get_m_rollInfluence()
+        wheelObj['get_m_rotation'] = wheelInfos[0].get_m_rotation()
+        wheelObj['get_m_skidInfo'] = wheelInfos[0].get_m_skidInfo()
+        wheelObj['get_m_steering'] = wheelInfos[0].get_m_steering()
+        wheelObj['get_m_suspensionRelativeVelocity'] = wheelInfos[0].get_m_suspensionRelativeVelocity()
+        wheelObj['get_m_suspensionRestLength1'] = wheelInfos[0].get_m_suspensionRestLength1()
+        wheelObj['get_m_suspensionStiffness'] = wheelInfos[0].get_m_suspensionStiffness()
+        // wheelObj['get_m_wheelAxleCS'] = wheelInfos[0].get_m_wheelAxleCS()
+        // wheelObj['get_m_wheelDirectionCS'] = wheelInfos[0].get_m_wheelDirectionCS()
+        wheelObj['get_m_wheelsDampingCompression'] = wheelInfos[0].get_m_wheelsDampingCompression()
+        wheelObj['get_m_wheelsDampingRelaxation'] = wheelInfos[0].get_m_wheelsDampingRelaxation()
+        wheelObj['get_m_wheelsRadius'] = wheelInfos[0].get_m_wheelsRadius()
+        wheelObj['get_m_wheelsSuspensionForce'] = wheelInfos[0].get_m_wheelsSuspensionForce()
+        wheelObj['get_m_worldTransform'] = wheelInfos[0].get_m_worldTransform()
+        console.log(wheelObj);
+
+        GUIHelp.addFolder('vehicle')
+        GUIHelp.add(wheelObj, 'getSuspensionRestLength').onChange((v) => {
+        })
+        GUIHelp.add(wheelObj, 'get_m_brake').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_brake(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_clippedInvContactDotSuspension').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_clippedInvContactDotSuspension(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_deltaRotation').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_deltaRotation(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_engineForce').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_engineForce(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_frictionSlip').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_frictionSlip(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_maxSuspensionForce').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_maxSuspensionForce(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_maxSuspensionTravelCm').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_maxSuspensionTravelCm(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_rollInfluence').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_rollInfluence(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_rotation').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_rotation(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_skidInfo').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_skidInfo(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_steering').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_steering(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_suspensionRelativeVelocity').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_suspensionRelativeVelocity(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_suspensionRestLength1').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_suspensionRestLength1(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_suspensionStiffness').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_suspensionStiffness(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_wheelsDampingCompression').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_wheelsDampingCompression(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_wheelsDampingRelaxation').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_wheelsDampingRelaxation(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_wheelsRadius').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_wheelsRadius(+v))
+        })
+        GUIHelp.add(wheelObj, 'get_m_wheelsSuspensionForce').onChange((v) => {
+            this.wheelInfos.forEach(item => item.set_m_wheelsSuspensionForce(+v))
+        })
+
 
     }
 
@@ -189,8 +288,20 @@ export class VehicleControl extends ComponentBase {
 
             if (this.mVehicleControlState[VehicleControlType.acceleration]) {
                 if (speed < -1) this.mBreakingForce = this.mVehicleArgs.maxBreakingForce;
-                else this.mEngineForce = this.mVehicleArgs.maxEngineForce;
+                else this.mEngineForce = this.mVehicleArgs.maxEngineForce * this.speedUp;
             }
+
+            if (this.speedUp === 1) {
+                if (this.transform.view3D.camera.fov >= this.fov) {
+                    this.transform.view3D.camera.fov -= 0.1 * delta
+                }
+            } else {                
+                if (this.transform.view3D.camera.fov - 5  <= this.fov) {
+                    this.transform.view3D.camera.fov += 0.1 * delta
+                }
+            }
+            // this.transform.view3D.camera.fov = this.fov + (speed*0.1)
+
 
             if (this.mVehicleControlState[VehicleControlType.braking]) {
                 if (speed > 1) this.mBreakingForce = this.mVehicleArgs.maxBreakingForce;
@@ -245,20 +356,20 @@ export class VehicleControl extends ComponentBase {
             }
 
 
-            if (n === 10) {
+            // if (n === 10) {
 
-                vehicle.setSteeringValue(this.mVehicleSteering / 2, 2);
-                vehicle.setSteeringValue(this.mVehicleSteering / 2, 3);
-                vehicle.setSteeringValue(this.mVehicleSteering / 4, 4);
-                vehicle.setSteeringValue(this.mVehicleSteering / 4, 5);
+            //     vehicle.setSteeringValue(this.mVehicleSteering / 2, 2);
+            //     vehicle.setSteeringValue(this.mVehicleSteering / 2, 3);
+            //     vehicle.setSteeringValue(this.mVehicleSteering / 4, 4);
+            //     vehicle.setSteeringValue(this.mVehicleSteering / 4, 5);
 
-                vehicle.applyEngineForce(this.mEngineForce, 4);
-                vehicle.applyEngineForce(this.mEngineForce, 5);
-                vehicle.applyEngineForce(this.mEngineForce, 6);
-                vehicle.applyEngineForce(this.mEngineForce, 7);
-                vehicle.applyEngineForce(this.mEngineForce, 8);
-                vehicle.applyEngineForce(this.mEngineForce, 9);
-            }
+            //     vehicle.applyEngineForce(this.mEngineForce, 4);
+            //     vehicle.applyEngineForce(this.mEngineForce, 5);
+            //     vehicle.applyEngineForce(this.mEngineForce, 6);
+            //     vehicle.applyEngineForce(this.mEngineForce, 7);
+            //     vehicle.applyEngineForce(this.mEngineForce, 8);
+            //     vehicle.applyEngineForce(this.mEngineForce, 9);
+            // }
         }
 
         // update body position and rotation
@@ -317,6 +428,9 @@ export class VehicleControl extends ComponentBase {
     onKeyDown(e: KeyEvent) {
         this.updateControlState(e.keyCode, true);
     }
+
+    private speedUp: number = 1
+    private fov: number = 0
     updateControlState(keyCode: number, state: boolean) {
         switch (keyCode) {
             case KeyCode.Key_W:
@@ -345,6 +459,10 @@ export class VehicleControl extends ComponentBase {
                 break;
             case KeyCode.Key_Space:
                 this.mVehicleControlState[VehicleControlType.handbrake] = state;
+                break;
+            case KeyCode.Key_Shift_L:
+                this.speedUp = state ? 1.8 : 1; // 加速
+
                 break;
             case KeyCode.Key_P:
                 if (state) {
@@ -379,7 +497,7 @@ export class VehicleControl extends ComponentBase {
         Physics.world.removeAction(this.mAmmoVehicle);
         Ammo.destroy(this.mAmmoVehicle);
 
-        this.wheelInfos = null
+        this.mWheelInfos = null
         this.mVehicleArgs = null
     }
 }

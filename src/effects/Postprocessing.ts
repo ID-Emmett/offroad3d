@@ -1,4 +1,4 @@
-import { Engine3D, PostProcessingComponent, GlobalFog, ComponentBase, DepthOfFieldPost } from '@orillusion/core'
+import { Engine3D, PostProcessingComponent, GlobalFog, ComponentBase, DepthOfFieldPost, BloomPost } from '@orillusion/core'
 import { GUIUtil } from '@/utils/GUIUtil'
 
 /**
@@ -28,6 +28,14 @@ export class PostProcessingSetup extends ComponentBase {
          * config...
          */
         GUIUtil.renderDepthOfField(depthOfField, false)
+
+        let bloom = post.addPost(BloomPost)
+        bloom.enable = false
+        /**
+         * config...
+         */
+        GUIUtil.renderBloom(bloom, false)
+        
     }
 
 }
