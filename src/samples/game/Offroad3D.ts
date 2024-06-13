@@ -37,10 +37,10 @@ class Offroad3D {
             useSoftBody: true, // 使用软体
             useCollisionCallback: true, // 使用碰撞回调
             debugConfig: { // 物理调试配置
-                enable: false,
+                enable: true,
                 viewIndex: 0,
                 updateFreq: 1,
-                debugDrawMode: 2,
+                debugDrawMode: 4096,
                 maxLineCount: 25000
             },
         })
@@ -129,10 +129,10 @@ class Offroad3D {
 
 
         // 地形
-        scene.addComponent(TerrainComponent);
+        // scene.addComponent(TerrainComponent);
 
         // 植被
-        scene.addComponent(TreesComponent);
+        // scene.addComponent(TreesComponent);
 
         // 草
         // scene.addComponent(Grass).enable = false; // gui control
@@ -144,8 +144,8 @@ class Offroad3D {
         cameraCtrl.object3D.addComponent(InteractRay);
 
         // 移动设施
-        scene.addComponent(Elevator);
-        scene.addComponent(SlidingPlatform);
+        // scene.addComponent(Elevator);
+        // scene.addComponent(SlidingPlatform);
 
         if (import.meta.env.PROD) {
             this.printing();

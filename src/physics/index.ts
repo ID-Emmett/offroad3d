@@ -8,3 +8,4 @@ export * from './Physics';
 export * from './softBody/ClothSoftBody';
 export * from './constraint/HingeConstraint';
 export * from './constraint/Generic6DofSpringConstraint';
+export * from './constraint/SliderConstraint';

@@ -130,6 +130,7 @@ export class RigidBodyComponent extends ComponentBase {
         this._gravity = value
         if (this._btRigidbody) this._btRigidbody.setGravity(PhysicsMathUtil.toBtVector3(value));
     }
+    
     /**
      * Get friction value
      */
@@ -255,7 +256,6 @@ export class RigidBodyComponent extends ComponentBase {
         this.damping && this._btRigidbody.setDamping(this.damping.x, this.damping.y);
         this.activationState && this._btRigidbody.setActivationState(this.activationState);
         this.collisionFlags && this._btRigidbody.setCollisionFlags(this.collisionFlags);
-        this.gravity && this._btRigidbody.setGravity(PhysicsMathUtil.toBtVector3(this.gravity));
 
         if (this.mass <= 0) {
             this._btRigidbody.setCollisionFlags(this._btRigidbody.getCollisionFlags() | CollisionFlags.STATIC_OBJECT);
@@ -268,6 +268,8 @@ export class RigidBodyComponent extends ComponentBase {
         } else {
             Physics.world.addRigidBody(this._btRigidbody);
         }
+
+        this.gravity && this._btRigidbody.setGravity(PhysicsMathUtil.toBtVector3(this.gravity));
     }
 
     private originShape(): Ammo.btCollisionShape {

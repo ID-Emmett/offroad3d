@@ -187,6 +187,17 @@ class _Physics {
     }
 
     /**
+     * 删除约束
+     */
+    public removeConstraint(constraint: Ammo.btTypedConstraint){
+        if (constraint) {
+            Physics.world.removeConstraint(constraint);
+            Ammo.destroy(constraint);
+            constraint = null;
+        }
+    }
+    
+    /**
      * 同步图形变换
      */
     public syncGraphic(graphic: Object3D, tm: Ammo.btTransform): void {

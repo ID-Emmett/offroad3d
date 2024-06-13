@@ -89,11 +89,8 @@ export class Generic6DofSpringConstraint extends ComponentBase {
     }
 
     public destroy(force?: boolean): void {
-        if (this._constraint) {
-            Physics.world.removeConstraint(this._constraint);
-            Ammo.destroy(this._constraint);
-            this._constraint = null;
-        }
+        Physics.removeConstraint(this._constraint);
+        this._constraint = null;
         super.destroy(force);
     }
 }

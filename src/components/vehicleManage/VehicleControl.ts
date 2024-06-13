@@ -291,15 +291,15 @@ export class VehicleControl extends ComponentBase {
                 else this.mEngineForce = this.mVehicleArgs.maxEngineForce * this.speedUp;
             }
 
-            if (this.speedUp === 1) {
-                if (this.transform.view3D.camera.fov >= this.fov) {
-                    this.transform.view3D.camera.fov -= 0.1 * delta
-                }
-            } else {                
-                if (this.transform.view3D.camera.fov - 5  <= this.fov) {
-                    this.transform.view3D.camera.fov += 0.1 * delta
-                }
-            }
+            // if (this.speedUp === 1) {
+            //     if (this.transform.view3D.camera.fov >= this.fov) {
+            //         this.transform.view3D.camera.fov -= 0.1 * delta
+            //     }
+            // } else {                
+            //     if (this.transform.view3D.camera.fov - 5  <= this.fov) {
+            //         this.transform.view3D.camera.fov += 0.1 * delta
+            //     }
+            // }
             // this.transform.view3D.camera.fov = this.fov + (speed*0.1)
 
 

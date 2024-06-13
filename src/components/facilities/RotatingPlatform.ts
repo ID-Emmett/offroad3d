@@ -93,13 +93,13 @@ export class RotatingPlatform extends ComponentBase {
 
     public onDisable() {
         // 关闭电机
-        this._hinge && this._hinge.enableMotor(false);
+        this._hinge?.enableMotor(false);
 
     }
 
     public onEnable() {
         // 启用电机并设置旋转速度和最大马达脉冲
-        this._hinge && this._hinge.enableAngularMotor(true, this.rotationSpeed, this.maxMotorImpulse);
+        this._hinge?.enableAngularMotor(true, this.rotationSpeed, this.maxMotorImpulse);
     }
 
     public destroy(force?: boolean): void {
