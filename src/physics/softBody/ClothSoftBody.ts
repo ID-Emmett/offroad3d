@@ -17,10 +17,14 @@ export class ClothSoftBody extends ComponentBase {
     private anchorManager: AnchorManager;
 
     /**
-     * (00,01,10,11) 四个角的位置，默认：
+     * (00,01,10,11) 布料四个角的位置，默认：
+     * 
      * [-halfWidth, halfHeight, 0],
+     * 
      * [halfWidth, halfHeight, 0],
+     * 
      * [-halfWidth, -halfHeight, 0],
+     * 
      * [halfWidth, -halfHeight, 0]
      */
     public clothCorners: [Vector3, Vector3, Vector3, Vector3];

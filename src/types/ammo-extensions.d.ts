@@ -15,6 +15,11 @@ declare module "@orillusion/physics" {
             setMaxLinMotorForce(force: number): void;
         }
 
+        // export interface btConeTwistConstraint {
+        //     // 扩展 setLimit 方法重载。
+        //     setLimit(swingSpan1: number, swingSpan2: number, twistSpan: number, softness?: number, biasFactor?: number, relaxationFactor?: number): void;
+        // }
+
         export function castObject<T, C extends new (...args: any[]) => T>(
             object: any,
             type: C
@@ -28,6 +33,7 @@ declare module "@orillusion/physics" {
             return 0;
         }
 
+        export function UTF8ToString(warningString: number): string
 
     }
 }

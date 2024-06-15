@@ -347,7 +347,7 @@ export class RigidBodyUtil {
         transform.setRotation(rotQuat);
 
         const motionState = new Ammo.btDefaultMotionState(transform);
-        const localInertia = PhysicsMathUtil.setBtVector3(0, 0, 0);
+        const localInertia = PhysicsMathUtil.zeroBtVector3();
         if (mass > 0) {
             shape.calculateLocalInertia(mass, localInertia);
         }
@@ -643,8 +643,8 @@ export class RigidBodyUtil {
 
         // 清除力和速度
         bodyRb.clearForces();
-        bodyRb.setLinearVelocity(PhysicsMathUtil.setBtVector3(0, 0, 0));
-        bodyRb.setAngularVelocity(PhysicsMathUtil.setBtVector3(0, 0, 0));
+        bodyRb.setLinearVelocity(PhysicsMathUtil.zeroBtVector3());
+        bodyRb.setAngularVelocity(PhysicsMathUtil.zeroBtVector3());
     }
 
     /**

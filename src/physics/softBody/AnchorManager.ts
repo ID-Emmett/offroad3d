@@ -113,9 +113,7 @@ export class AnchorManager {
      */
     public clearAnchors() {
         console.log('destroy anchor');
-        const anchors = this.component.btSoftBody.get_m_anchors();
-        anchors.clear();
-        this.component.btSoftBody.set_m_anchors(anchors);
+        this.component.btSoftBody.get_m_anchors().clear();
         this.component.appendRigidbody = null;
     }
 }

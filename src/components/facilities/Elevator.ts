@@ -47,8 +47,20 @@ export class Elevator extends ComponentBase {
         this.boxObj = boxObj
 
         let constraint = boxObj.addComponent(Generic6DofSpringConstraint)
-        constraint.linearLowerLimit.set(0, -1e30, 0)
-        constraint.linearUpperLimit.set(0, 1e30, 0)
+        // constraint.linearLowerLimit.set(0, -1e30, 0)
+        // constraint.linearUpperLimit.set(0, 1e30, 0)
+        // constraint.angularLowerLimit.set(0, 0, 0)
+        // constraint.angularUpperLimit.set(0, 0, 0)
+        constraint.waitConstraint().then(v=>{
+           v.setLinearLowerLimit(PhysicsMathUtil.setBtVector3(0, -1e30, 0))
+           v.setLinearUpperLimit(PhysicsMathUtil.setBtVector3(0, 1e30, 0))
+           v.setAngularLowerLimit(PhysicsMathUtil.zeroBtVector3());
+           v.setAngularUpperLimit(PhysicsMathUtil.zeroBtVector3());
+        })
+        // constraint.constraint.setLinearLowerLimit(PhysicsMathUtil.setBtVector3(0,-1e30,0))
+        // constraint.constraint.setLinearUpperLimit(PhysicsMathUtil.setBtVector3(0,1e30,0))
+        // constraint.constraint.setAngularLowerLimit(PhysicsMathUtil.setBtVector3(0, 0, 0));
+        // constraint.constraint.setAngularUpperLimit(PhysicsMathUtil.setBtVector3(0, 0, 0));
     }
 
     private debug() {

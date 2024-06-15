@@ -61,6 +61,15 @@ export class PhysicsMathUtil {
     }
 
     /**
+     * x, y, z, w set Ammo.btQuaternion
+     */
+    public static setBtQuaternion(x: number, y: number, z: number, w: number, btQua?: Ammo.btQuaternion): Ammo.btQuaternion {
+        btQua ||= this.tmpQuaA;
+        btQua.setValue(x, y, z, w);
+        return btQua;
+    }
+
+    /**
      *  Ammo.btVector3 to Vector3
      */
     public static fromBtVector3(btVec: Ammo.btVector3, vec?: Vector3): Vector3 {
@@ -76,5 +85,23 @@ export class PhysicsMathUtil {
         qua ||= new Quaternion();
         qua.set(btQua.x(), btQua.y(), btQua.z(), btQua.w());
         return qua;
+    }
+
+    /**
+     *  Sets the given Ammo.btVector3 to (0, 0, 0)
+     */
+    public static zeroBtVector3(btVec?: Ammo.btVector3): Ammo.btVector3 {
+        btVec ||= this.tmpVecA;
+        btVec.setValue(0, 0, 0);
+        return btVec;
+    }
+
+    /**
+     *  Sets the given Ammo.btQuaternion to (0, 0, 0, 1)
+     */
+    public static resetBtQuaternion(btQua?: Ammo.btQuaternion): Ammo.btQuaternion {
+        btQua ||= this.tmpQuaA;
+        btQua.setValue(0, 0, 0, 1);
+        return btQua;
     }
 }

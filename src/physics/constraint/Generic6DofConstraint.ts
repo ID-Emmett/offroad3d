@@ -3,9 +3,9 @@ import { Ammo, Physics, RigidBodyComponent, PhysicsMathUtil } from '..';
 import { ConstraintBase } from './ConstraintBase';
 
 /**
- * 弹簧特性六自由度约束
+ * 通用六自由度约束
  */
-export class Generic6DofSpringConstraint extends ConstraintBase<Ammo.btGeneric6DofSpringConstraint> {
+export class Generic6DofConstraint extends ConstraintBase<Ammo.btGeneric6DofConstraint> {
     public linearLowerLimit: Vector3 = new Vector3(-1e30, -1e30, -1e30);
     public linearUpperLimit: Vector3 = new Vector3(1e30, 1e30, 1e30);
     public angularLowerLimit: Vector3 = new Vector3(-Math.PI, -Math.PI, -Math.PI);
@@ -29,10 +29,10 @@ export class Generic6DofSpringConstraint extends ConstraintBase<Ammo.btGeneric6D
             frameInB.setOrigin(pivotInB);
             frameInB.setRotation(rotInB);
 
-            this._constraint = new Ammo.btGeneric6DofSpringConstraint(selfRb.btRigidbody, this._targetRigidbody.btRigidbody, frameInA, frameInB, this.useLinearFrameReferenceFrame);
+            this._constraint = new Ammo.btGeneric6DofConstraint(selfRb.btRigidbody, this._targetRigidbody.btRigidbody, frameInA, frameInB, this.useLinearFrameReferenceFrame);
             Ammo.destroy(frameInB);
         } else {
-            this._constraint = new Ammo.btGeneric6DofSpringConstraint(selfRb.btRigidbody, frameInA, this.useLinearFrameReferenceFrame);
+            this._constraint = new Ammo.btGeneric6DofConstraint(selfRb.btRigidbody, frameInA, this.useLinearFrameReferenceFrame);
         }
 
         this._constraint.setLinearLowerLimit(PhysicsMathUtil.toBtVector3(this.linearLowerLimit));

@@ -1,73 +1,62 @@
-import { ComponentBase, Vector3 } from '@orillusion/core'
+import { Vector3 } from '@orillusion/core';
 import { Ammo, Physics, RigidBodyComponent, PhysicsMathUtil } from '..';
-/**
- * @internal
- * @group Plugin
- */
+import { ConstraintBase } from './ConstraintBase';
 
-export class HingeConstraint extends ComponentBase {
-    private _targetRigidbody: RigidBodyComponent;
-    public pivotSelf: Vector3 = new Vector3();
-    public pivotTarget: Vector3 = new Vector3();
+/**
+ * 铰链约束
+ */
+export class HingeConstraint extends ConstraintBase<Ammo.btHingeConstraint> {
     public axisSelf: Vector3 = new Vector3(0, 1, 0);
     public axisTarget: Vector3 = new Vector3(0, 1, 0);
-    private _hinge: Ammo.btHingeConstraint;
+    /**
+     * 默认：true
+     */
+    public useReferenceFrameA: boolean = true;
+    /**
+     * 默认：false
+     */
+    public useTwoBodiesTransformOverload: boolean = false;
 
-    start(): void {
-        var selfRb = this.object3D.getComponent(RigidBodyComponent);
-        if (selfRb == null) {
-            console.error('HingeConstraint need rigidbody');
-            return;
+    protected createConstraint(selfRb: RigidBodyComponent) {
+        const constraintType = !this._targetRigidbody ?
+            'SINGLE_BODY_TRANSFORM' : this.useTwoBodiesTransformOverload ?
+                'TWO_BODIES_TRANSFORM' : 'TWO_BODIES_PIVOT';
+
+        const pivotInA = PhysicsMathUtil.toBtVector3(this.pivotSelf, PhysicsMathUtil.tmpVecA);
+        const pivotInB = PhysicsMathUtil.toBtVector3(this.pivotTarget, PhysicsMathUtil.tmpVecB);
+
+        switch (constraintType) {
+            case 'SINGLE_BODY_TRANSFORM':
+                const frameA_single = Physics.TEMP_TRANSFORM;
+                frameA_single.setIdentity();
+                frameA_single.setOrigin(pivotInA);
+                frameA_single.setRotation(PhysicsMathUtil.toBtQuaternion(this.rotationSelf));
+
+                this._constraint = new Ammo.btHingeConstraint(selfRb.btRigidbody, frameA_single, this.useReferenceFrameA);
+                break;
+            case 'TWO_BODIES_TRANSFORM':
+                const frameA = Physics.TEMP_TRANSFORM;
+                frameA.setIdentity();
+                frameA.setOrigin(pivotInA);
+                frameA.setRotation(PhysicsMathUtil.toBtQuaternion(this.rotationSelf));
+
+                const frameB = new Ammo.btTransform();
+                frameB.setIdentity();
+                frameB.setOrigin(pivotInB);
+                frameB.setRotation(PhysicsMathUtil.toBtQuaternion(this.rotationTarget, PhysicsMathUtil.tmpQuaB));
+
+                this._constraint = new Ammo.btHingeConstraint(selfRb.btRigidbody, this._targetRigidbody.btRigidbody, frameA, frameB, this.useReferenceFrameA);
+                Ammo.destroy(frameB);
+                break;
+            case 'TWO_BODIES_PIVOT':
+                const axisSelf = PhysicsMathUtil.toBtVector3(this.axisSelf, PhysicsMathUtil.tmpVecC);
+                const axisTarget = PhysicsMathUtil.toBtVector3(this.axisTarget, PhysicsMathUtil.tmpVecD);
+
+                this._constraint = new Ammo.btHingeConstraint(selfRb.btRigidbody, this._targetRigidbody.btRigidbody, pivotInA, pivotInB, axisSelf, axisTarget);
+                break;
+            default:
+                console.error('Invalid constraint type');
+                return;
         }
-
-        if (this._targetRigidbody == null) {
-            console.error('HingeConstraint need target rigidbody');
-            return;
-        }
-
-        let canStart = true;
-        if (!selfRb.btBodyInited) {
-            selfRb.addInitedFunction(this.start, this);
-            canStart = false;
-        }
-        if (!this._targetRigidbody.btBodyInited) {
-            this._targetRigidbody.addInitedFunction(this.start, this);
-            canStart = false;
-        }
-
-        console.log("hinge true start init");
-
-        let axisSelf = new Ammo.btVector3(this.axisSelf.x, this.axisSelf.y, this.axisSelf.z);
-        let axisTarget = new Ammo.btVector3(this.axisTarget.x, this.axisTarget.y, this.axisTarget.z);
-
-        if (!canStart) {
-            return;
-        }
-        let pa = new Ammo.btVector3(this.pivotSelf.x, this.pivotSelf.y, this.pivotSelf.z);
-        let pb = new Ammo.btVector3(this.pivotTarget.x, this.pivotTarget.y, this.pivotTarget.z);
-        let hinge = new Ammo.btHingeConstraint(selfRb.btRigidbody, this._targetRigidbody.btRigidbody, pa, pb, axisSelf, axisTarget, true);
-        this._hinge = hinge;
-        Physics.world.addConstraint(hinge, true);
-    }
-
-    public get hinge(): Ammo.btHingeConstraint {
-        return this._hinge;
-    }
-
-    public get targetRigidbody(): RigidBodyComponent {
-        return this._targetRigidbody;
-    }
-
-    public set targetRigidbody(value: RigidBodyComponent) {
-        this._targetRigidbody = value;
-    }
-
-    public destroy(force?: boolean): void {
-        if (this._hinge) {
-            Physics.world.removeConstraint(this._hinge);
-            Ammo.destroy(this._hinge);
-            this._hinge = null;
-        }
-        super.destroy(force);
     }
 }

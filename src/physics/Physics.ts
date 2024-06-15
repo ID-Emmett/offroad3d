@@ -10,7 +10,7 @@ class _Physics {
     private _isStop: boolean = false;
     private _gravity: Vector3 = new Vector3(0, -9.8, 0);
     private isInitialized: boolean = false;
-    private softBodyWorldInfo: Ammo.btSoftBodyWorldInfo | null = null;
+    private _worldInfo: Ammo.btSoftBodyWorldInfo | null = null;
     private physicBound: BoundingBox;
 
     public maxSubSteps: number = 10;
@@ -69,8 +69,8 @@ class _Physics {
         if (this.isInitialized && useSoftBody && this.isSoftBodyWord) return;
 
         if (this.isInitialized) {
-            this.softBodyWorldInfo && Ammo.destroy(this.softBodyWorldInfo);
-            this.softBodyWorldInfo = null;
+            this._worldInfo && Ammo.destroy(this._worldInfo);
+            this._worldInfo = null;
             Ammo.destroy(this.world);
         }
 
@@ -84,15 +84,15 @@ class _Physics {
         if (useSoftBody) {
             const softBodySolver = new Ammo.btDefaultSoftBodySolver();
             this._world = new Ammo.btSoftRigidDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration, softBodySolver);
-            this.softBodyWorldInfo = (this.world as Ammo.btSoftRigidDynamicsWorld).getWorldInfo();
-            this.softBodyWorldInfo.set_m_broadphase(broadphase);
-            this.softBodyWorldInfo.set_m_dispatcher(dispatcher);
-            this.softBodyWorldInfo.set_m_gravity(PhysicsMathUtil.toBtVector3(this.gravity));
-            this.softBodyWorldInfo.set_air_density(1.2);
-            this.softBodyWorldInfo.set_water_density(0);
-            this.softBodyWorldInfo.set_water_offset(0);
-            this.softBodyWorldInfo.set_water_normal(PhysicsMathUtil.setBtVector3(0, 0, 0));
-            this.softBodyWorldInfo.set_m_maxDisplacement(0.5);
+            this._worldInfo = (this.world as Ammo.btSoftRigidDynamicsWorld).getWorldInfo();
+            this._worldInfo.set_m_broadphase(broadphase);
+            this._worldInfo.set_m_dispatcher(dispatcher);
+            this._worldInfo.set_m_gravity(PhysicsMathUtil.toBtVector3(this.gravity));
+            this._worldInfo.set_air_density(1.2);
+            this._worldInfo.set_water_density(0);
+            this._worldInfo.set_water_offset(0);
+            this._worldInfo.set_water_normal(PhysicsMathUtil.setBtVector3(0, 0, 0));
+            this._worldInfo.set_m_maxDisplacement(0.5);
         } else {
             this._world = new Ammo.btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
         }
@@ -153,10 +153,10 @@ class _Physics {
         return this._isStop;
     }
 
-    public set gravity(gravity: Vector3) {
-        this._gravity = gravity;
+    public set gravity(value: Vector3) {
+        this._gravity = value;
         if (this.world) {
-            this.world.setGravity(PhysicsMathUtil.toBtVector3(gravity));
+            this.world.setGravity(PhysicsMathUtil.toBtVector3(value));
         }
     }
 
@@ -165,14 +165,14 @@ class _Physics {
     }
 
     public get worldInfo(): Ammo.btSoftBodyWorldInfo {
-        if (!this.softBodyWorldInfo) {
+        if (!this._worldInfo) {
             throw new Error("SoftBodyPhysics has not been initialized.");
         }
-        return this.softBodyWorldInfo;
+        return this._worldInfo;
     }
 
     public get isSoftBodyWord() {
-        return !!this.softBodyWorldInfo;
+        return !!this._worldInfo;
     }
 
     public checkBound(body: RigidBodyComponent) {
@@ -187,7 +187,7 @@ class _Physics {
     }
 
     /**
-     * 删除约束
+     * 销毁约束
      */
     public removeConstraint(constraint: Ammo.btTypedConstraint){
         if (constraint) {

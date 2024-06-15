@@ -2,7 +2,7 @@ import { Engine3D, Scene3D, Camera3D, View3D, Object3D, Color, DirectLight, Atmo
 import { Stats } from "@orillusion/stats"
 import { CustomCameraController } from '@/components/cameraController'
 import { InteractRay } from '@/components/ammoRay/InteractRay';
-import { TerrainComponent, TreesComponent, Grass, BoxGenerator, MainModelComponent } from '@/components/sceneManage';
+import { TerrainComponent, TreesComponent, Grass, BoxGenerator, MainModelComponent, TestComponent } from '@/components/sceneManage';
 import { VehicleComponent, VehicleType } from '@/components/vehicleManage';
 import { FrameTaskQueue } from '@/components/systems/FrameTaskQueue';
 import { PostProcessingSetup } from '@/effects/Postprocessing';
@@ -115,8 +115,13 @@ class Offroad3D {
         // 场景模型
         scene.addComponent(MainModelComponent);
 
+
+
         // 载具
         const onTerrainReady = () => {
+            
+            scene.addComponent(TestComponent); // 测试组件
+
             let vehicle = scene.addComponent(VehicleComponent);
             vehicle.vehicleType = VehicleType.LargePickup;
             vehicle.position = new Vector3(-96, -22, -96)
@@ -144,7 +149,7 @@ class Offroad3D {
         cameraCtrl.object3D.addComponent(InteractRay);
 
         // 移动设施
-        // scene.addComponent(Elevator);
+        scene.addComponent(Elevator);
         // scene.addComponent(SlidingPlatform);
 
         if (import.meta.env.PROD) {

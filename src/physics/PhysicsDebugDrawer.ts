@@ -128,11 +128,14 @@ export class PhysicsDebugDrawer {
     }
 
     private reportErrorWarning(warningString: string): void {
-        console.warn(warningString);
+        const warning = Ammo.UTF8ToString(warningString as unknown as number);
+        console.error(warning);
     }
 
     private draw3dText(location: Ammo.btVector3, textString: string): void {
-        console.log("draw3dText", location, textString);
+        const _location = Ammo.wrapPointer(location as unknown as number, Ammo.btVector3);
+        const _textString = Ammo.UTF8ToString(textString as unknown as number);
+        console.log("draw3dText", _location, _textString);
     }
 
     public setDebugMode(debugMode: DebugDrawMode): void {
