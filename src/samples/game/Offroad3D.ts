@@ -43,6 +43,7 @@ class Offroad3D {
                 debugDrawMode: 4096,
                 maxLineCount: 25000
             },
+            physicBound: new Vector3(2000, 500, 2000)
         })
 
         // Init Engine3D
@@ -119,7 +120,7 @@ class Offroad3D {
 
         // 载具
         const onTerrainReady = () => {
-            
+
             scene.addComponent(TestComponent); // 测试组件
 
             let vehicle = scene.addComponent(VehicleComponent);

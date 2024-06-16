@@ -91,17 +91,13 @@ export class PhysicsMathUtil {
      *  Sets the given Ammo.btVector3 to (0, 0, 0)
      */
     public static zeroBtVector3(btVec?: Ammo.btVector3): Ammo.btVector3 {
-        btVec ||= this.tmpVecA;
-        btVec.setValue(0, 0, 0);
-        return btVec;
+        return this.setBtVector3(0, 0, 0, btVec);
     }
 
     /**
      *  Sets the given Ammo.btQuaternion to (0, 0, 0, 1)
      */
     public static resetBtQuaternion(btQua?: Ammo.btQuaternion): Ammo.btQuaternion {
-        btQua ||= this.tmpQuaA;
-        btQua.setValue(0, 0, 0, 1);
-        return btQua;
+        return this.setBtQuaternion(0, 0, 0, 1, btQua);
     }
 }

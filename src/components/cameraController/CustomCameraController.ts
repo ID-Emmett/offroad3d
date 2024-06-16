@@ -278,6 +278,8 @@ export class CustomCameraController extends ComponentBase {
             case KeyCode.Key_L:
                 // 锁定相机跟踪
                 if (isKeyDown) {
+                    // if (this.enableFixedCamera) this.slowTracking(this._flowTarget)
+
                     this.enableFixedCamera = !this.enableFixedCamera;
                     if (this.enableFixedCamera) {
                         this._currentTarget.copy(this._targetPos.transform.localPosition)
@@ -428,19 +430,17 @@ export class CustomCameraController extends ComponentBase {
             Vector3.HELP_0.copyFrom(this._flowTarget.transform[this.lookAtFront ? 'forward' : 'back']).normalize();
             let targetRollRadians = -(Math.atan2(Vector3.HELP_0.z, Vector3.HELP_0.x) - kPI);
 
-            let lerpFactor = this.lookAtFront ? 0.01 : 0.02
-            // let lerpFactor = this.lookAtFront ? 0.02 : 0.02
+            let lerpFactor = this.lookAtFront ? 0.01 : 0.02;
             const TWO_PI = 2 * kPI;
-            let currentRollRadians = (this.roll - 90) * DEGREES_TO_RADIANS
+            let currentRollRadians = (this.roll - 90) * DEGREES_TO_RADIANS;
 
-            // 将角度规范化到 [0, 2π] 范围
-            const normalizedCurrentRollRadians = (currentRollRadians + TWO_PI) % TWO_PI;
-            const normalizedTargetRollRadians = (targetRollRadians + TWO_PI) % TWO_PI;
+            // 计算角度差并选择最短路径
+            let angleDifference = ((targetRollRadians - currentRollRadians + kPI) % TWO_PI) - kPI;
 
-            // 计算角度差的最短路径
-            let angleDifference = normalizedTargetRollRadians - normalizedCurrentRollRadians;
+            // 确保角度差在合理范围内
             if (angleDifference > kPI) angleDifference -= TWO_PI;
             else if (angleDifference < -kPI) angleDifference += TWO_PI;
+
 
             // 更新当前 roll 角度
             currentRollRadians += angleDifference * lerpFactor;
@@ -448,7 +448,7 @@ export class CustomCameraController extends ComponentBase {
 
             // 处理 pitch
             const desiredPitchRadians = -15 * DEGREES_TO_RADIANS;
-            let currentPitchRadians = this.pitch * DEGREES_TO_RADIANS
+            let currentPitchRadians = this.pitch * DEGREES_TO_RADIANS;
 
             const pitchDiff = desiredPitchRadians - currentPitchRadians;
             currentPitchRadians += pitchDiff * lerpFactor;
@@ -531,10 +531,10 @@ export class CustomCameraController extends ComponentBase {
         Vector3.add(this._currentTarget, this._tempPos, this._tempPos)
 
         this._currentCamera = lerpVector3(this._currentCamera, this._tempPos, dt * 5);
-        this._currentCamera.y = this._currentTarget.y + 10; // 相机始终高于目标
+        this._currentCamera.y = this._currentTarget.y + 2; // 相机始终高于目标
         this.camera.transform.lookAt(this._currentCamera, this._currentTarget);
-
     }
+
 
     public onBeforeUpdate(view?: View3D) {
         // public onLateUpdate(view?: View3D) {
@@ -588,8 +588,7 @@ export class CustomCameraController extends ComponentBase {
         }
 
         this._tempDir.set(0, 0, 1);
-        let q = Quaternion.HELP_0;
-        q.fromEulerAngles(this._pitch, this._roll, 0.0);
+        let q = Quaternion.HELP_0.fromEulerAngles(this._pitch, this._roll, 0.0);
         this._tempDir.applyQuaternion(q);
 
         // 计算新的相机位置
@@ -637,7 +636,7 @@ export class CustomCameraController extends ComponentBase {
             // 调整相机位置逻辑
             // console.log('视线发生碰撞的点', hitPoint.x(), hitPoint.y(), hitPoint.z());
             this._tempPos.set(hitPoint.x(), hitPoint.y() + cameraOffsetY, hitPoint.z());
-        } 
+        }
         this.resetRayCallback(this.cameraRay)
     }
 

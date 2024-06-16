@@ -50,6 +50,7 @@ export class SliderMotorController extends ComponentBase {
         // 等待目标刚体初始化完成
         this._constraint = await this.constraintComponent.waitConstraint()
         this._rigidbody = this.object3D.getComponent(RigidBodyComponent).btRigidbody;
+        // if (!this._rigidbody) throw new Error('Need rigid body')
         this._angularVelocity = this._rigidbody.getAngularVelocity()
 
         this.enableLinearMotor && this.enable && this.onEnable(); // 设置线性电机
@@ -102,25 +103,28 @@ export class SliderMotorController extends ComponentBase {
      * 更新电机滑动与旋转
      */
     public onUpdate(): void {
-        if (!this.enable || !this.enableLinearMotor) return;
+        // if (!this.enable || !this._constraint) return;
+        if (!this.enable) return;
         if (!this._constraint) return
 
-        const currentPos = this._constraint.getLinearPos();
+        if (this.enableLinearMotor) {
+            const currentPos = this._constraint.getLinearPos();
 
-        const isAtLowerLimit = currentPos <= this._lowerLinLimit + 0.0001;
-        const isAtUpperLimit = currentPos >= this._upperLinLimit - 0.0001;
+            const isAtLowerLimit = currentPos <= this._lowerLinLimit + 0.0001;
+            const isAtUpperLimit = currentPos >= this._upperLinLimit - 0.0001;
 
-        if (isAtLowerLimit || isAtUpperLimit) {
-            if (this._pauseStartTime === 0) {
-                this._pauseStartTime = Time.time;
-            } else if (Time.time - this._pauseStartTime >= this.pauseDuration) {
-                const absVelocity = Math.abs(this.targetLinearMotorVelocity);
-                const newVelocity = isAtLowerLimit ? absVelocity : -absVelocity;
-                this._constraint.setTargetLinMotorVelocity(newVelocity);
-                this._pauseStartTime = 0;
+            if (isAtLowerLimit || isAtUpperLimit) {
+                if (this._pauseStartTime === 0) {
+                    this._pauseStartTime = Time.time;
+                } else if (Time.time - this._pauseStartTime >= this.pauseDuration) {
+                    const absVelocity = Math.abs(this.targetLinearMotorVelocity);
+                    const newVelocity = isAtLowerLimit ? absVelocity : -absVelocity;
+                    this._constraint.setTargetLinMotorVelocity(newVelocity);
+                    this._pauseStartTime = 0;
+                }
+            } else {
+                this._pauseStartTime = 0; // 如果不在暂停状态，重置暂停时间
             }
-        } else {
-            this._pauseStartTime = 0; // 如果不在暂停状态，重置暂停时间
         }
 
         // 角度控制

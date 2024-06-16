@@ -414,7 +414,7 @@ export class VehicleComponent extends ComponentBase {
                     suspensionDamping: 1, // 悬架阻尼 2.3
                     suspensionCompression: 1, // 悬架压缩 4.4
                     suspensionRestLength: 0.18, // 悬架未受压时的长度 0.6  
-                    rollInfluence: 0.5, // 离心力 影响力 0.2
+                    rollInfluence: 0.4, // 离心力 影响力 0.2
                     steeringIncrement: .004,  // 转向增量 0.04
                     steeringClamp: 0.35, // 转向钳 0.5
                     maxEngineForce: 300, // 最大发动机力 1500

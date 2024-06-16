@@ -42,8 +42,9 @@ class _Physics {
      * @param options.useSoftBody - 是否启用软体模拟。如果为 true，则启用软体模拟功能（如布料、软体物体等）。
      * @param options.useCollisionCallback - 是否启用碰撞回调。如果为 true，则在发生碰撞时触发回调函数。
      * @param options.debugConfig - 调试绘制选项，用于配置物理调试绘制器。如果提供，则启用物理调试绘制功能。
+     * @param options.physicBound - 物理边界，默认范围：2000 2000 2000，超出边界时将会销毁该刚体。
      */
-    public async init(options: { useSoftBody?: boolean, useCollisionCallback?: boolean, debugConfig?: DebugDrawerOptions } = {}) {
+    public async init(options: { useSoftBody?: boolean, useCollisionCallback?: boolean, debugConfig?: DebugDrawerOptions, physicBound?: Vector3 } = {}) {
         await Ammo.bind(window)(Ammo);
         PhysicsMathUtil.init();
 
@@ -62,7 +63,7 @@ class _Physics {
         }
 
         this.isInitialized = true;
-        this.physicBound = new BoundingBox(new Vector3(), new Vector3(2000, 2000, 2000));
+        this.physicBound = new BoundingBox(new Vector3(), options.physicBound || new Vector3(2000, 2000, 2000));
     }
 
     public switchWorld(useSoftBody: boolean) {
@@ -189,14 +190,14 @@ class _Physics {
     /**
      * 销毁约束
      */
-    public removeConstraint(constraint: Ammo.btTypedConstraint){
+    public removeConstraint(constraint: Ammo.btTypedConstraint) {
         if (constraint) {
             Physics.world.removeConstraint(constraint);
             Ammo.destroy(constraint);
             constraint = null;
         }
     }
-    
+
     /**
      * 同步图形变换
      */
